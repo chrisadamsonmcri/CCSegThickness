@@ -1,0 +1,460 @@
+#!/usr/bin/python
+
+import os
+import sys
+import getopt
+import errno
+import csv
+
+import h5py
+
+import numpy
+import scipy.stats
+
+def usage():
+	print "Usage: " + sys.argv[0] + " [options] <output directory> <test type> <group label file> <output hdf5 file>"
+	print
+	print "\tDESCRIPTION"
+	print
+	print "\t\tPerforms statistical analysis on callosal thickness profiles created by CCSegProcess"
+	print
+	print "\tARGUMENTS"
+	print
+	print "\t\t<output directory>: the directory with the thickness hdf5 files"
+	print "\t\t<test type>: the type of test to use, the following are supported:"
+	print "\t\t\t\"2sample\": Welch's 2-sample T-test"
+	print "\t\t\t\"paired\": Student's 1-sample paired T-test"
+	print "\t\t<group label file>: a two-column, tab delimited text file containing the group labels for each subject"
+	print "\t\t\tThe format depends on the test type,"
+	print "\t\t\t\t\"2sample\": GROUPLABEL SUBJECTID"
+	print "\t\t\t\t\"paired\": First line contains group labels: GROUPLABELA GROUPLABELB, then each line contains pairs of subject IDs: SUBJECTIDA SUBJECTIDB"
+	print "\t\t<output hdf5 file>: file name to write the output to, a hdf5 file that contains the following variables:"
+	print "\t\t\tGroupLabels"
+	print "\t\t\tGroupIDX"
+	print "\t\t\tobservedP"
+	print "\t\t\tobservedT"
+	print "\t\t\tpermP"
+	print "\t\t\tomnibusP"
+	print "\t\t\tobservedPFDR"
+	print
+	print "\tOPTIONS"
+	print "\t\t--cull-percent=<>: the percentage of profiles at the anterior and posterior borders to ignore, 10 if not given"
+	print "\t\t--num-perms=<>: the number of permutations in permutation tests, 100000 by default"
+	print "\t\t--registered-profiles: use the registered profiles"
+
+def pairedTTest(thicknessA, thicknessB, numPerms):
+	assert(numpy.array_equal(thicknessA.shape, thicknessB.shape)),"Thickness profiles must have the same dimensions"
+	
+	numSubjects = thicknessA.shape[0]
+	numNodes = thicknessA.shape[1]
+
+	sqrtNumSubjects = numpy.sqrt(numSubjects)
+
+	observedDiff = thicknessA - thicknessB
+
+	observedT = numpy.mean(observedDiff, axis = 0) / (numpy.std(observedDiff, axis = 0) / sqrtNumSubjects)
+	observedP = scipy.stats.t.cdf(-observedT, numSubjects - 1)
+
+	observedTSign = numpy.sign(observedT)
+	
+	observedT = numpy.abs(observedT)
+
+	# get the sort order putting the observedT in DESCENDING ORDER
+	observedTSortIDX = numpy.argsort(-observedT)
+
+	observedTSorted = observedT[(observedTSortIDX)]
+	
+	randomisationSwap = numpy.random.uniform(size = (numPerms, numSubjects)) >= numpy.random.uniform(size = (numPerms, numSubjects))
+
+	randomisationSwap = randomisationSwap.T
+	I = numpy.lexsort(numpy.uint8(randomisationSwap), axis = 0)
+	randomisationSwap = numpy.take(randomisationSwap, I, axis = 1).T
+	#print randomisationSwap
+	del I
+	
+	# do the unique part, delete duplicates
+	I = numpy.where(numpy.all(numpy.diff(numpy.uint8(randomisationSwap), axis = 0) == 0, axis = 1))
+	#print I
+	if numpy.size(I) > 1:
+		randomisationSwap = numpy.delete(randomisationSwap, I[0], axis = 0)
+	#print randomisationSwap
+	
+	if numpy.all(randomisationSwap[0] == False):
+		#print "First all false"
+		randomisationSwap = randomisationSwap[1:]
+	#print randomisationSwap
+	
+	# change randomisationSwap to an array of int8 values
+	# firstly the elements that are True are those that we want to swap, therefore randomisationSwap(True) = -1
+	randomisationSwap = -numpy.int8(randomisationSwap)
+
+	# then we set all the zeros to one
+	randomisationSwap[numpy.where(randomisationSwap == 0)] = 1
+
+	maxRandomisedT = numpy.zeros(randomisationSwap.shape[0])
+	countRandGreater = numpy.zeros((numNodes))
+	OneOverNumSubjectsMinusOne = 1 / (numSubjects - 1)
+
+	for z in range(randomisationSwap.shape[0]):
+
+		randomisedDiff = observedDiff * numpy.atleast_2d(numpy.double(randomisationSwap[z])).T
+		
+		randomisedT = numpy.mean(randomisedDiff, axis = 0) / (numpy.std(randomisedDiff, axis = 0) / sqrtNumSubjects)
+		maxRandomisedT[z] = numpy.max(randomisedT)
+
+		stepDownT = numpy.maximum.accumulate(randomisedT[(observedTSortIDX)][::-1])[::-1]
+
+		countRandGreater = countRandGreater + numpy.uint64(stepDownT >= observedTSorted)
+	
+	permP = numpy.double(countRandGreater) / randomisationSwap.shape[0]
+	
+	# final correction
+	# PValues = max(PValues[i], PValues[i - 1]) for i = 1 to len(PValues)
+	permP = numpy.maximum.accumulate(permP)
+
+	#R = numpy.zeros(numpy.size(permP), dtype = numpy.int64)
+	
+	#R[(observedTSortIDX)] = numpy.arange(numpy.size(permP))
+	permP[(observedTSortIDX)] = permP
+
+	omnibusP = numpy.double(numpy.count_nonzero(maxRandomisedT >= numpy.max(observedT))) / numpy.double(randomisationSwap.shape[0])
+	
+	observedT = observedT * observedTSign
+
+	return (permP, observedP, observedT, omnibusP) 
+
+# performs false discovery rate correction on P at the threshold Q
+def FDR(P, Q = 0.05):
+	sortedP = numpy.sort(P)
+
+	I = numpy.arange(1, numpy.size(P) + 1) / numpy.size(P)
+
+	PBelowFDRThresh = numpy.where(sortedP <= (I * Q))[0]
+
+	if numpy.size(PBelowFDRThresh) == 0:
+		return numpy.ones(P.shape)
+	else:
+		# the last index where sortedP <= (I * Q)
+		FDRPThresh = sortedP[PBelowFDRThresh[-1]]
+		return numpy.minimum(P / FDRPThresh, 1)
+
+def twoSampleTTestCalcT(thicknessA, thicknessB, returnP = False):
+	NA = numpy.double(thicknessA.shape[0])
+	NB = numpy.double(thicknessB.shape[0])
+
+	meanA = numpy.sum(thicknessA, axis = 0) / NA
+	meanB = numpy.sum(thicknessB, axis = 0) / NB
+	
+	AXC = thicknessA - meanA
+	BXC = thicknessB - meanB
+
+	varA = numpy.sum(AXC * AXC, axis = 0) / (NA - 1)
+	varB = numpy.sum(BXC * BXC, axis = 0) / (NB - 1)
+	
+	Den = numpy.sqrt(varA / NA + varB / NB)
+
+	T = (meanA - meanB) / Den
+
+	if not returnP:
+		return T
+	else:
+		DF = ((varA / NA + varB / NB) * (varA / NA + varB / NB)) / ((varA * varA / NA / NA) / (NA - 1) + (varB * varB / NB / NB) / (NB - 1))
+		P = 2.0 * scipy.stats.t.cdf(-numpy.abs(T), DF)
+		return (T, P)
+
+#import time
+def twoSampleTTest(thicknessA, thicknessB, numPerms):
+	
+	assert(thicknessA.shape[1] == thicknessB.shape[1]),"Thickness profiles have different number of nodes"
+	
+	numSubjectsA = thicknessA.shape[0]
+	numSubjectsB = thicknessB.shape[0]
+	numNodes = thicknessA.shape[1]
+
+	observedT, observedP = twoSampleTTestCalcT(thicknessA, thicknessB, returnP = True)
+	
+	#rint observedP
+	#rint observedT
+
+	observedTSign = numpy.sign(observedT)
+	observedT = numpy.abs(observedT)
+
+	# get the sort order putting the observedT in DESCENDING ORDER
+	observedTSortIDX = numpy.argsort(-observedT)
+
+	observedTSorted = observedT[(observedTSortIDX)]
+	
+	#print "observedTSorted"
+	#print observedTSorted
+	numSubjectsTotal = numSubjectsA + numSubjectsB
+	thicknessAll = numpy.concatenate((thicknessA, thicknessB), axis = 0)
+	# generate a randomisation index array
+	randomisationIDX = numpy.argsort(numpy.random.uniform(size = (numPerms, numSubjectsTotal)), axis = 1)
+	
+	if numSubjectsTotal < 256:
+		randomisationIDX = numpy.uint8(randomisationIDX)
+	elif numSubjectsTotal < 65536:
+		randomisationIDX = numpy.uint16(randomisationIDX)
+	else:
+		randomisationIDX = numpy.uint32(randomisationIDX)
+	
+	groupAIDX = numpy.int32(numpy.arange(numSubjectsA))
+	groupBIDX = numpy.int32(numpy.arange(numSubjectsA, numSubjectsTotal))
+	
+	# sort the group A and group B parts
+	randomisationIDX = numpy.concatenate((numpy.sort(numpy.take(randomisationIDX, groupAIDX, axis = 1), axis = 1), numpy.sort(numpy.take(randomisationIDX, groupBIDX, axis = 1), axis = 1)), axis = 1)
+
+	# this emulates sortrows
+	randomisationIDX = randomisationIDX.T
+	I = numpy.lexsort(randomisationIDX, axis = 0)
+	randomisationIDX = numpy.take(randomisationIDX, I, axis = 1).T
+	del I
+	
+	# do the unique part, delete duplicates
+	I = numpy.where(numpy.all(numpy.diff(randomisationIDX, axis = 0) == 0, axis = 1))
+	if numpy.size(I) > 1:
+		randomisationIDX = numpy.delete(randomisationIDX, I[0], axis = 0)
+	
+	del I
+
+	# remove the last row, if it doesnt permute at all, i.e. 0:numSubjectsTotal - 1 
+	if numpy.array_equal(randomisationIDX[-1, :], numpy.arange(numSubjectsTotal)):
+		randomisationIDX = randomisationIDX[0:-1]
+	
+	#rint randomisationIDX.shape
+	
+	maxRandomisedT = numpy.zeros(randomisationIDX.shape[0])
+	countRandGreater = numpy.zeros(numNodes, dtype = numpy.uint64)
+	
+	#print randomisationIDX.shape
+	#print numSubjectsTotal
+	#print groupAIDX
+	#print groupBIDX
+	for z in range(randomisationIDX.shape[0]):
+		randomisedA = numpy.take(thicknessAll, randomisationIDX[z, groupAIDX], axis = 0)
+		randomisedB = numpy.take(thicknessAll, randomisationIDX[z, groupBIDX], axis = 0)
+
+		randomisedT = twoSampleTTestCalcT(randomisedA, randomisedB, returnP = False)
+		randomisedT = numpy.abs(randomisedT)
+
+		maxRandomisedT[z] = numpy.max(randomisedT)
+		
+		# stepDownT = max(randomisedT[i], randomisedT[i - 1]) for i = 1 to len(randomisedT)
+
+		#stepDownT = numpy.maximum.accumulate(randomisedT[(observedTSortIDX)])
+		# this steps through the array from end to beginning, so we need to reverse the order to use the numpy maximum
+		# U(J) = max(U(J), U(J + 1))
+		stepDownT = numpy.maximum.accumulate(randomisedT[(observedTSortIDX)][::-1])[::-1]
+
+		countRandGreater = countRandGreater + numpy.uint64(stepDownT >= observedTSorted)
+	
+	permP = numpy.double(countRandGreater) / randomisationIDX.shape[0]
+	
+	# final correction
+	# PValues = max(PValues[i], PValues[i - 1]) for i = 1 to len(PValues)
+	permP = numpy.maximum.accumulate(permP)
+
+	R = numpy.zeros(numpy.size(permP), dtype = numpy.int64)
+	
+	#R[(observedTSortIDX)] = numpy.arange(numpy.size(permP))
+	#permP[(R)] = permP
+	permP[(observedTSortIDX)] = permP
+
+	omnibusP = numpy.double(numpy.count_nonzero(maxRandomisedT >= numpy.max(observedT))) / numpy.double(randomisationIDX.shape[0])
+	
+	observedT = observedT * observedTSign
+
+	return (permP, observedP, observedT, omnibusP) 
+	#print observedT
+	#print PValues
+
+	#print omniP
+
+#		 % step down test
+#		 % http://support.sas.com/documentation/cdl/en/statug/63033/HTML/default/viewer.htm#statug_multtest_sect014.htm
+#		 % pesudocode
+#		 % go down the order of the observed T, going from the 
+#		 % StepDownP(1) is the randomised T value of the lowest T value from the observed
+#		 % then 
+#		 % StepDownP(i) is the maximum of StepDownP(i - 1) and the randomised T value of the (i'th) highest T value from the obse    rved
+#		 % 
+#		 % so if you observe a high randomised T for a low observed T, then all the other T values are given this T value
+#		 % so the randomised T values are boosted if any previous randomised T has exceeded the observed T until the randomised T     is greater
+#		 % than the last randomised T
+#	  
+#		 %StepDownT = zeros(NumVariables, 1);
+#		 %   StepDownT = RandomisedT(ObservedTSortedIDX);
+#		 %   for CurT = NumVariables - 1:-1:1
+#		 %       StepDownT(CurT) = max(StepDownT(CurT + 1), StepDownT(CurT));
+#		 %   end
+
+
+def main():
+	opts, args = getopt.getopt(sys.argv[1:], "h", ["test-type=", "cull-percent=", "num-perms=", 'registered-profiles'])
+
+	numpy.set_printoptions(precision = 3, formatter = {'float':lambda x: "%.3f" % x})
+	
+	inputDirectory = None
+	testType = None
+	groupFile = None
+	outputFile = None
+
+	if len(args) != 4:
+		print "The number of arguments must be 4"
+		usage()
+		exit()
+
+	inputDirectory = args[0]
+	testType = args[1]
+	groupFile = args[2]
+	outputFile = args[3]
+
+	if not os.path.isdir(inputDirectory):
+		print "The input directory does not exist"
+		quit()
+
+	testTypesSupported = ['2sample', 'paired']
+	if not testType in testTypesSupported:
+		print "The test type is not supported, the following are supported: " + str(testTypesSupported)
+		quit()
+
+	if not os.path.isfile(groupFile):
+		print "The group file does not exist"
+		quit()
+	
+	head, tail = os.path.split(outputFile)
+
+	if len(head) > 0:
+		if not os.path.isdir(head):
+			print "The directory for the output file does not exist, I'm not going to be able to write it"
+			quit()
+
+	cullPercent = float(10)
+	numPerms = int(100000)
+	#numPerms = int(100)
+	useRegisteredProfiles = False
+	for o, a in opts:
+		if o == '--cull-percent':
+			try:
+				cullPercent = float(a)
+			except Exception:
+				print "Cull percentage was not formatted in a valid way, it must be a floating point number"
+				quit()
+		if o == '--num-perms':
+			try:
+				numPerms = int(a)
+				assert(numPerms > 0),"number of permutations is negative or zero, must be positive"
+			except Exception:
+				print "Number of permutations was invalid, it must be an integer"
+				quit()
+		if o == '--registered-profiles':
+			useRegisteredProfiles = True
+	
+	# read the subjects file
+
+
+	groupFileFID = open(groupFile, 'r')
+	groupFileReader = csv.reader(groupFileFID, delimiter = "\t")
+	
+	groupLabels = list()
+	groupLists = dict()
+	thicknessProfiles = dict()
+
+	if testType == "2sample":
+		for curRow in groupFileReader:
+			if not curRow[0] in groupLists:
+				groupLabels.append(curRow[0])
+				groupLists[curRow[0]] = list()
+				thicknessProfiles[curRow[0]] = list()
+			groupLists[curRow[0]].append(curRow[1])
+
+		if len(groupLabels) != 2:
+			print "2-sample test"
+			print "The number of groups was not 2, it was: " + str(len(groupLabels)) + " the groups were: " + str(groupLabels)
+			quit()
+	elif testType == "paired":
+		groupLabels = groupFileReader.next()
+		
+		for curGroupLabel in groupLabels:
+			thicknessProfiles[curGroupLabel] = list()
+			groupLists[curGroupLabel] = list()
+
+		for curRow in groupFileReader:
+			groupLists[groupLabels[0]].append(curRow[0])
+			groupLists[groupLabels[1]].append(curRow[1])
+	
+	#print groupLabels
+	#print thicknessProfiles
+	#print groupLists
+	#quit()
+	# go through each group label and load the thickness profile for each member subject
+	for curGroupLabel in groupLabels:
+		for curSubject in groupLists[curGroupLabel]:
+			curThicknessFile = os.path.join(inputDirectory, curSubject + "_thickness.hdf5")
+			
+			if os.path.isfile(curThicknessFile):
+				FID = h5py.File(curThicknessFile, 'r')
+				
+				if useRegisteredProfiles == True:
+					curThicknessProfile = numpy.atleast_2d(numpy.array(FID['registeredThicknessProfile']))
+				else:
+					curThicknessProfile = numpy.atleast_2d(numpy.array(FID['thicknessProfile']))
+					curValidStreamlines = numpy.atleast_2d(numpy.array(FID['validStreamlines'])) > 0
+					curThicknessProfile[numpy.where(numpy.logical_not(curValidStreamlines))] = numpy.nan
+				
+				thicknessProfiles[curGroupLabel].append(numpy.array(curThicknessProfile))
+				FID.close()
+			else:
+				print "Subject thickness file not found: " + curThicknessFile
+				quit()
+		thicknessProfiles[curGroupLabel] = numpy.concatenate(thicknessProfiles[curGroupLabel])
+		#print thicknessProfiles[curGroupLabel].shape
+	#print thicknessProfiles
+	
+	numNodes = thicknessProfiles[groupLabels[0]].shape[1]
+	
+	cutoffNumber = numpy.int64(numpy.round(numNodes * cullPercent / 100.0))
+
+	validNodeIDX = numpy.arange(cutoffNumber - 1, numNodes - cutoffNumber)
+	#print validNodeIDX
+	if testType == "2sample":
+		permP, observedP, observedT, omnibusP = twoSampleTTest(numpy.take(thicknessProfiles[groupLabels[0]], validNodeIDX, axis = 1), numpy.take(thicknessProfiles[groupLabels[1]], validNodeIDX, axis = 1), numPerms)
+	elif testType == "paired":
+		permP, observedP, observedT, omnibusP = pairedTTest(numpy.take(thicknessProfiles[groupLabels[0]], validNodeIDX, axis = 1), numpy.take(thicknessProfiles[groupLabels[1]], validNodeIDX, axis = 1), numPerms)
+	
+	observedPFDR = FDR(observedP)
+	
+	# put in the dummy values for the nodes that werent tested
+
+	T = numpy.ones(numNodes); T[validNodeIDX] = permP; permP = numpy.array(T)
+	T = numpy.ones(numNodes); T[validNodeIDX] = observedP; observedP = numpy.array(T)
+	T = numpy.zeros(numNodes); T[validNodeIDX] = observedT; observedT = numpy.array(T)
+	T = numpy.ones(numNodes); T[validNodeIDX] = observedPFDR; observedPFDR = numpy.array(T)
+	
+	del T
+
+	try:
+		FID = h5py.File(outputFile, 'w')
+		FID.create_dataset("permP", data = permP, compression = 'gzip')
+		FID.create_dataset("observedPFDR", data = observedPFDR, compression = 'gzip')
+		FID.create_dataset("observedP", data = observedP, compression = 'gzip')
+		FID.create_dataset("observedT", data = observedT, compression = 'gzip')
+		FID.create_dataset("omnibusP", data = omnibusP)
+		FID.create_dataset("groupLabels", data = groupLabels)
+		FID.close()
+
+	except Exception:
+		print "Could not open output file"
+	
+	#print "\t\t\tGroupLabels"
+	#print "\t\t\tGroupIDX"
+	#print "\t\t\tobservedP"
+	#print "\t\t\tobservedT"
+	#print "\t\t\tpermP"
+	#print "\t\t\tomnibusP"
+	#print "\t\t\tobservedPFDR"
+	
+#numpy.argsort(numpy.random.uniform , axis = 1)
+
+if __name__ == "__main__":
+	main()

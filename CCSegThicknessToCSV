@@ -1,0 +1,124 @@
+#!/usr/bin/python
+
+import os
+import getopt
+import sys
+import errno
+
+import h5py
+import csv
+import numpy
+
+import CCSegUtils
+import CCSegSubjectSelection
+
+def criticalError(errorString):
+	print "Error: " + str(errorString)
+	quit()
+
+
+def usage():
+	print "Usage: " + sys.argv[0] + " [options] <input directory> <output directory>"
+	print
+	print "Prints thickness profiles to <output directory>/all_thickness_profiles.csv"
+	print "Prints registered thickness profiles to <output directory>/all_registered_thickness_profiles.csv"
+	print "Each row is the subject followed by the nodal thicknesses"
+	print
+	print "Prints stats of the thickness profiles according to the parcellations in <output directory>/parcellation_stats/"
+	print "For each parcellation scheme: witelson, hoferfrahm, emsell, the following files are produced:"
+	print "\t<output directory>/parcellation_stats/<scheme>_stats_area.csv: the areas of each region"
+	print "\tWithin the following files, the stats refer to the thicknesses of the nodes within each region"
+	print "\t<output directory>/parcellation_stats/<scheme>_stats_max.csv: the maximum thickness within each region"
+	print "\t<output directory>/parcellation_stats/<scheme>_stats_min.csv: the minimum thickness within each region"
+	print "\t<output directory>/parcellation_stats/<scheme>_stats_median.csv: the median thickness within each region"
+	print "\t<output directory>/parcellation_stats/<scheme>_stats_std.csv: the standard deviation of the thicknesses within each region"
+	print "\t<output directory>/parcellation_stats/<scheme>_stats_var.csv: the variance of the thicknesses within each region"
+
+def main():
+	
+	longOptStrings = []
+	longOptStrings.extend(CCSegSubjectSelection.getOptions())	
+	opts, args = getopt.getopt(sys.argv[1:], "h", longOptStrings)
+	
+	if len(args) != 2:
+		print "The number of arguments must be 2"
+		usage()
+		exit()
+	numpy.set_printoptions(precision = 3, formatter = {'all':lambda x: "%.3f" % x})
+
+	inputDirectory = args[0]
+	outputDirectory = args[1]
+	
+	for o, a in opts:
+		if o == '-h':
+			usage()
+			quit()
+	#for o, a in opts:
+	
+	if not os.path.isdir(inputDirectory):
+		criticalError("The input directory specified was not found")
+	
+	actualInputFiles = CCSegSubjectSelection.selectSubjectsFromOpts(inputDirectory, opts = opts)
+	if len(actualInputFiles) == 0:
+		criticalError("No subjects to process")
+	
+	allThicknessFID = open(os.path.join(outputDirectory, 'all_thickness_profiles.csv'), 'w')
+	allRegisteredThicknessFID = open(os.path.join(outputDirectory, 'all_registered_thickness_profiles.csv'), 'w')
+
+	parcellationStatsDirectory = os.path.join(outputDirectory, 'parcellation_stats')
+	try:
+		os.makedirs(parcellationStatsDirectory)
+	except OSError as exc: # Python >2.5
+		if exc.errno == errno.EEXIST and os.path.isdir(parcellationStatsDirectory):
+			pass
+		else:
+			raise Exception
+
+	regionalStats = ['area', 'min', 'max', 'median', 'std', 'var']
+
+	witelsonStatsFIDS = dict.fromkeys(regionalStats)
+	hoferFrahmStatsFIDS = dict.fromkeys(regionalStats)
+	emsellStatsFIDS = dict.fromkeys(regionalStats)
+	
+	for curStat in regionalStats:
+		witelsonStatsFIDS[curStat] = open(os.path.join(parcellationStatsDirectory, 'witelson_stats_' + curStat + '.csv'), 'w')
+		hoferFrahmStatsFIDS[curStat] = open(os.path.join(parcellationStatsDirectory, 'hoferfrahm_stats_' + curStat + '.csv'), 'w')
+		emsellStatsFIDS[curStat] = open(os.path.join(parcellationStatsDirectory, 'emsell_stats_' + curStat + '.csv'), 'w')
+	
+	for curFile in sorted(actualInputFiles):
+		outputBase = os.path.join(outputDirectory, curFile)
+		if os.path.isfile(outputBase + "_thickness.hdf5"):
+			allThicknessFID.write(curFile + ",")
+			allRegisteredThicknessFID.write(curFile + ",")
+			FID = h5py.File(outputBase + "_thickness.hdf5", 'r')
+			
+			#curThicknessProfile = numpy.array(FID['thicknessProfile'])
+			T = numpy.array(FID['thicknessProfile'])
+			TR = numpy.array(FID['registeredThicknessProfile'])
+			S = numpy.array(FID['validStreamlines'])
+			
+			T[numpy.where(S == 0)] = numpy.nan
+
+			allThicknessFID.write(','.join([str(x) for x in T.tolist()]) + "\n")
+			allRegisteredThicknessFID.write(','.join([str(x) for x in TR.tolist()]) + "\n")
+			for curStat in regionalStats:
+				witelsonStatsFIDS[curStat].write(curFile + ',')
+				hoferFrahmStatsFIDS[curStat].write(curFile + ',')
+				emsellStatsFIDS[curStat].write(curFile + ',')
+
+				witelsonStatsFIDS[curStat].write(','.join([str(x) for x in numpy.array(FID['/witelsonStats/' + curStat]).tolist()]) + "\n")
+				hoferFrahmStatsFIDS[curStat].write(','.join([str(x) for x in numpy.array(FID['/hoferFrahmStats/' + curStat]).tolist()]) + "\n")
+				emsellStatsFIDS[curStat].write(','.join([str(x) for x in numpy.array(FID['/emsellStats/' + curStat]).tolist()]) + "\n")
+
+			FID.close()
+			pass
+		pass
+	allThicknessFID.close()
+	allRegisteredThicknessFID.close()
+	for curStat in regionalStats:
+		witelsonStatsFIDS[curStat].close()
+		hoferFrahmStatsFIDS[curStat].close()
+		emsellStatsFIDS[curStat].close()
+
+if __name__ == "__main__":
+	main()

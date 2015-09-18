@@ -1,0 +1,23 @@
+Installation for Linux systems:
+
+You may need to be logged in as root, depending on the permissions of the directory
+on which you are installing acpcdetect.
+
+The rest of this document assumes that acpcdetect is installed in /usr/local/art.  
+
+1. Unpack the package.
+
+	cd /usr/local/art	# create this directory if it does not already exist
+	tar xvzf acpcdetect.tar.gz		# unpack the archive
+
+2. Set the $ARTHOME environment variable. To set $ARTHOME, csh and tcsh users should 
+add this line in their `.cshrc' or `.tcshrc' files: 
+
+	setenv ARTHOME /usr/local/art
+
+sh and bash users should instead add these lines in their `.profile' or `.bashrc': 
+
+	ARTHOME=/usr/local/art
+	export ARTHOME 
+
+3.  mv the executable program: $ARTHOME/acpcdetect to a bin directory in your PATH.

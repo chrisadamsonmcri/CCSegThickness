@@ -1,0 +1,824 @@
+#!/usr/bin/python
+
+import os
+import sys
+import numpy
+import getopt
+import errno
+
+import h5py
+
+import pygtk
+pygtk.require('2.0')
+import gtk
+import gobject
+
+import copy
+
+import CCSegUtils
+
+import scipy
+import scipy.ndimage
+
+def usage():
+	print "Usage: " + sys.argv[0] + " [options] <output directory>"
+	print
+	print "\tDESCRIPTION"
+	print
+	print "\t\tSegmentation manual editor for CC Segmentation and Thickness profile pipeline"
+	print
+	print "\tARGUMENTS"
+	print "\t\t<output directory>: the directory containing all the output from CCSegProcess, the user must have run CCSegProcess --do-seg"
+	print
+	print "\tOPTIONS"
+	print "\t\t--start-subject=<start subject>: Start on this subject"
+	print "\t\t-h: This message"
+
+class UIManagerExample:
+
+	WIDTH = 800
+	HEIGHT = 600
+	
+#	ui = '''<ui>
+#	<toolbar name="BrushToolbar">
+#		<toolitem action="BrushSquare"/>
+#		<toolitem action="BrushCircle"/>
+#	</toolbar>
+#	<toolbar name="MorphToolbar">
+#		<toolitem action="MorphErode"/>
+#		<toolitem action="MorphDilate"/>
+#		<toolitem action="MorphClose"/>
+#		<toolitem action="MorphOpen"/>
+#	</toolbar>
+#	</ui>'''
+#
+	def delete_event(self, widget, event, data=None):
+		gtk.main_quit()
+		return False
+	
+	def ask_to_save_segs(self):
+		dialog = gtk.MessageDialog(parent=None, flags=0, type=gtk.MESSAGE_ERROR, buttons=gtk.BUTTONS_YES_NO, message_format="There are unsaved changes, do you wish to save the changes?")
+		response = dialog.run()
+		dialog.destroy()
+		return response
+	
+	def window_deleting_cb(self, widget, event, data = None):
+		if numpy.any(self.subjectsToSave):
+			response = self.ask_to_save_segs()
+			if response == gtk.RESPONSE_YES:
+				self.saveSegs()
+		return False
+
+	def quit_cb(self, b):
+		if numpy.any(self.subjectsToSave):
+			response = self.ask_to_save_segs()
+			if response == gtk.RESPONSE_YES:
+				self.saveSegs()
+	
+		gtk.main_quit()
+
+	def layout_resize(self, widget, event):
+		x, y, width, height = widget.get_allocation()
+		if width > self.lwidth or height > self.lheight:
+			self.lwidth = max(width, self.lwidth)
+			self.lheight = max(height, self.lheight)
+			widget.set_size(self.lwidth, self.lheight)
+	
+	# callbacks
+	def brush_cb(self, widget, data=None):
+		self.brushType = data
+	
+	def undo_cb(self, b):
+		
+		if not self.curUndoIMG == None:
+			self.CCSegs[self.curUndoSubjectID]['finalSegManEdit'] = numpy.array(self.curUndoIMG)
+
+		if self.curSubjectID == self.curUndoSubjectID:	
+			self.updateSubject()
+		
+		self.curUndoIMG = None
+		self.curUndoSubjectID = None
+
+
+	def morph_cb(self, widget, data=None):
+		#print "morph_cb %s" % data
+		self.initSegChanging()
+		
+		xx = numpy.arange(-self.morphSizeScale.get_value(), self.morphSizeScale.get_value() + 1)
+		yy = numpy.array(xx)
+
+		xx = numpy.atleast_2d(xx)
+		yy = numpy.atleast_2d(yy).T
+			
+		morphMask = numpy.sqrt(xx * xx + yy * yy) <= self.morphSizeScale.get_value()
+
+		del xx
+		del yy
+
+		if data == "dilate":
+			self.CCSegs[self.curSubjectID]['finalSegManEdit'] = scipy.ndimage.morphology.binary_dilation(self.CCSegs[self.curSubjectID]['finalSegManEdit'], structure = morphMask)
+		elif data == "erode":
+			self.CCSegs[self.curSubjectID]['finalSegManEdit'] = scipy.ndimage.morphology.binary_erosion(self.CCSegs[self.curSubjectID]['finalSegManEdit'], structure = morphMask)
+		elif data == "close":
+			self.CCSegs[self.curSubjectID]['finalSegManEdit'] = scipy.ndimage.morphology.binary_closing(self.CCSegs[self.curSubjectID]['finalSegManEdit'], structure = morphMask)
+		elif data == "open":
+			self.CCSegs[self.curSubjectID]['finalSegManEdit'] = scipy.ndimage.morphology.binary_opening(self.CCSegs[self.curSubjectID]['finalSegManEdit'], structure = morphMask)
+		
+		self.updateSubject()
+
+	def morphother_cb(self, widget, data=None):
+		self.initSegChanging()
+
+		if data == 'fillholes':
+			self.CCSegs[self.curSubjectID]['finalSegManEdit'] = scipy.ndimage.morphology.binary_fill_holes(self.CCSegs[self.curSubjectID]['finalSegManEdit'])
+
+		elif data == 'largestcomponent':
+			CCSegLabels, numCCSegLabels = scipy.ndimage.measurements.label(self.CCSegs[self.curSubjectID]['finalSegManEdit'], structure = numpy.ones([3, 3]))
+			if numCCSegLabels > 1:
+				M = CCSegLabels[numpy.nonzero(CCSegLabels)]
+				H, bin_edges = numpy.histogram(M, bins = numpy.arange(1, numCCSegLabels + 2))
+				I = numpy.argmax(H)
+				self.CCSegs[self.curSubjectID]['finalSegManEdit'] = (CCSegLabels == bin_edges[I])
+			pass
+
+		self.updateSubject()
+
+	def saveSegs(self):
+		#print "Saving segmentations"
+		I = numpy.where(self.subjectsToSave)[0]
+		for z in I:
+			
+			curSubjectID = self.CCSegSubjectIDs[z]
+			
+			FIDManedit = h5py.File(os.path.join(self.inputDirectory, curSubjectID + "_seg_manedit.hdf5"), 'w')
+			FIDManedit.create_dataset("finalSegManEdit", data = numpy.uint8(self.CCSegs[curSubjectID]['finalSegManEdit']), compression = 'gzip')
+			FIDManedit.close()
+			
+			#self.CCSegs[self.CCSegSubjectIDs[z]]['finalSegManEdit']			
+			#print z
+		# make all subjects unmodified
+		self.subjectsToSave.fill(False)
+	
+	def segsave_cb(self, widget, data=None):
+		#print "segsave_cb %s" % data
+
+		self.saveSegs()
+
+		self.segSaveButton.set_sensitive(False)
+	
+	def initSegChanging(self):
+
+		if self.CCSegs[self.curSubjectID]['finalSegManEdit'] == None:
+			self.CCSegs[self.curSubjectID]['finalSegManEdit'] = numpy.array(self.CCSegs[self.curSubjectID]['originalSeg'])
+
+		# copy the current segmentation to the undo image
+		self.curUndoIMG = numpy.array(self.CCSegs[self.curSubjectID]['finalSegManEdit'])
+		# set the current undo subject ID
+		self.curUndoSubjectID = self.curSubjectID
+		# set the current subject ID "to save" to true, indicating it has been modified
+		self.subjectsToSave[int(self.curSubjectSlider.get_value()) - 1] = True
+		# enable the save segmentation button
+		self.segSaveButton.set_sensitive(True)
+
+	def segColourButtonPixmap(self, curColour):
+
+		buttonIMGShape = (16, 16)
+
+		T = numpy.tile(numpy.reshape(numpy.atleast_3d(curColour), (1, 1, 3)), (buttonIMGShape[0], buttonIMGShape[1], 1))
+		#rint T
+		#rint T.shape
+		return gtk.gdk.pixbuf_new_from_array(T, gtk.gdk.COLORSPACE_RGB, 8)
+		
+
+	def subjectButtonClicked_cb(self, widget, data=None):
+		#self.curSubjectID = self.CCSegSubjectIDs[int(self.curSubjectSlider.get_value()) - 1]
+		curSubjectIDX = int(self.curSubjectSlider.get_value())
+		if data == "previous":
+			self.curSubjectSlider.set_value(curSubjectIDX - 1)
+		elif data == "next":
+			self.curSubjectSlider.set_value(curSubjectIDX + 1)
+		
+		self.updateSubject()
+
+	def colourchanged_cb(self, widget, data = None):
+		T = widget.get_color()
+
+		RGB = numpy.array([T.red, T.green, T.blue], dtype = numpy.uint16)
+		RGB = numpy.uint8(RGB / 256)
+
+		self.segColours[data] = numpy.array(RGB)
+		self.updateSubject()
+
+	def subjectchanged_cb(self, widget, data = None):
+		self.updateSubject()
+	
+	def RGBtoGDKColor(self, RGB):
+		T = numpy.double(RGB) * 256
+		T = numpy.ravel(numpy.uint16(T))
+		return gtk.gdk.Color(red = T[0], green = T[1], blue = T[2])
+
+	def __init__(self):
+		# Create the toplevel window
+		window = gtk.Window()
+		window.connect('destroy', lambda w: gtk.main_quit())
+		window.set_size_request(self.WIDTH, self.HEIGHT)
+		window.set_title("CCSegPipe manual editing tool")
+		window.connect("delete-event", self.window_deleting_cb)
+		self.lwidth = self.WIDTH
+		self.lheight = self.HEIGHT
+
+		#elf.window.connect("delete_event", self.delete_event)
+		#self.window.set_border_width(10)
+		
+		# A gtk.VBox is a container that allows you to insert objects
+		# vertically
+		
+		bgBox = gtk.VBox()
+		window.add(bgBox)
+
+		mainHBox = gtk.HBox()
+		bgBox.pack_end(mainHBox, True, True)
+
+		leftVBox = gtk.VBox()
+		mainHBox.pack_start(leftVBox, expand = False, fill = True)
+
+		rightVBox = gtk.VBox()
+		mainHBox.pack_start(rightVBox, expand = True, fill = True)
+
+		# Create a UIManager instance
+		uimanager = gtk.UIManager()
+		
+		accelgroup = uimanager.get_accel_group()
+		window.add_accel_group(accelgroup)
+
+		self.actiongroup = gtk.ActionGroup('UIManagerExample')
+		self.actiongroup.add_actions([
+		('Save', gtk.STOCK_SAVE, '_Save segmentations', "<CTRL>S", 'Save segmentations', self.segsave_cb),
+		('Quit', gtk.STOCK_QUIT, '_Quit', None, 'Quit the Program', self.quit_cb),
+		('Undo', gtk.STOCK_UNDO, '_Undo', "<CTRL>Z", 'Undo last edit', self.undo_cb),
+		('File', None, '_File'), ('Edit', None, '_Edit')])
+
+		self.actiongroup.get_action('Save').set_property('short-label', '_Save')
+		self.actiongroup.get_action('Quit').set_property('short-label', '_Quit')
+		self.actiongroup.get_action('Undo').set_property('short-label', '_Undo')
+		
+		ui = '''<ui>
+		<menubar name="MenuBar">
+			<menu action="File">
+				<menuitem action="Save"/>
+				<menuitem action="Quit"/>
+			</menu>
+			<menu action="Edit">
+				<menuitem action="Undo"/>
+			</menu>
+		</menubar>
+		</ui>'''
+
+		uimanager.insert_action_group(self.actiongroup, 0)
+		uimanager.add_ui_from_string(ui)
+
+		menubar = uimanager.get_widget('/MenuBar')
+		bgBox.pack_start(menubar, False)
+
+		#leftVBox.pack_start(gtk.Label("Brush"), expand = False, fill = False)
+		#brushToolbar = uimanager.get_widget('/BrushToolbar')
+		#leftVBox.pack_start(brushToolbar, False)
+
+		brushFrame = gtk.Frame("Brush")
+		leftVBox.pack_start(brushFrame, expand = False, fill = False)
+		
+		brushButtonBox = gtk.HButtonBox()
+		brushButtonBox.set_layout(gtk.BUTTONBOX_SPREAD)
+		brushButtonBox.set_spacing(5)
+		brushButtonBox.set_border_width(5)
+		
+		brushFrameBox = gtk.VBox()
+		brushFrame.add(brushFrameBox)
+
+		#brushFrame.add(brushButtonBox)
+		brushFrameBox.pack_start(brushButtonBox, False, True)
+		self.brushSizeScale = gtk.HScale(gtk.Adjustment(value=1, lower=1, upper=10, step_incr=10, page_incr=1, page_size=0))
+		self.brushSizeScale.set_digits(0)
+		
+		brushFrameBox.pack_start(gtk.Label("Brush size"))
+		brushFrameBox.pack_start(self.brushSizeScale, False, True)
+
+		#imageSquare = gtk.Image()
+		#imageSquare.set_from_stock(gtk.STOCK_OPEN, gtk.ICON_SIZE_BUTTON)
+
+		brushCircleButton = gtk.RadioButton(None, "Circle")
+		brushSquareButton = gtk.RadioButton(brushCircleButton, "Square")
+		brushSquareButton.connect("toggled", self.brush_cb, "square")
+		
+		brushCircleButton.connect("toggled", self.brush_cb, "circle")
+		
+		self.brushType = 'circle'
+		#brushSquareButton.set_image(imageSquare)
+		#imageCircle = gtk.Image()
+		#imageCircle.set_from_stock(gtk.STOCK_OPEN, gtk.ICON_SIZE_BUTTON)
+
+		brushButtonBox.add(brushSquareButton)
+		brushButtonBox.add(brushCircleButton)
+		
+		morphFrame = gtk.Frame("Morphology")
+		
+		morphFrameBox = gtk.VBox()
+		morphFrame.add(morphFrameBox)
+		
+		morphButtonBox = gtk.HButtonBox()
+		morphButtonBox.set_layout(gtk.BUTTONBOX_SPREAD)
+		morphButtonBox.set_spacing(5)
+		morphButtonBox.set_border_width(5)
+		
+		morphButtonTable = gtk.Table(rows = 2, columns = 2, homogeneous = False)
+		
+		morphDilateButton = gtk.Button(label = "Dilate")
+		morphDilateButton.connect("clicked", self.morph_cb, "dilate")
+		#morphButtonBox.add(morphDilateButton)
+		morphButtonTable.attach(morphDilateButton, 0, 1, 0, 1, xoptions=gtk.EXPAND|gtk.FILL, yoptions=gtk.EXPAND|gtk.FILL, xpadding=5, ypadding=5)
+		morphErodeButton = gtk.Button(label = "Erode")
+		morphErodeButton.connect("clicked", self.morph_cb, "erode")
+		morphButtonTable.attach(morphErodeButton, 1, 2, 0, 1, xoptions=gtk.EXPAND|gtk.FILL, yoptions=gtk.EXPAND|gtk.FILL, xpadding=5, ypadding=5)
+		#morphButtonBox.add(morphErodeButton)
+		morphCloseButton = gtk.Button(label = "Close")
+		morphCloseButton.connect("clicked", self.morph_cb, "close")
+		#morphButtonBox.add(morphCloseButton)
+		morphButtonTable.attach(morphCloseButton, 0, 1, 1, 2, xoptions=gtk.EXPAND|gtk.FILL, yoptions=gtk.EXPAND|gtk.FILL, xpadding=5, ypadding=5)
+		morphOpenButton = gtk.Button(label = "Open")
+		morphOpenButton.connect("clicked", self.morph_cb, "open")
+		#morphButtonBox.add(morphOpenButton)
+		morphButtonTable.attach(morphOpenButton, 1, 2, 1, 2, xoptions=gtk.EXPAND|gtk.FILL, yoptions=gtk.EXPAND|gtk.FILL, xpadding=5, ypadding=5)
+		
+		#morphFrameBox.pack_start(morphButtonBox, expand = False, fill = False)
+		morphFrameBox.pack_start(morphButtonTable, expand = False, fill = False)
+		
+		self.morphSizeScale = gtk.HScale(gtk.Adjustment(value=1, lower=1, upper=10, step_incr=10, page_incr=1, page_size=0))
+		self.morphSizeScale.set_digits(0)
+		
+		morphFrameBox.pack_start(gtk.Label("Structural element size"))
+
+		morphFrameBox.pack_start(self.morphSizeScale, False, True)
+		
+		morphFrameBox.pack_start(gtk.Label("Other"))
+		
+		morphLargestComponentButton = gtk.Button(label = "Largest component")
+		morphLargestComponentButton.connect("clicked", self.morphother_cb, 'largestcomponent')
+		morphFrameBox.pack_start(morphLargestComponentButton, expand = False, fill = False)
+
+		morphFillHolesButton = gtk.Button(label = "Fill holes")
+		morphFillHolesButton.connect("clicked", self.morphother_cb, 'fillholes')
+		morphFrameBox.pack_start(morphFillHolesButton, expand = False, fill = False)
+
+		leftVBox.pack_start(morphFrame, expand = False, fill = False)
+		
+				
+		coloursFrame = gtk.Frame("Colours")
+		leftVBox.pack_start(coloursFrame, expand = False, fill = False)
+
+		segColourTable = gtk.Table(rows = 3, columns = 2, homogeneous = False)
+		coloursFrame.add(segColourTable)
+
+		self.segColours = dict()
+		self.segColours['seg'] = numpy.array([128, 0, 0], dtype = numpy.uint8)
+		self.segColours['add'] = numpy.array([0, 128, 0], dtype = numpy.uint8)
+		self.segColours['del'] = numpy.array([0, 0, 128], dtype = numpy.uint8)
+		
+		segColourSegButton = gtk.ColorButton(color = self.RGBtoGDKColor(self.segColours['seg']))
+		segColourAddButton = gtk.ColorButton(color = self.RGBtoGDKColor(self.segColours['add']))
+		segColourDelButton = gtk.ColorButton(color = self.RGBtoGDKColor(self.segColours['del']))
+		
+		segColourSegButton.connect('color-set', self.colourchanged_cb, "seg")
+		segColourAddButton.connect('color-set', self.colourchanged_cb, "add")
+		segColourDelButton.connect('color-set', self.colourchanged_cb, "del")
+
+		#segColourSegButton = gtk.Button()
+		#segColourAddButton = gtk.Button()
+		#segColourDelButton = gtk.Button()
+		
+#		box1 = gtk.HBox(False, 0)
+#		self.segColourSegButtonIMG = gtk.Image()
+#		self.segColourSegButtonIMG.set_from_pixbuf(self.segColourButtonPixmap(self.segColours['seg']))
+#		box1.pack_start(self.segColourSegButtonIMG, True, True)	
+#		segColourSegButton.add(box1)
+#
+#		box1 = gtk.HBox(False, 0)
+#		self.segColourAddButtonIMG = gtk.Image()
+#		self.segColourAddButtonIMG.set_from_pixbuf(self.segColourButtonPixmap(self.segColours['add']))
+#		box1.pack_start(self.segColourAddButtonIMG, True, True)	
+#		segColourAddButton.add(box1)
+#		
+#		box1 = gtk.HBox(False, 0)
+#		self.segColourDelButtonIMG = gtk.Image()
+#		self.segColourDelButtonIMG.set_from_pixbuf(self.segColourButtonPixmap(self.segColours['del']))
+#		box1.pack_start(self.segColourDelButtonIMG, True, True)
+#		segColourDelButton.add(box1)
+#
+		segColourTable.attach(segColourSegButton, 0, 1, 0, 1, xoptions=gtk.FILL, yoptions=gtk.FILL, xpadding=5, ypadding=0)
+		segColourTable.attach(segColourAddButton, 0, 1, 1, 2, xoptions=gtk.FILL, yoptions=gtk.FILL, xpadding=5, ypadding=0)
+		segColourTable.attach(segColourDelButton, 0, 1, 2, 3, xoptions=gtk.FILL, yoptions=gtk.FILL, xpadding=5, ypadding=0)
+		
+		T = gtk.Label('Segmentation'); T.set_alignment(xalign=0.0, yalign=0.5)
+		segColourTable.attach(T, 1, 2, 0, 1, xoptions=gtk.EXPAND|gtk.FILL, yoptions=gtk.EXPAND|gtk.FILL, xpadding=5, ypadding=0)
+		T = gtk.Label('Adding'); T.set_alignment(xalign=0.0, yalign=0.5)
+		segColourTable.attach(T, 1, 2, 1, 2, xoptions=gtk.EXPAND|gtk.FILL, yoptions=gtk.EXPAND|gtk.FILL, xpadding=5, ypadding=0)
+		T = gtk.Label('Deleting'); T.set_alignment(xalign=0.0, yalign=0.5)
+		segColourTable.attach(T, 1, 2, 2, 3, xoptions=gtk.EXPAND|gtk.FILL, yoptions=gtk.EXPAND|gtk.FILL, xpadding=5, ypadding=0)
+		
+		#segColourSegButton.connect("clicked", self.colourchange_cb, 'seg')
+		#segColourAddButton.connect("clicked", self.colourchange_cb, 'add')
+		#segColourDelButton.connect("clicked", self.colourchange_cb, 'del')
+		
+		#leftVBox.pack_start(segColourTable, expand = False, fill = False)
+		
+		leftVBox.pack_start(gtk.Label("Segmentation opacity"), expand = False, fill = False)
+		
+		self.segOpacity = gtk.HScale(gtk.Adjustment(value=0.7, lower=0, upper=1, step_incr=1, page_incr=1, page_size=0))
+		self.segOpacity.connect("value-changed", self.subjectchanged_cb, "")
+			
+		leftVBox.pack_start(self.segOpacity, expand = False, fill = False)
+
+		self.segSaveButton = gtk.Button(label = "Save segmentations")
+		self.segSaveButton.connect("clicked", self.segsave_cb, "")
+
+		self.segSaveButton.set_sensitive(False)
+
+		leftVBox.pack_start(self.segSaveButton, expand = False, fill = False, padding = 10)
+
+		rightTopBox = gtk.VBox()
+
+		self.curSubjectLabel = gtk.Label('Current subject')
+		
+		rightTopBox.pack_start(self.curSubjectLabel, expand = False, fill = True, padding = 5)
+		
+		self.curSubjectSlider = gtk.HScale(gtk.Adjustment(value = 0, lower = 0, upper = 1, step_incr = 1, page_incr = 1, page_size=0))
+		self.curSubjectSlider.set_digits(0)
+		self.curSubjectSlider.connect("value-changed", self.subjectchanged_cb, "")
+		
+		rightTopBox.pack_start(self.curSubjectSlider, expand = False, fill = True, padding = 5)
+
+		rightSubjectButtons = gtk.HButtonBox()
+
+		rightSubjectButtons.set_layout(gtk.BUTTONBOX_SPREAD)
+		rightSubjectButtons.set_spacing(50)
+
+		self.prevSubjectButton = gtk.Button(label = "Previous")
+		self.prevSubjectButton.connect("clicked", self.subjectButtonClicked_cb, "previous")
+		
+		self.prevSubjectButton.set_sensitive(False)
+		self.nextSubjectButton = gtk.Button(label = "Next")
+		self.nextSubjectButton.connect("clicked", self.subjectButtonClicked_cb, "next")
+
+		rightSubjectButtons.add(self.prevSubjectButton)
+		rightSubjectButtons.add(self.nextSubjectButton)
+		
+		rightTopBox.pack_start(rightSubjectButtons, expand = False, fill = False, padding = 0)
+					
+		self.mainImageEventBox = gtk.EventBox()
+
+		self.mainImage = gtk.Image()
+
+		self.mainImage.connect('expose-event', self.onImageResize, window)
+		self.mainImageEventBox.connect('button_press_event', self.imageButtonClicked, "pressed")
+		self.mainImageEventBox.connect('button_release_event', self.imageButtonClicked, "released")
+		self.mainImageEventBox.connect('motion_notify_event', self.imageButtonClicked, "dragged")
+		self.mainImage.show()
+		self.mainImageEventBox.add(self.mainImage)
+		#gtk.gdk.pixbuf_new_from_array(, gtk.gdk.COLORSPACE_RGB, 8)
+
+		rightVBox.pack_start(rightTopBox, expand = True, fill = True, padding = 5)
+		rightVBox.pack_start(self.mainImageEventBox, expand = True, fill = True, padding = 5)
+
+		#eftVBox.pack_start(morphFrame, expand = False, fill = False)
+
+		#leftVBox.pack_start(gtk.Label("Morphological operations"))
+		#morphToolbar = uimanager.get_widget('/MorphToolbar')
+		#leftVBox.pack_start(morphToolbar, expand = False, fill = False)
+		
+		#scrolled_window = gtk.ScrolledWindow()
+		#scrolled_window.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+		
+		# the main image's allocation size
+		self.mainImageAllocationHeight = None
+		self.mainImageAllocationWidth = None
+		
+		# the main image's actual size after resizing
+		self.resizeWidth = None
+		self.resizeHeight = None
+		
+		self.curImageWithSegRGB = None
+		self.curIMGRGB = None
+		
+		self.curSegChangeIMG = None
+		self.curSegModColour = None
+
+		self.curUndoIMG = None
+		self.curUndoSubjectID = None
+		self.curSegModMode = None
+		
+
+		window.show_all()
+	
+	def resetSizeOfMainImage(self, doNotCheckAllocation = False):
+		
+		allocation = self.mainImage.get_allocation()
+		
+		#if self.mainImageAllocationHeight != allocation.height or self.mainImageAllocationWidth != allocation.width or doNotCheckAllocation:
+		IMGAspect = float(self.CCSegs[self.curSubjectID]['IMG'].shape[1]) / float(self.CCSegs[self.curSubjectID]['IMG'].shape[0])
+	#	self.mainImageAllocationHeight = allocation.height
+	#	self.mainImageAllocationWidth = allocation.width
+
+		allocationAspect = float(allocation.width) / float(allocation.height)
+		
+		if allocationAspect > IMGAspect:
+			self.resizeHeight = allocation.height
+			self.resizeWidth = int(IMGAspect * self.resizeHeight)
+		else:
+			self.resizeWidth = allocation.width
+			self.resizeHeight = int(self.resizeWidth / IMGAspect)
+		
+		#print "resized image dims: " + str(self.resizeWidth) + " " + str(self.resizeHeight)
+	
+	# transform the clicked coordinate into the space of the original, unscaled image
+	def imageCoordsFromEventBoxCoords(self, eventBoxCoords):
+		return ( (eventBoxCoords[0] - (self.mainImageAllocationWidth - self.resizeWidth) / 2.0) * (float(self.curIMGShape[1]) / self.resizeWidth), (eventBoxCoords[1] - (self.mainImageAllocationHeight - self.resizeHeight) / 2.0) * (float(self.curIMGShape[0]) / self.resizeHeight))
+	
+	# returns a mask the size of IMGShape that contains the affected pixels of a mouse click
+	# use
+	
+	def maskFromClick(self, imgCoords):
+		#print "MaskFromClick"
+		M = numpy.zeros(self.curIMGShape, dtype = numpy.bool)
+		
+		brushSize = self.brushSizeScale.get_value()
+		
+		xx = numpy.int64(numpy.arange(numpy.maximum(numpy.round(imgCoords[0] - brushSize), 0), numpy.minimum(numpy.round(imgCoords[0] + brushSize) + 1, self.curIMGShape[1])))
+		yy = numpy.int64(numpy.arange(numpy.maximum(numpy.round(imgCoords[1] - brushSize), 0), numpy.minimum(numpy.round(imgCoords[1] + brushSize) + 1, self.curIMGShape[0])))
+		
+		if self.brushType == 'square':
+			T = numpy.ones((numpy.size(yy), numpy.size(xx)), dtype = numpy.bool)
+		elif self.brushType == 'circle':
+			xc = xx - imgCoords[0]
+			yc = yy - imgCoords[1]
+
+			xc = numpy.atleast_2d(xc)
+			yc = numpy.atleast_2d(yc).T
+			
+			T = numpy.sqrt(xc * xc + yc * yc) < brushSize
+				
+		X, Y = numpy.meshgrid(xx, yy)
+
+		M[(Y, X)] = T
+		
+		return M				
+
+	def imageButtonClicked(self, widget, event, data = None):
+	
+		curCoords = event.get_coords()
+		imgCoords = self.imageCoordsFromEventBoxCoords(curCoords)
+
+		# do a bounding box test to see if the click is inside the image
+		if imgCoords[0] >= 0 and imgCoords[0] <= self.curIMGShape[1] - 1 and imgCoords[1] >= 0 and imgCoords[1] <= self.curIMGShape[0] - 1:
+			# store the current segmentation for undo purposes
+			
+			if data == "pressed":
+
+				if event.button == 1 or event.button == 3:
+					
+					# we are modifying the segmentation
+					# initialise the segmentation change image
+					self.curSegChangeIMG = numpy.zeros(self.curIMGShape, dtype = numpy.bool)
+					
+					self.initSegChanging()
+
+					if event.button == 1:
+						self.curSegModColour = numpy.array(self.segColours['add'])
+						self.curSegModMode = 'add'
+					elif event.button == 3:
+						self.curSegChangeIMG = numpy.zeros(self.curIMGShape, dtype = numpy.bool)
+						self.curSegModColour = numpy.array(self.segColours['del'])
+						self.curSegModMode = 'del'
+				else:
+					self.curSegChangeIMG = None
+					self.curSegModColour = None
+					self.curSegModMode = None
+			
+			if self.curSegModColour != None:
+				M = self.maskFromClick(imgCoords)
+				self.curSegChangeIMG = numpy.logical_or(self.curSegChangeIMG, M)
+				
+				if self.CCSegs[self.curSubjectID]['finalSegManEdit'] == None:
+					self.CCSegs[self.curSubjectID]['finalSegManEdit'] = numpy.zeros(self.curIMGShape, dtype = numpy.bool)
+				
+				T = numpy.array(self.curIMGRGB)
+				
+				T = self.addSegToRGBIMG(T, self.CCSegs[self.curSubjectID]['finalSegManEdit'], self.segColours['seg'])
+				T = self.addSegToRGBIMG(T, self.curSegChangeIMG, self.curSegModColour)
+				
+				T = numpy.transpose(T, [1, 2, 0])
+
+				A = gtk.gdk.pixbuf_new_from_array(T, gtk.gdk.COLORSPACE_RGB, 8)
+				A = A.scale_simple(self.resizeWidth, self.resizeHeight, gtk.gdk.INTERP_BILINEAR)
+				self.mainImage.set_from_pixbuf(A)
+
+		if data == "released":
+			# commit the changes to the segmentation
+			
+			if self.curSegModMode == "add":
+				self.CCSegs[self.curSubjectID]['finalSegManEdit'] = numpy.logical_or(self.CCSegs[self.curSubjectID]['finalSegManEdit'], self.curSegChangeIMG)
+			elif self.curSegModMode == "del":
+				self.CCSegs[self.curSubjectID]['finalSegManEdit'] = numpy.logical_and(self.CCSegs[self.curSubjectID]['finalSegManEdit'], numpy.logical_not(self.curSegChangeIMG))
+
+			# update the image
+			if self.curSegModMode != None:
+				
+				T = numpy.array(self.curIMGRGB)
+				T = self.addSegToRGBIMG(T, self.CCSegs[self.curSubjectID]['finalSegManEdit'], self.segColours['seg'])
+				# = self.addSegToRGBIMG(T, self.curSegChangeIMG, self.curSegModColour)
+				
+				T = numpy.transpose(T, [1, 2, 0])
+
+				A = gtk.gdk.pixbuf_new_from_array(T, gtk.gdk.COLORSPACE_RGB, 8)
+				A = A.scale_simple(self.resizeWidth, self.resizeHeight, gtk.gdk.INTERP_BILINEAR)
+				self.mainImage.set_from_pixbuf(A)
+				self.curSegChangeIMG = None
+				#self.curUndoIMG = None
+				#self.curUndoSubjectID = None
+
+	def onImageResize(self, widget, event, data = None):
+		
+		#print "on_image_resize(self, widget, event, data = None)"
+		
+		oldResizeWidth = self.resizeWidth
+		oldResizeHeight = self.resizeHeight
+
+		self.resetSizeOfMainImage(doNotCheckAllocation = False)
+		
+		allocation = widget.get_allocation()
+
+		#print str(allocation.width) + " " + str(allocation.height)
+		if self.mainImageAllocationHeight != allocation.height or self.mainImageAllocationWidth != allocation.width or oldResizeWidth != self.resizeWidth or oldResizeHeight != self.resizeHeight:
+			#print "resizing"
+			self.mainImageAllocationHeight = allocation.height
+			self.mainImageAllocationWidth = allocation.width
+			
+			T = numpy.array(self.curIMGRGB)
+			if self.CCSegs[self.curSubjectID]['finalSegManEdit'] != None:
+				T = self.addSegToRGBIMG(T, self.CCSegs[self.curSubjectID]['finalSegManEdit'], self.segColours['seg'])
+			else:
+				T = self.addSegToRGBIMG(T, self.CCSegs[self.curSubjectID]['originalSeg'], self.segColours['seg'])
+				
+			T = numpy.transpose(T, [1, 2, 0])
+
+			A = gtk.gdk.pixbuf_new_from_array(T, gtk.gdk.COLORSPACE_RGB, 8)
+
+			A = A.scale_simple(self.resizeWidth, self.resizeHeight, gtk.gdk.INTERP_BILINEAR)
+			widget.set_from_pixbuf(A)
+	
+	def addSegToRGBIMG(self, IMG, SEG, segColour):
+		
+		assert(IMG.shape[0] == 3),"IMG must be a 3 row array"
+		assert(IMG.ndim == 3),"IMG must be a 3 dimension array"
+
+		assert(numpy.array_equal(SEG.shape, (IMG.shape[1], IMG.shape[2]))),"SEG must have the same shape as IMG[1, 2]"
+		
+		alphaChannel = numpy.zeros(SEG.shape)
+		alphaChannel[numpy.where(SEG)] = self.segOpacity.get_value()
+
+		T = numpy.double(IMG)
+		for z in range(3):
+			T[z] = (1 - alphaChannel) * T[z] + alphaChannel * segColour[z]
+		T = numpy.uint8(T)
+		
+		return T
+
+	def updateSubject(self):
+		curSubjectIDX = int(self.curSubjectSlider.get_value()) - 1
+		self.curSubjectID = self.CCSegSubjectIDs[curSubjectIDX]
+		self.curSubjectLabel.set_text("Current subject: " + self.curSubjectID)
+		
+		if curSubjectIDX == 0:
+			self.prevSubjectButton.set_sensitive(False)
+			self.nextSubjectButton.set_sensitive(True)
+		elif curSubjectIDX == len(self.CCSegSubjectIDs) - 1:
+			self.prevSubjectButton.set_sensitive(True)
+			self.nextSubjectButton.set_sensitive(False)
+		else:
+			self.prevSubjectButton.set_sensitive(True)
+			self.nextSubjectButton.set_sensitive(True)
+
+		self.curIMGShape = self.CCSegs[self.curSubjectID]['IMG'].shape
+
+		T = self.CCSegs[self.curSubjectID]['IMG']
+		T = (T - numpy.min(T)) / (numpy.max(T) - numpy.min(T))
+		T = numpy.uint8(numpy.round(T * 255))
+		
+		T = numpy.expand_dims(T, axis = 0)
+		T = numpy.tile(T, (3, 1, 1))
+		
+		self.curIMGRGB = numpy.array(T)
+		
+		if self.CCSegs[self.curSubjectID]['finalSegManEdit'] != None:
+			T = self.addSegToRGBIMG(T, self.CCSegs[self.curSubjectID]['finalSegManEdit'], self.segColours['seg'])
+		else:
+			T = self.addSegToRGBIMG(T, self.CCSegs[self.curSubjectID]['originalSeg'], self.segColours['seg'])
+
+		T = numpy.transpose(T, [1, 2, 0])
+
+		#self.imageWithSegRGB = numpy.array(T)
+		
+		self.resetSizeOfMainImage(doNotCheckAllocation = True)
+		
+		A = gtk.gdk.pixbuf_new_from_array(T, gtk.gdk.COLORSPACE_RGB, 8)
+		A = A.scale_simple(self.resizeWidth, self.resizeHeight, gtk.gdk.INTERP_BILINEAR)
+		self.mainImage.set_from_pixbuf(A)
+	
+	def setSegs(self, CCSegs, inputDirectory):
+		self.CCSegs = copy.deepcopy(CCSegs)
+		self.CCSegSubjectIDs = sorted(CCSegs.keys())
+		self.subjectsToSave = numpy.zeros(len(self.CCSegSubjectIDs), dtype = numpy.bool)
+		
+		self.inputDirectory = inputDirectory
+
+		self.curSubjectSlider.set_adjustment(gtk.Adjustment(value = 1, lower = 1, upper = len(self.CCSegs), step_incr = 1, page_incr = 1, page_size=0))
+		self.updateSubject()
+
+	def setStartSubject(self, startSubjectIDX):
+		self.curSubjectSlider.set_value(startSubjectIDX)
+		self.updateSubject()
+		
+def main():
+	opts, args = getopt.getopt(sys.argv[1:], "h", ['start-subject='])
+	
+	# initialise options
+
+	# mandatory arguments
+	inputDirectory = None
+	
+	# do the mandatory arguments first
+
+	if len(args) != 1:
+		print "The number of arguments must be 1"
+		usage()
+		exit()
+	numpy.set_printoptions(precision = 3, formatter = {'float':lambda x: "%.3f" % x})
+	
+	startSubject = None
+
+	for o, a in opts:
+		if o == '--start-subject':
+			startSubject = a
+			
+	inputDirectory = args[0]
+
+	# get a list of nifti files in the input directory
+	inputDirectoryFileList = os.listdir(inputDirectory)
+	
+	inputSegHDF5Files = [x for x in sorted(inputDirectoryFileList) if x.endswith("_seg.hdf5")]
+	inputSegHDF5FilesPrefixes = [x[:-len("_seg.hdf5")] for x in inputSegHDF5Files]
+	
+	if startSubject == None:
+		startSubjectIDX = 0
+	else:
+		try:
+			startSubjectIDX = inputSegHDF5FilesPrefixes.index(startSubject) + 1
+			print "Start subject found at index: " + str(startSubjectIDX)
+		except ValueError:
+			print "Warning: start subject not found, starting at first subject"
+			startSubjectIDX = 0
+			pass
+	#inputSegHDF5Files = [x + "_seg.hdf5" for x in inputThicknessHDF5FilesPrefixes]
+	#inputSegManeditHDF5Files = [x + "_seg_manedit.hdf5" for x in inputThicknessHDF5FilesPrefixes]
+
+	CCSegs = dict()
+
+	for curFile in inputSegHDF5FilesPrefixes:
+		CCSegs[curFile] = dict()
+		
+		FID = h5py.File(os.path.join(inputDirectory, curFile + "_seg.hdf5"), 'r')
+		CCSegs[curFile]['IMG'] = numpy.array(FID['IMG'])
+		
+		if os.path.isfile(os.path.join(inputDirectory, curFile + "_seg_manedit.hdf5")):
+			#print curFile + "_seg_manedit.hdf5"
+			FIDManedit = h5py.File(os.path.join(inputDirectory, curFile + "_seg_manedit.hdf5"), 'r')
+			CCSegs[curFile]['finalSegManEdit'] = numpy.array(FIDManedit['finalSegManEdit']) > 0
+			FIDManedit.close()
+		else:
+			#print curFile + "_seg.hdf5"
+			CCSegs[curFile]['originalSeg'] = numpy.array(FID['finalSegNoArtefacts'])
+			CCSegs[curFile]['finalSegManEdit'] = None
+		FID.close()
+	
+	#print CCSegs	
+	if len(CCSegs) == 0:
+		print "No segmentation hdf5 files found"
+		quit()
+
+	UIExample = UIManagerExample()
+	UIExample.setSegs(CCSegs, inputDirectory)
+	UIExample.setStartSubject(startSubjectIDX)
+
+	gtk.main()
+	
+if __name__ == "__main__":
+	main()
+

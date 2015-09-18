@@ -1,0 +1,50 @@
+Functions of some of the programs included in ART:
+
+3dwarper	
+For 3D non-linear registration of high-resolution T1-weighted brain MRI scans.
+
+acpcdetect	
+Automatically detected the AC and PC landmarks as well as the mid-sagittal image on 3D T1-weighted and
+T2-weighted brain MRI scans.  For T2-weighted images, option -T2 should be used.
+
+analyze2nii
+For converting ANALYZE format images to NIFTI format images.  Specify the orientation code using
+the -O option.  See ``docs/acpcdetect.pdf'' for more information about orientation codes used in ART.
+
+applywarp3d
+Applied the deformation field vector outputted from the 3dwarper program to other images.
+
+avgImage
+Used to average several NIFTI images.
+
+ivf
+Used to invert the deformation vector field outputted from the 3dwarper program.
+
+brainwash
+Still under development.  Used for skull-stripping 3D T1-weighted brain MRI scans.
+
+unwarp2d
+For 2D non-linear registration of brain MRI scans.  Mostly used to for susceptibility 
+distortion correction in DTI by matched the b0 image to a conventional T2-weighted image.
+The deformation vector field that is outputted from this program is the input to the -w2d
+argument of applywarp3d
+
+art2
+GUI-based program for multi-modality rigid-body registration.  For example, this program 
+is used to register 3D T1-weighted images to 2D multi-slice T2-weighted images of the
+same subject.
+
+reslice
+Used to apply a transformation matrix of type outputted by art2 to other images.  This
+program only works with ANALYZE images.
+
+scaleImage
+Used to multiply the image values by a constant.
+
+acpcalign  
+Computes a rigid-body transformation between two images using AC, PC, and mid-sagittal plane locations.
+
+affinealign
+Computes an affine transformation between two images using the output transformation matrix of acpcalign
+(which must be inputed to this program) as a starting point.  
+

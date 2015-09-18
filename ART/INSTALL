@@ -1,0 +1,33 @@
+Installation for Linux systems:
+
+You may need to be logged in as root, depending on the permissions of the directory
+on which you are installing ART.
+
+The rest of this document assumes that ART is installed in /usr/local/art.  However,
+this need not be the case.
+
+1. Unpack the package.
+
+	cd /usr/local/art	# create this directory if it does not already exist
+	gunzip art.tar.gz	# uncompress the archive
+	tar xvf art.tar		# unpack the archive
+
+2. Set the $ARTHOME environment variable. To set $ARTHOME, csh and tcsh users should 
+add this line in their `.cshrc' or `.tcshrc' files: 
+
+	setenv ARTHOME /usr/local/art
+
+sh and bash users should instead add these lines in their `.profile' or `.bashrc': 
+
+	ARTHOME=/usr/local/art
+	export ARTHOME 
+
+3.  Update your path.  For example, sh or bash users should add this line to their
+`.profile' or `.bashrc':
+
+	export PATH=$PATH:$ARTHOME/bin   		#Linux users
+	export PATH=$PATH:$ARTHOME/bin_macg5   	#Macintosh G5 users
+	export PATH=$PATH:$ARTHOME/bin_maci   	#Macintosh Intel users
+
+4. Depending on your setup, you may need to install libraries: nifticlib, znzlib,
+and openmotif in order for some of programs to work.
