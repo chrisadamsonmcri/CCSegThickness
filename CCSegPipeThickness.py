@@ -24,6 +24,7 @@ from matplotlib.font_manager import FontProperties
 
 import LaplaceThicknessMethod
 
+import FLIRT
 	#SigmaB = 
 #	MuK = numpy.cumsum(T * hist)
 #	MuT = numpy.sum(MuK)
@@ -259,7 +260,7 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
 	
 	assert(os.path.isfile(segMATFile)),"Seg mat file not found: " + segMATFile
 	
-	(head, tail) = os.path.split(outputBase)
+	(outputDir, tail) = os.path.split(outputBase)
 	subjectID = tail
 
 	FID = h5py.File(segMATFile, 'r')
@@ -293,7 +294,7 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
 		finalSeg = numpy.array(seg['finalSeg'])
 	
 	if doGraphics:
-		outputPNG = os.path.join(head, 'endpoint', subjectID + "_endpoints.png")
+		outputPNG = os.path.join(outputDir, 'endpoint', subjectID + "_endpoints.png")
 	else:
 		outputPNG = None
 	try:
@@ -311,12 +312,29 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
 
 		thicknessProfile[z] = numpy.sum(numpy.sqrt(numpy.sum(D * D, axis = 0)))
 	
+	# here, we need to scale if we are using the longitudinal method
+	FID = h5py.File(outputBase + "_midsag.hdf5", 'r')
+	
+	MSPMethod = FID['MSPMethod'].value
+	if MSPMethod == 'long':
+		flirtMAT = numpy.matrix(numpy.array(FID['flirtMAT']))
+		(rotmat, skew, scales, transl, angles) = FLIRT.fsl_decomp_aff(flirtMAT)
+		scales = numpy.diag(scales)
+		
+		D = numpy.abs(scales[0] - scales)
+		if numpy.any(D > 1e-5):
+			print "Scaling constants are not equal, this should not happen, using mean anyway"
+		globalScale = numpy.mean(scales)
+		print "global scale: " + str(globalScale)
+		thicknessProfile = thicknessProfile / globalScale
+
+	FID.close()
 	thicknessProfile[numpy.logical_not(validStreamlines)] = 0
 
 	registeredThicknessProfile = registerProfile(thicknessProfile)
 
 	if doGraphics:
-		PNGDirectory = os.path.join(head, "thickness")
+		PNGDirectory = os.path.join(outputDir, "thickness")
 		try:
 			os.makedirs(PNGDirectory)
 		except OSError as exc: # Python >2.5
@@ -653,7 +671,7 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
 		CCSegUtils.plotStreamlines(streamlines, lineProps = lineProps)
 		pylab.title('Emsell parcellation')
 
-		parcellationPNGDirectory = os.path.join(head, "parcellations")
+		parcellationPNGDirectory = os.path.join(outputDir, "parcellations")
 		try:
 			os.makedirs(parcellationPNGDirectory)
 		except OSError as exc: # Python >2.5
@@ -662,7 +680,6 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
 			else:
 				raise Exception
 
-	
 		outputPNG = os.path.join(parcellationPNGDirectory, subjectID + "_parcellations.png")
 		
 		pylab.gcf().set_size_inches((20, 10), forward = True)
@@ -723,7 +740,6 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
 	emsellGroup = FID.create_group("emsellStats")
 	for curKey in emsellStats.iterkeys():
 		emsellGroup.create_dataset(curKey, data = emsellStats[curKey], compression = 'gzip')
-	
 	
 	FID.create_dataset("startV", data = startV, compression = 'gzip')
 

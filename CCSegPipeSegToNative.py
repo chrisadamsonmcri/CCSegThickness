@@ -18,34 +18,6 @@ import CCSegUtils
 
 def segCCToNativeOneFile(segIMG, outputBase, midSagMATFile, segMATFile, dilateToParaSag = False, flirtInterpType = 'trilinear'):
 	
-	FID = h5py.File(midSagMATFile, 'r')
-	
-	midSagAVW = numpy.array(FID['midSagAVW'])
-	skullCrop = numpy.array(FID["skullCrop"]) # the initial cropping indices of the background
-	originalOrientationString = str(numpy.array(FID['originalOrientationString']))
-	originalNativeFile = str(numpy.array(FID['originalNativeFile']))
-	originalNativeCroppedFile = str(numpy.array(FID['originalNativeCroppedFile']))
-	flirtTemplateFile = str(numpy.array(FID['flirtTemplateFile']))
-	
-	if flirtTemplateFile == "***":
-		flirtTemplateFile = CCSegUtils.MNI152FLIRTTemplate()
-	
-	flirtMAT = numpy.array(FID["flirtMAT"]) # the transformation between  originalNativeCroppedFile -> flirtTemplateFile
-	flirtCropZerosRows = numpy.array(FID["flirtCropZerosRows"])
-	flirtCropZerosCols = numpy.array(FID["flirtCropZerosCols"])
-
-	#MSPMethod = str(numpy.array(FID['MSPMethod']))
-	
-	#midSagAVW = midSagAVW[:, ::-1]
-	#midSagAVW = numpy.rot90(midSagAVW, -1)
-	FID.close()
-	
-	if not numpy.array_equal(flirtMAT.shape, (4, 4)):
-		print "the flirt matrix should be a 4x4 array, it is not"
-		return
-
-	del FID
-
 	FID = h5py.File(segMATFile, 'r')
 	
 	resampledAVWShape = numpy.array(FID['resampledAVWShape'])
@@ -59,6 +31,39 @@ def segCCToNativeOneFile(segIMG, outputBase, midSagMATFile, segMATFile, dilateTo
 	#print seg['templatePixdims']
 	FID.close()
 	#print seg['IMG'].dtype
+	
+	FID = h5py.File(midSagMATFile, 'r')
+	
+	MSPMethod = str(numpy.array(FID['MSPMethod']))
+	
+	FID.close()
+
+	midSagAVW = numpy.array(FID['midSagAVW'])
+	
+	skullCrop = numpy.array(FID["skullCrop"]) # the initial cropping indices of the background
+	originalOrientationString = str(numpy.array(FID['originalOrientationString']))
+	originalNativeFile = str(numpy.array(FID['originalNativeFile']))
+	originalNativeCroppedFile = str(numpy.array(FID['originalNativeCroppedFile']))
+	flirtTemplateFile = str(numpy.array(FID['flirtTemplateFile']))
+	
+	if flirtTemplateFile == "***":
+		flirtTemplateFile = CCSegUtils.MNI152FLIRTTemplate()
+	
+	flirtMAT = numpy.array(FID["flirtMAT"]) # the transformation between  originalNativeCroppedFile -> flirtTemplateFile
+	flirtCropZerosRows = numpy.array(FID["flirtCropZerosRows"])
+	flirtCropZerosCols = numpy.array(FID["flirtCropZerosCols"])
+
+	
+	#midSagAVW = midSagAVW[:, ::-1]
+	#midSagAVW = numpy.rot90(midSagAVW, -1)
+	FID.close()
+	
+	if not numpy.array_equal(flirtMAT.shape, (4, 4)):
+		print "the flirt matrix should be a 4x4 array, it is not"
+		return
+
+	del FID
+
 
 	#pylab.subplot(1, 4, 1); CCSegUtils.showIMG(seg['initialSeg'])
 	#pylab.subplot(1, 4, 2); CCSegUtils.showIMG(seg['finalSeg'])

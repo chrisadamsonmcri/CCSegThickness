@@ -781,10 +781,8 @@ def radialStrel(R):
 def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, segNoAuto = False):
 	
 	if doGraphics:
-		(head, tail) = os.path.split(outputBase)
-		PNGDirectory = os.path.join(head, "seg")
-
-		(head, subjectID) = os.path.split(outputBase)
+		(outputDir, subjectID) = os.path.split(outputBase)
+		PNGDirectory = os.path.join(outputDir, "seg")
 		try:
 			os.makedirs(PNGDirectory)
 		except OSError as exc: # Python >2.5
@@ -830,14 +828,14 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 	
 	NIIPixdims = numpy.array(FID['NIIPixdims'])
 	midSagAVW = numpy.array(FID['midSagAVW'])
-	skullCrop = numpy.array(FID["skullCrop"]) # the initial cropping indices of the background
-	originalOrientationString = str(numpy.array(FID['originalOrientationString']))
-	originalNativeFile = str(numpy.array(FID['originalNativeFile']))
-	originalNativeCroppedFile = str(numpy.array(FID['originalNativeCroppedFile']))
+	#skullCrop = numpy.array(FID["skullCrop"]) # the initial cropping indices of the background
+	#originalOrientationString = str(numpy.array(FID['originalOrientationString']))
+	#originalNativeFile = str(numpy.array(FID['originalNativeFile']))
+	#originalNativeCroppedFile = str(numpy.array(FID['originalNativeCroppedFile']))
 	flirtTemplateFile = str(numpy.array(FID['flirtTemplateFile']))
 	flirtMAT = numpy.array(FID["flirtMAT"]) # the transformation between  originalNativeCroppedFile -> flirtTemplateFile
-	flirtCropZerosRows = numpy.array(FID["flirtCropZerosRows"])
-	flirtCropZerosCols = numpy.array(FID["flirtCropZerosCols"])
+	#flirtCropZerosRows = numpy.array(FID["flirtCropZerosRows"])
+	#flirtCropZerosCols = numpy.array(FID["flirtCropZerosCols"])
 
 	#MSPMethod = str(numpy.array(FID['MSPMethod']))
 	
@@ -872,9 +870,9 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 	# load atlases
 	
 	scriptPath = os.path.realpath(__file__)
-	(head, tail) = os.path.split(scriptPath)
+	(scriptDir, tail) = os.path.split(scriptPath)
 
-	atlasDir = os.path.join(head, 'data')
+	atlasDir = os.path.join(scriptDir, 'data')
 	
 	fornixProbNII = nibabel.load(os.path.join(atlasDir, 'all_fornix_prob.nii.gz'))
 	fornixProbAVW = numpy.rot90(numpy.squeeze(fornixProbNII.get_data()), 1)

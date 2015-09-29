@@ -161,7 +161,6 @@ def niftiOrientations(SForm):
 	
 	return (IOrientation, JOrientation, KOrientation)
 
-
 def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False):
 	
 	# check for the presence of FSLDIR in the enviornment variables
@@ -174,13 +173,26 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False):
 		quit()
 	NII = nibabel.load(NIFTIFileName)
 	#print NII
-	print inputBase
+	#print inputBase
 	# find out if we have a 2D or a 3D image
 	NIISize = NII.get_shape()
 	assert(len(NIISize) == 2 or len(NIISize) == 3),"The input NIFTI file is not 2D or 3D: " + inputBase
 	
 	if len(NIISize) == 2:
-		pass
+		
+		#FID.create_dataset("NIIPixdims", data=NIIPixdims, compression = 'gzip')
+		#FID.create_dataset("midSagAVW", data=midSagAVW, compression = 'gzip')
+		#FID.create_dataset("MSPMethod", data=MSPMethod)
+		#FID.create_dataset("originalOrientationString", data=origOrientationString)
+		#FID.create_dataset("originalNativeFile", data=(outputBase + "_native.nii.gz"))
+		#FID.create_dataset("skullCrop", data=skullCrop)
+		#FID.create_dataset("originalNativeCroppedFile", data=(outputBase + "_native_cropped.nii.gz"))
+		#FID.create_dataset("flirtMAT", data=flirtMAT)
+		#FID.create_dataset("flirtTemplateFile", data=flirtTemplateFile)
+		#FID.create_dataset("flirtCropZerosRows", data=flirtCropZerosRows)
+		#FID.create_dataset("flirtCropZerosCols", data=flirtCropZerosCols)
+		print "2D input not supported yet"
+		quit()
 		# 2D image, so it is already the midsagittal plane
 	else:
 		# 3D image
@@ -202,39 +214,71 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False):
 		# use FSLORIENT to get the RADIOLOGICAL/NEUROLOGICAL orientation of the image
 		# we may not need this
 		
-		Transform = NII.get_sform(coded=True)
-		if Transform[0] == None:
-			print "Trying qform in " + inputBase
-			Transform = NII.get_qform(coded=True)
-			assert(Transform[0] != None),"No transformation information in NIFTI file" + inputBase
-		det = numpy.linalg.det(Transform[0][0:3, 0:3])
-		(icode, jcode, kcode) = niftiOrientations(Transform[0])
+		NIIPixdims = NII.get_header().get_zooms()[1:3]
+		if MSPMethod == 'long':
+			# testing
+			(head, tail) = os.path.split(outputBase)
+			stdMat = os.path.join(head, tail + "_to_std.mat")
+			assert(os.path.isfile(stdMat)),"FLIRT MAT file not found, need to run CCSegLongPreprocess: " + stdMat
+			
+			flirtMAT = numpy.loadtxt(stdMat)
+			toStdNII = CCSegUtils.findNIFTIFromPrefix(os.path.join(head, tail + "_to_std"))
+			assert(toStdNII != None),"standard image not found, need to run CCSegLongPreprocess: " + os.path.join(head, tail + "_to_std")
 
-		del Transform
+			NII = nibabel.load(toStdNII)
+			NIIPixdims = NII.get_header().get_zooms()[1:3]
+			NIISize = NII.get_shape()
+			
+			NIIData = NII.get_data()
+			NIIData = numpy.rot90(NIIData, 1)
+			
+			T = math.floor(NIIData.shape[1] / 2)
+			# extract the midsagittal slice
+			if (NIIData.shape[1] % 2 == 0):
+				# even number of slices
+				midSagAVW = (numpy.double(NIIData[:, T - 1]) + numpy.double(NIIData[:, T])) / 2.0
+			else:
+				# odd number of slices
+				midSagAVW = numpy.double(NIIData[:, T])
+			midSagAVW = numpy.rot90(midSagAVW, 1)
+			midSagAVW = numpy.array(midSagAVW[:, ::-1])
+			
+			flirtTemplateFile = CCSegUtils.MNI152FLIRTTemplate()
 
-		if numpy.abs(det) < 1e-12:
-			OrientationString = None
-		elif det < 0.0:
-			OrientationString = "RL PA IS"
 		else:
-			OrientationString = "LR PA IS"
-		
-		origOrientationString = list()
+			Transform = NII.get_sform(coded=True)
+			if Transform[0] == None:
+				print "Trying qform in " + inputBase
+				Transform = NII.get_qform(coded=True)
+				assert(Transform[0] != None),"No transformation information in NIFTI file" + inputBase
+			det = numpy.linalg.det(Transform[0][0:3, 0:3])
+			(icode, jcode, kcode) = niftiOrientations(Transform[0])
 
-		pat = re.compile("NIFTI_([LRASIP])2([LRASIP])")
-		mat = pat.match(icode)
-		if mat != None:
-			origOrientationString.append(mat.group(1) + mat.group(2))
-		mat = pat.match(jcode)
-		if mat != None:
-			origOrientationString.append(mat.group(1) + mat.group(2))
-		mat = pat.match(kcode)
-		if mat != None:
-			origOrientationString.append(mat.group(1) + mat.group(2))
-		
-		origOrientationString = " ".join(origOrientationString)
-		#print icode + " " + jcode + " " + kcode
-		#assert(not (icode == "NIFTI_INVALID" or jcode == "NIFTI_INVALID" or kcode == "NIFTI_INVALID")),"Invalid NIFTI orientations in " + inputBase
+			del Transform
+
+			if numpy.abs(det) < 1e-12:
+				OrientationString = None
+			elif det < 0.0:
+				OrientationString = "RL PA IS"
+			else:
+				OrientationString = "LR PA IS"
+			
+			origOrientationString = list()
+
+			pat = re.compile("NIFTI_([LRASIP])2([LRASIP])")
+			mat = pat.match(icode)
+			if mat != None:
+				origOrientationString.append(mat.group(1) + mat.group(2))
+			mat = pat.match(jcode)
+			if mat != None:
+				origOrientationString.append(mat.group(1) + mat.group(2))
+			mat = pat.match(kcode)
+			if mat != None:
+				origOrientationString.append(mat.group(1) + mat.group(2))
+			
+			origOrientationString = " ".join(origOrientationString)
+			#print icode + " " + jcode + " " + kcode
+			#assert(not (icode == "NIFTI_INVALID" or jcode == "NIFTI_INVALID" or kcode == "NIFTI_INVALID")),"Invalid NIFTI orientations in " + inputBase
 
 #		if icode == "NIFTI_L2R" or jcode == "NIFTI_L2R" or kcode == "NIFTI_L2R":
 #			OrientationString = "LR PA IS"
@@ -246,111 +290,111 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False):
 #		del jcode
 #		del kcode
 #
-		assert(OrientationString != None),"Could not find RADIOLOGICAL/NEUROLOGICAL orientation in " + inputBase
-		
-		#print "OrientationString = " + OrientationString
-
-		NIITempDir = tempfile.mkdtemp()
-		#print NIITempDir
-		NIIFileForMidSag = os.path.join(NIITempDir, 'in.nii.gz')
-
-		os.system(os.environ['FSLDIR'] + '/bin/fslswapdim ' + inputBase + ' ' + OrientationString + ' ' + NIIFileForMidSag)
-		
-		NII = nibabel.load(NIIFileForMidSag)
-		shutil.copyfile(NIIFileForMidSag, outputBase + "_native.nii.gz")
-		NIIData = numpy.array(NII.get_data())
-		NIIData = numpy.rot90(NIIData, 1)
-		NIIPixdims = NII.get_header().get_zooms()
-		#print "pixdims: " + str(NIIPixdims)
-		#print NII
-		# perform 3-class otsu thresholding
-		#print numpy.min(NIIData)
-		#print numpy.max(NIIData)
-		OtsuSeg = Otsu.robustOtsu(NIIData, [0.02, 0.98], NumberClasses = 2)
-
-		L, NumLabels = scipy.ndimage.measurements.label(OtsuSeg, structure = numpy.ones([3, 3, 3]))
-		LAreas = scipy.ndimage.measurements.labeled_comprehension(OtsuSeg, L, numpy.arange(1, NumLabels + 1), numpy.size, numpy.uint32, 0)
-		MaxLabel = numpy.argmax(LAreas) + 1
+			assert(OrientationString != None),"Could not find RADIOLOGICAL/NEUROLOGICAL orientation in " + inputBase
 			
-		OtsuSeg[numpy.where(L != MaxLabel)] = 0
-		del L; del MaxLabel; del NumLabels
-		
-		# cut off the neck, find the bounding box
-		I = numpy.nonzero(OtsuSeg)
+			#print "OrientationString = " + OrientationString
 
-		minI = numpy.min(I[0]); maxI = numpy.max(I[0]);
-		minJ = numpy.min(I[1]); maxJ = numpy.max(I[1]);
-		minK = numpy.min(I[2]);	maxK = numpy.max(I[2]);
-		
-		minK = numpy.int32(numpy.maximum(numpy.floor(maxK - 180 / NIIPixdims[2]), 0))
-		
-		skullCrop = numpy.array([[minI, maxI], [minJ, maxJ], [minK, maxK]])
+			NIITempDir = tempfile.mkdtemp()
+			#print NIITempDir
+			NIIFileForMidSag = os.path.join(NIITempDir, 'in.nii.gz')
 
-		#print str(minI) + " " + str(maxI) + ", " + str(minJ) + " " + str(maxJ) + ", " + str(minK) + " " + str(maxK)
-		
-		NIIData = numpy.take(NIIData, numpy.arange(minI, maxI + 1), axis=0)
-		NIIData = numpy.take(NIIData, numpy.arange(minJ, maxJ + 1), axis=1)
-		NIIData = numpy.take(NIIData, numpy.arange(minK, maxK + 1), axis=2)
-
-		if numpy.max(NIIData) > 32767:
-			NIIData = numpy.double(NIIData)
-			NIIData = (NIIData - numpy.min(NIIData)) / (numpy.max(NIIData) - numpy.min(NIIData))
-			NIIData = numpy.round(NIIData * 1000.0)
-		
-		NIIData = numpy.int16(NIIData)
-
-		NIIData = numpy.rot90(NIIData, -1)
-
-		NIISaving = nibabel.Nifti1Image(NIIData, NII.get_affine(), NII.get_header())
-		NIISaving.set_data_dtype(numpy.int16)	
-
-		NIIFileForART = os.path.join(NIITempDir, 'in_art.nii')
-		NIIFileForARTOutput = os.path.join(NIITempDir, 'in_art_output.nii')
-		nibabel.save(NIISaving, NIIFileForART)
-		nibabel.save(NIISaving, outputBase + "_native_cropped.nii.gz")
-		del NIISaving
-
-		if MSPMethod == 'acpcdetect':
-			scriptPath = os.path.realpath(__file__)
-			(head, tail) = os.path.split(scriptPath)
-
-			CommandString = 'ARTHOME=' + os.path.join(head, 'ART') + " " + os.path.join(head, 'ART', 'acpcdetect') + ' -i ' + NIIFileForART + ' -o ' + NIIFileForARTOutput
-			print CommandString
-			os.system(CommandString)
-
-			inF = file(NIIFileForARTOutput, 'rb')
-			s = inF.read()
-			inF.close()
-
-			outF = gzip.GzipFile(NIIFileForARTOutput + ".gz", 'wb')
-			outF.write(s)
-			outF.close()
+			os.system(os.environ['FSLDIR'] + '/bin/fslswapdim ' + inputBase + ' ' + OrientationString + ' ' + NIIFileForMidSag)
 			
-			os.unlink(NIIFileForARTOutput)
+			NII = nibabel.load(NIIFileForMidSag)
+			shutil.copyfile(NIIFileForMidSag, outputBase + "_native.nii.gz")
+			NIIData = numpy.array(NII.get_data())
+			NIIData = numpy.rot90(NIIData, 1)
+			NIIPixdims = NII.get_header().get_zooms()
+			#print "pixdims: " + str(NIIPixdims)
+			#print NII
+			# perform 3-class otsu thresholding
+			#print numpy.min(NIIData)
+			#print numpy.max(NIIData)
+			OtsuSeg = Otsu.robustOtsu(NIIData, [0.02, 0.98], NumberClasses = 2)
+
+			L, NumLabels = scipy.ndimage.measurements.label(OtsuSeg, structure = numpy.ones([3, 3, 3]))
+			LAreas = scipy.ndimage.measurements.labeled_comprehension(OtsuSeg, L, numpy.arange(1, NumLabels + 1), numpy.size, numpy.uint32, 0)
+			MaxLabel = numpy.argmax(LAreas) + 1
+				
+			OtsuSeg[numpy.where(L != MaxLabel)] = 0
+			del L; del MaxLabel; del NumLabels
 			
-			flirtTemplateFile = outputBase + "_template.nii.gz"
-			shutil.copyfile(NIIFileForARTOutput + ".gz", flirtTemplateFile)
+			# cut off the neck, find the bounding box
+			I = numpy.nonzero(OtsuSeg)
+
+			minI = numpy.min(I[0]); maxI = numpy.max(I[0]);
+			minJ = numpy.min(I[1]); maxJ = numpy.max(I[1]);
+			minK = numpy.min(I[2]);	maxK = numpy.max(I[2]);
 			
-			# get the aligned image and register the original image to it to get the transformation
-			flirtOutputFile = None
-
-		elif MSPMethod == 'flirt':
+			minK = numpy.int32(numpy.maximum(numpy.floor(maxK - 180 / NIIPixdims[2]), 0))
 			
-			flirtTemplateFile = '***'
-			flirtOutputFile = NIIFileForARTOutput
+			skullCrop = numpy.array([[minI, maxI], [minJ, maxJ], [minK, maxK]])
 
-		flirtCost = 'corratio'
-		flirtInterp = 'trilinear'
+			#print str(minI) + " " + str(maxI) + ", " + str(minJ) + " " + str(maxJ) + ", " + str(minK) + " " + str(maxK)
+			
+			NIIData = numpy.take(NIIData, numpy.arange(minI, maxI + 1), axis=0)
+			NIIData = numpy.take(NIIData, numpy.arange(minJ, maxJ + 1), axis=1)
+			NIIData = numpy.take(NIIData, numpy.arange(minK, maxK + 1), axis=2)
 
-		NIIFileARTOutputAffineMat = os.path.join(NIITempDir, 'in_art_output.mat')
+			if numpy.max(NIIData) > 32767:
+				NIIData = numpy.double(NIIData)
+				NIIData = (NIIData - numpy.min(NIIData)) / (numpy.max(NIIData) - numpy.min(NIIData))
+				NIIData = numpy.round(NIIData * 1000.0)
+			
+			NIIData = numpy.int16(NIIData)
 
-		D = 15
-		if flirtTemplateFile == "***":
-			realFlirtTemplateFile = CCSegUtils.MNI152FLIRTTemplate()
-		else:
-			realFlirtTemplateFile = flirtTemplateFile
+			NIIData = numpy.rot90(NIIData, -1)
 
-		CommandString = os.environ['FSLDIR'] + '/bin/flirt -in ' + NIIFileForART + ' -ref ' + realFlirtTemplateFile + ' -dof 6 -searchrx ' + str(-D) + ' ' + str(D) + ' -searchry ' + str(-D) + ' ' + str(D) + ' -searchrz ' + str(-D) + ' ' + str(D) + ' -omat ' + NIIFileARTOutputAffineMat + ' -cost ' + flirtCost + " -interp " + flirtInterp
+			NIISaving = nibabel.Nifti1Image(NIIData, NII.get_affine(), NII.get_header())
+			NIISaving.set_data_dtype(numpy.int16)	
+
+			NIIFileForART = os.path.join(NIITempDir, 'in_art.nii')
+			NIIFileForARTOutput = os.path.join(NIITempDir, 'in_art_output.nii')
+			nibabel.save(NIISaving, NIIFileForART)
+			nibabel.save(NIISaving, outputBase + "_native_cropped.nii.gz")
+			del NIISaving
+
+			if MSPMethod == 'acpcdetect':
+				scriptPath = os.path.realpath(__file__)
+				(head, tail) = os.path.split(scriptPath)
+
+				CommandString = 'ARTHOME=' + os.path.join(head, 'ART') + " " + os.path.join(head, 'ART', 'acpcdetect') + ' -i ' + NIIFileForART + ' -o ' + NIIFileForARTOutput
+				print CommandString
+				os.system(CommandString)
+
+				inF = file(NIIFileForARTOutput, 'rb')
+				s = inF.read()
+				inF.close()
+
+				outF = gzip.GzipFile(NIIFileForARTOutput + ".gz", 'wb')
+				outF.write(s)
+				outF.close()
+				
+				os.unlink(NIIFileForARTOutput)
+				
+				flirtTemplateFile = outputBase + "_template.nii.gz"
+				shutil.copyfile(NIIFileForARTOutput + ".gz", flirtTemplateFile)
+				
+				# get the aligned image and register the original image to it to get the transformation
+				flirtOutputFile = None
+
+			elif MSPMethod == 'flirt':
+				
+				flirtTemplateFile = '***'
+				flirtOutputFile = NIIFileForARTOutput
+
+			flirtCost = 'mutualinfo'
+			flirtInterp = 'trilinear'
+
+			NIIFileARTOutputAffineMat = os.path.join(NIITempDir, 'in_art_output.mat')
+
+			D = 15
+			if flirtTemplateFile == "***":
+				realFlirtTemplateFile = CCSegUtils.MNI152FLIRTTemplate()
+			else:
+				realFlirtTemplateFile = flirtTemplateFile
+
+			CommandString = os.environ['FSLDIR'] + '/bin/flirt -in ' + NIIFileForART + ' -ref ' + realFlirtTemplateFile + ' -dof 6 -searchrx ' + str(-D) + ' ' + str(D) + ' -searchry ' + str(-D) + ' ' + str(D) + ' -searchrz ' + str(-D) + ' ' + str(D) + ' -omat ' + NIIFileARTOutputAffineMat + ' -cost ' + flirtCost + " -interp " + flirtInterp
 
 #		interpTypes = ['trilinear', 'nearestneighbour']
 #		costFns = ['mutualinfo','corratio','normcorr','normmi','leastsq']
@@ -364,58 +408,51 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False):
 #				elapsed_time = time.time() - start_time
 #				print "interp: " + flirtInterp + ", cost: " + flirtCost + ", time: " + str(elapsed_time)	
 #		quit()
-		if flirtOutputFile != None:
-			CommandString = CommandString + " -out " + NIIFileForARTOutput 
-		del D
-		print CommandString
-		os.system(CommandString)
+			if flirtOutputFile != None:
+				CommandString = CommandString + " -out " + NIIFileForARTOutput 
+			del D
+			#print CommandString
+			os.system(CommandString)
 
-		shutil.copyfile(NIIFileForARTOutput + ".gz", outputBase + "_native_cropped_to_template.nii.gz")
+			shutil.copyfile(NIIFileForARTOutput + ".gz", outputBase + "_native_cropped_to_template.nii.gz")
 
 			#flirtMAT = open(NIIFileARTOutputAffineMat, 'r')
-		flirtMAT = numpy.loadtxt(NIIFileARTOutputAffineMat)
-		shutil.copyfile(NIIFileARTOutputAffineMat, outputBase + "_native_cropped_to_template.mat")
+			flirtMAT = numpy.loadtxt(NIIFileARTOutputAffineMat)
+			shutil.copyfile(NIIFileARTOutputAffineMat, outputBase + "_native_cropped_to_template.mat")
 
+			
+			# find out whether the output file is a nifti or compressed nifti
+			#print NIIFileForARTOutput
+			NII = nibabel.load(NIIFileForARTOutput + ".gz")
 		
-		# find out whether the output file is a nifti or compressed nifti
-		#print NIIFileForARTOutput
-		NII = nibabel.load(NIIFileForARTOutput + ".gz")
-	
-		NIIData = NII.get_data()
-		NIIData = numpy.rot90(NIIData, 1)
-		
-		T = math.floor(NIIData.shape[1] / 2)
-		# extract the midsagittal slice
-		if (NIIData.shape[1] % 2 == 0):
-			# even number of slices
-			midSagAVW = (numpy.double(NIIData[:, T - 1]) + numpy.double(NIIData[:, T])) / 2.0
-		else:
-			# odd number of slices
-			midSagAVW = numpy.double(NIIData[:, T])
-		midSagAVW = numpy.rot90(midSagAVW, 1)
-		midSagAVW = numpy.array(midSagAVW[:, ::-1])
+			NIIData = NII.get_data()
+			NIIData = numpy.rot90(NIIData, 1)
+			
+			T = math.floor(NIIData.shape[1] / 2)
+			# extract the midsagittal slice
+			if (NIIData.shape[1] % 2 == 0):
+				# even number of slices
+				midSagAVW = (numpy.double(NIIData[:, T - 1]) + numpy.double(NIIData[:, T])) / 2.0
+			else:
+				# odd number of slices
+				midSagAVW = numpy.double(NIIData[:, T])
+			midSagAVW = numpy.rot90(midSagAVW, 1)
+			midSagAVW = numpy.array(midSagAVW[:, ::-1])
 
-		# crop out the zeros, sometimes FLIRT shrinks the image, causes problems downstream with the registration
-		I = numpy.nonzero(midSagAVW)
+			# crop out the zeros, sometimes FLIRT shrinks the image, causes problems downstream with the registration
+			I = numpy.nonzero(midSagAVW)
 
-		flirtCropZerosRows = numpy.arange(numpy.min(I[0]), numpy.max(I[0]) + 1)
-		flirtCropZerosCols = numpy.arange(numpy.min(I[1]), numpy.max(I[1]) + 1)
+			flirtCropZerosRows = numpy.arange(numpy.min(I[0]), numpy.max(I[0]) + 1)
+			flirtCropZerosCols = numpy.arange(numpy.min(I[1]), numpy.max(I[1]) + 1)
 
-		midSagAVW = numpy.take(midSagAVW, flirtCropZerosRows, axis=0)
-		midSagAVW = numpy.take(midSagAVW, flirtCropZerosCols, axis=1)
-		#print "flirtCropZerosRows: " + str(flirtCropZerosRows[0]) + " " + str(flirtCropZerosRows[-1])
-		#print "flirtCropZerosCols: " + str(flirtCropZerosCols[0]) + " " + str(flirtCropZerosCols[-1])
-		del I
+			midSagAVW = numpy.take(midSagAVW, flirtCropZerosRows, axis=0)
+			midSagAVW = numpy.take(midSagAVW, flirtCropZerosCols, axis=1)
+			#print "flirtCropZerosRows: " + str(flirtCropZerosRows[0]) + " " + str(flirtCropZerosRows[-1])
+			#print "flirtCropZerosCols: " + str(flirtCropZerosCols[0]) + " " + str(flirtCropZerosCols[-1])
+			del I
+			shutil.rmtree(NIITempDir)
 
-		T = numpy.double(midSagAVW)
-		T = (T - numpy.min(T)) / (numpy.max(T) - numpy.min(T))
-		T = numpy.uint8(numpy.round(T * 255))
-		
-		if doGraphics:
-			scipy.misc.imsave(outputPNG, T)
-		del T
-		NIIPixdims = NII.get_header().get_zooms()[1:3]
-
+	if MSPMethod != 'long':
 		FID = h5py.File(outputMAT, 'w')
 
 		FID.create_dataset("NIIPixdims", data=NIIPixdims, compression = 'gzip')
@@ -430,14 +467,32 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False):
 		FID.create_dataset("flirtCropZerosRows", data=flirtCropZerosRows)
 		FID.create_dataset("flirtCropZerosCols", data=flirtCropZerosCols)
 		FID.close()
+	else:
+		FID = h5py.File(outputMAT, 'w')
+
+		FID.create_dataset("NIIPixdims", data=NIIPixdims, compression = 'gzip')
+		FID.create_dataset("midSagAVW", data=midSagAVW, compression = 'gzip')
+		FID.create_dataset("MSPMethod", data=MSPMethod)
+		FID.create_dataset("flirtMAT", data=flirtMAT)
+		FID.create_dataset("flirtTemplateFile", data=flirtTemplateFile)
+		FID.close()
+
 		#print NII.get_header().get_zooms()
 		#print NIIPixdims
 		#ylab.imshow(midSagAVW)
 		#pylab.set_cmap(pylab.cm.gray)
 		#pylab.show()
 
-		shutil.rmtree(NIITempDir)
 	#if len(NIISize) == 2:
+	
+	if doGraphics:
+		T = numpy.double(midSagAVW)
+		T = (T - numpy.min(T)) / (numpy.max(T) - numpy.min(T))
+		T = numpy.uint8(numpy.round(T * 255))
+			
+		scipy.misc.imsave(outputPNG, T)
+		del T
+
 #def midsagExtract(inputBase, outputBase, MSPMethod):
 
 

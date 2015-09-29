@@ -57,7 +57,7 @@ def usage():
 
 def main():
 	
-	longOptStrings = ['num-thickness-nodes=', 'msp-method=', 'redo-done', 'do-midsag', 'do-seg', 'do-thickness', 'do-segtonative', 'do-all', 'do-thicknessmanedit', 'save-graphics', 'seg-no-lk', 'seg-no-auto', 'dilate-parasag', 'long-subject-timepoint-file']
+	longOptStrings = ['num-thickness-nodes=', 'msp-method=', 'redo-done', 'do-midsag', 'do-seg', 'do-thickness', 'do-segtonative', 'do-all', 'do-thicknessmanedit', 'save-graphics', 'seg-no-lk', 'seg-no-auto', 'dilate-parasag', 'long-subject-timepoint-file=']
 	longOptStrings.extend(CCSegSubjectSelection.getOptions())	
 	opts, args = getopt.getopt(sys.argv[1:], "h", longOptStrings)
 	
@@ -181,7 +181,7 @@ def main():
 	for curFile in sorted(actualInputFiles):
 	#for curFile in ['003_S_1122_sc']:	
 	#for curFile in ['051_S_1338_sc']:	
-		#print "Current subject: " + curFile
+		print "Current subject: " + curFile
 		outputBase = os.path.join(outputDirectory, curFile)
 		
 		if doMidsag:
