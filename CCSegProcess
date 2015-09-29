@@ -46,7 +46,7 @@ def usage():
 	print
 	print "\tOPTIONS"
 	print "\t\t--num-thickness-nodes=(integer): the number of streamlines and thickness profiles to generate, 100 if not given"
-	print "\t\t--msp-method=(string): the method to use for MSP extraction, supported values are 'flirt' and 'acpcdetect', 'acpcdetect' is the default if not specified"
+	print "\t\t--msp-method=(string): the method to use for MSP extraction, supported values are 'flirt', 'acpcdetect' and 'long', 'acpcdetect' is the default if not specified"
 	print "\t\t--redo-done: each processing step will not overwrite existing output, this forces existing output to be overwritten"
 	print "\t\t--dilate-parasag: when performing the backprojection to native, dilate the segmentation and parcellations to the neighbouring parasagittal slices"
 	print "\t\t--save-graphics: output graphics showing results of processing steps, look in subdirectories of output directory"
@@ -57,7 +57,7 @@ def usage():
 
 def main():
 	
-	longOptStrings = ["num-thickness-nodes=", "msp-method=", "redo-done", "do-midsag", "do-seg", 'do-thickness', 'do-segtonative', 'do-all', 'do-thicknessmanedit', 'save-graphics', 'seg-no-lk', 'seg-no-auto', 'dilate-parasag']
+	longOptStrings = ['num-thickness-nodes=', 'msp-method=', 'redo-done', 'do-midsag', 'do-seg', 'do-thickness', 'do-segtonative', 'do-all', 'do-thicknessmanedit', 'save-graphics', 'seg-no-lk', 'seg-no-auto', 'dilate-parasag', 'long-subject-timepoint-file']
 	longOptStrings.extend(CCSegSubjectSelection.getOptions())	
 	opts, args = getopt.getopt(sys.argv[1:], "h", longOptStrings)
 	
@@ -84,6 +84,8 @@ def main():
 
 	segLK = True
 	segNoAuto = False
+
+	longSubjectTimepointFile = None
 	# do the mandatory arguments first
 
 	if len(args) != 2:
@@ -134,13 +136,17 @@ def main():
 			segNoAuto = True
 		if o == '--dilate-parasag':
 			dilateToParaSag = True
+		if o == '--long-subject-timepoint-file':
+			longSubjectTimepointFile = a
 	#for o, a in opts:
 
 	# check to see if the user has given at least one of the MSP methods
 	#if MSPMethod == "acpcdetect":
 	#	print "Warning: the acpcdetect method does not yet give me backprojection to native space"
+	
+	MSPMethods = ['flirt', 'acpcdetect', 'long', 'none']
 
-	if not (MSPMethod == "flirt" or MSPMethod == "acpcdetect"):
+	if not MSPMethod in MSPMethods:
 		criticalError("The MSP Method specified is unsupported")
 
 	if numThicknessNodes <= 0:
@@ -218,9 +224,9 @@ def main():
 					continue
 					
 		if doThickness:
-			print outputBase + "_seg.hdf5"
 			if redoDone or not os.path.isfile(outputBase + "_thickness.hdf5"):
 				try:
+					print outputBase + "_seg.hdf5"
 					CCSegPipeThickness.thicknessCC(outputBase, doGraphics = doGraphics)
 				except AssertionError as e:
 					print "CCSeg Error: " + str(e) + ", subject " + outputBase
