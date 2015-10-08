@@ -306,6 +306,18 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
 
 	xx, yy, scaledContours, streamlines, validStreamlines, solvedImage = LaplaceThicknessMethod.laplaceEquation2DContours(finalContours['xi'], finalContours['yi'], finalContours['xo'][::-1], finalContours['yo'][::-1], seg['templatePixdims'][0], seg['templatePixdims'][1], 1.0 / numpy.min(seg['templatePixdims']), 100, redoFactorisation = True)
 	
+	startV = numpy.zeros((2, numThicknessNodes))
+
+	# make start points for each streamline
+	for z in range(numThicknessNodes):
+		D = numpy.diff(streamlines[z], axis = 1)
+		cumArcLength = numpy.cumsum(numpy.sqrt(numpy.sum(D * D, axis = 0)))
+		cumArcLength = cumArcLength / cumArcLength[-1]
+		cumArcLength = numpy.concatenate((numpy.array([0]), cumArcLength))
+
+		startV[0, z] = numpy.interp(0.5, cumArcLength, streamlines[z][0])
+		startV[1, z] = numpy.interp(0.5, cumArcLength, streamlines[z][1])
+
 	thicknessProfile = numpy.zeros((numThicknessNodes))
 	for z in range(numThicknessNodes):
 		D = numpy.diff(streamlines[z], axis = 1)
@@ -342,8 +354,8 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
 				pass
 			else:
 				raise Exception
-
-		outputPNG = os.path.join(PNGDirectory, subjectID + "_thickness.png")
+		
+			outputPNG = os.path.join(PNGDirectory, subjectID + "_thickness.png")
 
 		pylab.clf()
 		
@@ -356,7 +368,8 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
 			CCSegUtils.plotContour(streamlines[z], closed = False, lineProps = lineProps)
 			
 			if numpy.mod(z, 5) == 0:
-				pylab.text(streamlines[z][0, 0], streamlines[z][1, 0], str(z))
+				#pylab.text(streamlines[z][0, 0], streamlines[z][1, 0], str(z))startV[0, z], startV[1, z]
+				pylab.text(startV[0, z], startV[1, z], str(z), horizontalalignment='center', verticalalignment='center', backgroundcolor='w')
 			#CCSegUtils.plotContour(streamlinesOuter[z], closed = False)
 			#CCSegUtils.plotContour(streamlinesInner[z], closed = False)
 		lineProps = {'color': 'g', 'linewidth': 2}
@@ -622,18 +635,7 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
 	#pylab.savefig(outputPNG)
 		
 
-	startV = numpy.zeros((2, numThicknessNodes))
-
-	# make start points for each streamline
-	for z in range(numThicknessNodes):
-		D = numpy.diff(streamlines[z], axis = 1)
-		cumArcLength = numpy.cumsum(numpy.sqrt(numpy.sum(D * D, axis = 0)))
-		cumArcLength = cumArcLength / cumArcLength[-1]
-		cumArcLength = numpy.concatenate((numpy.array([0]), cumArcLength))
-
-		startV[0, z] = numpy.interp(0.5, cumArcLength, streamlines[z][0])
-		startV[1, z] = numpy.interp(0.5, cumArcLength, streamlines[z][1])
-	
+		
 	witelsonNodeLabels = CCSegUtils.interp2q(xx, yy, numpy.double(witelsonLabels), startV[0], startV[1], interpmethod = 'nearest')
 	witelsonNodeLabels = numpy.uint8(witelsonNodeLabels)
 	

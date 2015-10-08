@@ -28,11 +28,33 @@ def usage():
 	print
 	print "\tDESCRIPTION"
 	print "\t\tLongitudinal preprocessing script. Registers all images to first timepoint for each subject then all images to the MNI152 template"
+	print "\tExample: for each subject <foo>, there will be the following files in <input directory>"
+	print "\t\t<foo>_tp1.nii.gz, <foo>_tp2.nii.gz, <foo>_tp3.nii.gz, ..."
+	print "(note the suffixes dont have to be in the _tpXX format, this is just an example)"
+	print "\t\tThere must be a line in the long-subject-timepoint-file file containing"
+	print "\t\t<foo>_tp1 <foo>_tp2 <foo>_tp3 ..."
+	print "\tIn the <output directory>, this program will produce:"
+	print "\t\t<foo>_tp1_to_std.mat: FLIRT matrix transforming <foo>_tp1 to the MNI152 template"
+	print "\t\tThen for each of the other timepoint files <foo>_tpX"
+	print "\t\t<foo>_tpX_to_<foo>_tp1.mat: FLIRT matrix transforming <foo>_tpX to the first timepoint <foo>_tp1"
+	print "\t\t<foo>_tpX_to_std.mat: FLIRT matrix transforming <foo>_tpX to the MNI152 template"
+
+	print "\t\t"
+
 	print
 	print "\tMANDATORY OPTIONS"
 	print CCSegLong.longOptionText()
+	print "\tOTHER OPTIONS"
+	print "\t\t--save-reg-to-first: save an image that is the result of registering all images for a subject to the first timepoint"
+	print "\t\t\tAs per the example above, saves <foo>_tpX_to_<foo>_tp1.nii.gz"
+	print "\t\t--save-reg-to-std: save an image that is the result of registering all images for a subject to the MNI152 template"
+	print "\t\t\tAs per the example above, saves <foo>_tpX_to_std.nii.gz"
+	print "\t\t--parallel-mode=: which mechanism to use to run the registrations in parallel, supported values are:"
+	print "\t\t\tparallel (default if installed): Uses the GNU parallel program to use all host CPUs"
+	print "\t\t\tnone: No parallel, runs all registrations in serial"
 	print
 	print CCSegLong.longOptionFileFormat()
+
 
 	#CCSegSubjectSelection.printHelpText()
 
@@ -42,7 +64,7 @@ def criticalError(errorString):
 
 def main():
 	
-	longOptStrings = ["long-subject-timepoint-file=", 'save-reg-to-first', 'parallel-mode=']
+	longOptStrings = ["long-subject-timepoint-file=", 'save-reg-to-first', 'save-reg-to-std', 'parallel-mode=']
 	longOptStrings.extend(CCSegSubjectSelection.getOptions())	
 	opts, args = getopt.getopt(sys.argv[1:], "h", longOptStrings)
 	
@@ -54,6 +76,7 @@ def main():
 
 	longSubjectTimepointFile = None
 	saveRegToFirst = False
+	saveRegToStd = False
 	# do the mandatory arguments first
 	
 	parallelMode = 'parallel'
@@ -80,6 +103,9 @@ def main():
 			parallelMode = a
 		if o == '--save-reg-to-first':
 			saveRegToFirst = True
+		if o == '--save-reg-to-std':
+			saveRegToStd = True
+
 	#for o, a in opts:
 	
 	if not os.path.isdir(inputDirectory):
@@ -118,7 +144,7 @@ def main():
 	flirtCost = 'mutualinfo'
 	flirtInterp = 'trilinear'
 
-	flirtBase = [os.environ['FSLDIR'] + '/bin/flirt', '-searchrx', str(-D), str(D), '-searchry', str(-D), str(D), '-searchrz', str(-D), str(D), '-cost', flirtCost, '-interp', flirtInterp]
+	flirtBase = [os.environ['FSLDIR'] + '/bin/flirt', '-searchrx', str(-D), str(D), '-searchry', str(-D), str(D), '-searchrz', str(-D), str(D), '-cost', flirtCost, '-interp', flirtInterp, '-usesqform']
 #flirtBase = ['qsub', '-b', 'y', '-q', 'linux.q', '-V', '-cwd', '-N', 'IMAGEHD', os.environ['FSLDIR'] + '/bin/flirt', '-dof', '6', '-searchrx', str(-D), str(D), '-searchry', str(-D), str(D), '-searchrz', str(-D), str(D), '-cost', flirtCost, '-interp', flirtInterp]
 	flirtApplyXFMBase = [os.environ['FSLDIR'] + '/bin/flirt', '-interp', flirtInterp, '-applyxfm']
 
@@ -131,12 +157,12 @@ def main():
 
 	#fp = open('commands', 'w')
 
-	for curSubject in mainAndTimePoints.iterkeys():
-		refFile = os.path.join(inputDirectory, mainAndTimePoints[curSubject][0] + '.nii.gz')
+	for curSubject in sorted(mainAndTimePoints.iterkeys()):
+		refFile = os.path.join(inputDirectory, curSubject + '.nii.gz')
 
-		for curTimePoint in range(1, len(mainAndTimePoints[curSubject])):
+		for curTimePoint in range(len(mainAndTimePoints[curSubject])):
 			inFile = os.path.join(inputDirectory, mainAndTimePoints[curSubject][curTimePoint])
-			outPrefix = os.path.join(outputDirectory, mainAndTimePoints[curSubject][curTimePoint] + '_to_' + mainAndTimePoints[curSubject][0])
+			outPrefix = os.path.join(outputDirectory, mainAndTimePoints[curSubject][curTimePoint] + '_to_' + curSubject)
 			
 			if not os.path.isfile(outPrefix + '.mat'):
 				#commandString = flirtApplyXFMBase[:]
@@ -160,20 +186,23 @@ def main():
 	refFile = CCSegUtils.MNI152FLIRTTemplate()
 # then register the first timepoint to MNI152
 
-	for curSubject in mainAndTimePoints.iterkeys():
-		inFile = os.path.join(inputDirectory, mainAndTimePoints[curSubject][0])
-		outPrefix = os.path.join(outputDirectory, mainAndTimePoints[curSubject][0] + '_to_std')
+	for curSubject in sorted(mainAndTimePoints.iterkeys()):
+		inFile = os.path.join(inputDirectory, curSubject)
+		outPrefix = os.path.join(outputDirectory, curSubject + '_to_std')
 		
 		if not os.path.isfile(outPrefix + '.mat'):
 			#commandString = flirtApplyXFMBase[:]
 			#commandString.extend(['-in', inFile, '-ref', refFile, '-out', outPrefix, '-init', outPrefix + '.mat'])
 		#else:
 			commandString = flirtBase[:]
-			commandString.extend(['-in', inFile, '-ref', refFile, '-omat', outPrefix + '.mat', '-out', outPrefix, '-dof', '7'])
+			commandString.extend(['-in', inFile, '-ref', refFile, '-omat', outPrefix + '.mat', '-dof', '7'])
+			if saveRegToStd == True:
+				commandString.extend(['-out', outPrefix])
 
 			if parallelMode == 'none':
 				subprocess.call(commandString)
 			if parallelMode == 'parallel':
+				print " ".join(commandString)
 				parallelPipe.stdin.write(" ".join(commandString) + "\n")
 		#fp.write(" ".join(commandString) + "\n")
 #fp.close()
@@ -183,43 +212,45 @@ def main():
 		parallelPipe.stdin.close()
 		print "parallel, finished"
 	
-	if parallelMode == 'parallel':
-		parallelPipe = subprocess.Popen(['parallel', parallelSwitch], stdin = subprocess.PIPE, stdout = subprocess.PIPE)
+	if saveRegToStd == True:
+		if parallelMode == 'parallel':
+			parallelPipe = subprocess.Popen(['parallel', parallelSwitch], stdin = subprocess.PIPE, stdout = subprocess.PIPE)
 
 # concatenate the transforms and put the other files in MNI152 space 
 	refFile = CCSegUtils.MNI152FLIRTTemplate()
-	for curSubject in mainAndTimePoints.iterkeys():
-		firstMat = os.path.join(outputDirectory, mainAndTimePoints[curSubject][0] + '_to_std.mat') 
+	for curSubject in sorted(mainAndTimePoints.iterkeys()):
+		firstMat = os.path.join(outputDirectory, curSubject + '_to_std.mat') 
 
-		for curTimePoint in range(1, len(mainAndTimePoints[curSubject])):
+		for curTimePoint in range(len(mainAndTimePoints[curSubject])):
 			outMat = os.path.join(outputDirectory, mainAndTimePoints[curSubject][curTimePoint] + '_to_std.mat')
 			commandString = convertXFMBase[:]
 
-			commandString.extend(['-omat', outMat, '-concat', firstMat, os.path.join(outputDirectory, mainAndTimePoints[curSubject][curTimePoint] + '_to_' + mainAndTimePoints[curSubject][0] + '.mat')])
+			commandString.extend(['-omat', outMat, '-concat', firstMat, os.path.join(outputDirectory, mainAndTimePoints[curSubject][curTimePoint] + '_to_' + curSubject + '.mat')])
 
 			subprocess.call(commandString)
 			
-			commandString = flirtApplyXFMBase[:]
-			inFile = os.path.join(inputDirectory, mainAndTimePoints[curSubject][curTimePoint])
-			outPrefix = os.path.join(outputDirectory, mainAndTimePoints[curSubject][curTimePoint] + "_to_std")
-			
-			commandString.extend(['-in', inFile, '-ref', refFile, '-out', outPrefix, '-init', outMat])
-			
-			if parallelMode == 'none':
-				subprocess.call(commandString)
-			if parallelMode == 'parallel':
-				parallelPipe.stdin.write(" ".join(commandString) + "\n")
+			if saveRegToStd == True:
+				commandString = flirtApplyXFMBase[:]
+				inFile = os.path.join(inputDirectory, mainAndTimePoints[curSubject][curTimePoint])
+				outPrefix = os.path.join(outputDirectory, mainAndTimePoints[curSubject][curTimePoint] + "_to_std")
+				
+				commandString.extend(['-in', inFile, '-ref', refFile, '-out', outPrefix, '-init', outMat])
+				
+				if parallelMode == 'none':
+					subprocess.call(commandString)
+				if parallelMode == 'parallel':
+					parallelPipe.stdin.write(" ".join(commandString) + "\n")
 			#print " ".join(commandString)
 			#fp.write(" ".join(commandString) + "\n")
 			#subprocess.call(commandString)
 	#fp.close()
-	if parallelMode == 'parallel':
-		print "parallel, applying transforms"
-		parallelPipe.communicate()
-		parallelPipe.stdin.close()
-		print "parallel, finished"
+	if saveRegToStd == True:
+		if parallelMode == 'parallel':
+			print "parallel, applying transforms"
+			parallelPipe.communicate()
+			parallelPipe.stdin.close()
+			print "parallel, finished"
 #def main():
-
 
 if __name__ == "__main__":
 	main()

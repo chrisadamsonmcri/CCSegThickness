@@ -223,7 +223,7 @@ def imMatchHist(inputIMG, targetIMG):
 	#pylab.plot([centreXCorrMaxJ, centreXCorrMaxJ], [centreXCorrMaxI, centreXCorrMaxI + croppedTemplateAVW.shape[0]])
 	#pylab.plot([centreXCorrMaxJ + croppedTemplateAVW.shape[1], centreXCorrMaxJ + croppedTemplateAVW.shape[1]], [centreXCorrMaxI, centreXCorrMaxI + croppedTemplateAVW.shape[0]])
 
-def segCCLKandOtsu(IMG, templateIMG, templateCCProbIMG, templateFornixProbIMG, groundIMG, initialTranslation, DoLK = True):
+def segCCLKandOtsu(IMG, templateIMG, templateCCProbIMG, templateFornixProbIMG, groundIMG, initialTranslation, DoLK = True, targetIMGMask = None):
 	#print "Initial translation: " + str(initialTranslation)
 	#print "IMG size: " + str(IMG.shape)
 	#print "Template size: " + str(templateIMG.shape)
@@ -249,7 +249,7 @@ def segCCLKandOtsu(IMG, templateIMG, templateCCProbIMG, templateFornixProbIMG, g
 	else:
 		numLKIterations = 0
 
-	LKParameters, LKCost = LKTracker.weightedAffineInvComp(IMG, remappedTemplateIMG, templateIMG / numpy.max(templateIMG), numpy.array([0, 0, 0, 0, initialTranslation[0], initialTranslation[1]]), numLKIterations)
+	LKParameters, LKCost = LKTracker.weightedAffineInvComp(IMG, remappedTemplateIMG, templateIMG / numpy.max(templateIMG), numpy.array([0, 0, 0, 0, initialTranslation[0], initialTranslation[1]]), numLKIterations, targetIMGMask = targetIMGMask)
 
 #	[TX, TY, InterpX, InterpY] = coords_template_lk_img(LKParameters, ResampledAVW, MatchedFilter);
 	
@@ -838,7 +838,12 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 	#flirtCropZerosCols = numpy.array(FID["flirtCropZerosCols"])
 
 	#MSPMethod = str(numpy.array(FID['MSPMethod']))
+	midSagAVWBrainMask = numpy.logical_not(numpy.isnan(midSagAVW))
+
+	midSagAVW[numpy.where(numpy.logical_not(midSagAVWBrainMask))] = 0
 	
+	midSagAVWBrainMask = numpy.double(midSagAVWBrainMask)
+
 	#midSagAVW = midSagAVW[:, ::-1]
 	#midSagAVW = numpy.rot90(midSagAVW, -1)
 	FID.close()	
@@ -917,6 +922,7 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 	#resampledAVW = midSagAVWInterpolator(resamplexx, resampleyy)
 	
 	resampledAVW = CCSegUtils.interp2q(midSagAVWxx, midSagAVWyy, midSagAVW, resampleX, resampleY, interpmethod = 'linear', extrapval = 0)
+	resampledAVWBrainMask = CCSegUtils.interp2q(midSagAVWxx, midSagAVWyy, midSagAVWBrainMask, resampleX, resampleY, interpmethod = 'linear', extrapval = 0)
 	#del midSagAVWInterpolator
 	
 	if not groundTruthFile == None:
@@ -1015,9 +1021,27 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 	normXCorrCentreI = (WMSegSmoothed.shape[0] - croppedTemplateAVW.shape[0]) / 2
 	normXCorrCentreJ = (WMSegSmoothed.shape[1] - croppedTemplateAVW.shape[1]) / 2
 	del I; del minI;
+	
+	if doGraphics:
+		SR = 1
+		SC = 3
+		
+		pylab.subplot(SR, SC, 1)
+		CCSegUtils.showIMG(WMSegSmoothed)
+		pylab.subplot(SR, SC, 2)
+		CCSegUtils.showIMG(numpy.single(croppedCCProbAVW))
+		pylab.subplot(SR, SC, 3)
+		CCSegUtils.showIMG(normXCorrAVW)
+		
+		pylab.gcf().set_size_inches((20, 10), forward = True)
+
+		outputPNG = os.path.join(PNGDirectory, subjectID + "_xcorr.png")
+		pylab.savefig(outputPNG)
+		CCSegUtils.cropAutoWhitePNG(outputPNG)
+
+
 
 	#pylab.plot(F)
-	#CCSegUtils.showIMG(WMSegSmoothed)
 	#pylab.show()
 	del WMSegSmoothed;
 	
@@ -1126,7 +1150,7 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 
 	for z in range(LKInitialOffsets.shape[0]):
 		
-		segCCLKandOtsuOutput['TX'][z], segCCLKandOtsuOutput['TY'][z], segCCLKandOtsuOutput['interpX'][z], segCCLKandOtsuOutput['interpY'][z], segCCLKandOtsuOutput['croppedIMG'][z], segCCLKandOtsuOutput['croppedTemplateLKIMG'][z], segCCLKandOtsuOutput['croppedTemplateCCProbLKIMG'][z], segCCLKandOtsuOutput['croppedTemplateFornixProbLKIMG'][z], segCCLKandOtsuOutput['croppedGroundIMG'][z], segCCLKandOtsuOutput['otsuSegCC'][z], segCCLKandOtsuOutput['cropRows'][z], segCCLKandOtsuOutput['cropCols'][z], LKSegFits['LKCost'][z] = segCCLKandOtsu(resampledAVW, croppedTemplateAVW, croppedCCProbAVW, croppedFornixProbAVW, resampledGroundAVW, LKInitialOffsets[z, :], DoLK = doLK)
+		segCCLKandOtsuOutput['TX'][z], segCCLKandOtsuOutput['TY'][z], segCCLKandOtsuOutput['interpX'][z], segCCLKandOtsuOutput['interpY'][z], segCCLKandOtsuOutput['croppedIMG'][z], segCCLKandOtsuOutput['croppedTemplateLKIMG'][z], segCCLKandOtsuOutput['croppedTemplateCCProbLKIMG'][z], segCCLKandOtsuOutput['croppedTemplateFornixProbLKIMG'][z], segCCLKandOtsuOutput['croppedGroundIMG'][z], segCCLKandOtsuOutput['otsuSegCC'][z], segCCLKandOtsuOutput['cropRows'][z], segCCLKandOtsuOutput['cropCols'][z], LKSegFits['LKCost'][z] = segCCLKandOtsu(resampledAVW, croppedTemplateAVW, croppedCCProbAVW, croppedFornixProbAVW, resampledGroundAVW, LKInitialOffsets[z, :], DoLK = doLK, targetIMGMask = resampledAVWBrainMask)
 		
 
 		# compute the costs in LKSegFits
@@ -1238,12 +1262,21 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 		for z in range(LKInitialOffsets.shape[0]):
 			AX[0][z] = pylab.subplot(SR, SC, z + 1)
 			#CCSegUtils.showIMG(segCCLKandOtsuOutput['croppedIMG'][z])
-			CCSegUtils.showIMG(resampledAVW)
+		#	CCSegUtils.showIMG(resampledAVW)
+			CCSegUtils.showIMG(resampledAVWBrainMask)
+			
+			InitialColor = 'g'
+			LKColor = 'r'
 
-			pylab.plot([segCCLKandOtsuOutput['TX'][z][0, 0], segCCLKandOtsuOutput['TX'][z][-1, 0]], [segCCLKandOtsuOutput['TY'][z][0, 0], segCCLKandOtsuOutput['TY'][z][-1, 0]])
-			pylab.plot([segCCLKandOtsuOutput['TX'][z][0, -1], segCCLKandOtsuOutput['TX'][z][-1, -1]], [segCCLKandOtsuOutput['TY'][z][0, -1], segCCLKandOtsuOutput['TY'][z][-1, -1]])
-			pylab.plot([segCCLKandOtsuOutput['TX'][z][0, 0], segCCLKandOtsuOutput['TX'][z][0, -1]], [segCCLKandOtsuOutput['TY'][z][0, 0], segCCLKandOtsuOutput['TY'][z][0, -1]])
-			pylab.plot([segCCLKandOtsuOutput['TX'][z][-1, 0], segCCLKandOtsuOutput['TX'][z][-1, -1]], [segCCLKandOtsuOutput['TY'][z][-1, 0], segCCLKandOtsuOutput['TY'][z][-1, -1]])
+			pylab.plot([segCCLKandOtsuOutput['TX'][z][0, 0], segCCLKandOtsuOutput['TX'][z][-1, 0]], [segCCLKandOtsuOutput['TY'][z][0, 0], segCCLKandOtsuOutput['TY'][z][-1, 0]], color = LKColor)
+			pylab.plot([segCCLKandOtsuOutput['TX'][z][0, -1], segCCLKandOtsuOutput['TX'][z][-1, -1]], [segCCLKandOtsuOutput['TY'][z][0, -1], segCCLKandOtsuOutput['TY'][z][-1, -1]], color = LKColor)
+			pylab.plot([segCCLKandOtsuOutput['TX'][z][0, 0], segCCLKandOtsuOutput['TX'][z][0, -1]], [segCCLKandOtsuOutput['TY'][z][0, 0], segCCLKandOtsuOutput['TY'][z][0, -1]], color = LKColor)
+			pylab.plot([segCCLKandOtsuOutput['TX'][z][-1, 0], segCCLKandOtsuOutput['TX'][z][-1, -1]], [segCCLKandOtsuOutput['TY'][z][-1, 0], segCCLKandOtsuOutput['TY'][z][-1, -1]], color = LKColor)
+			
+			pylab.plot([LKInitialOffsets[z, 0], LKInitialOffsets[z, 0] + croppedTemplateAVW.shape[1]], [LKInitialOffsets[z, 1], LKInitialOffsets[z, 1]], color = InitialColor)
+			pylab.plot([LKInitialOffsets[z, 0], LKInitialOffsets[z, 0] + croppedTemplateAVW.shape[1]], [LKInitialOffsets[z, 1] + croppedTemplateAVW.shape[0], LKInitialOffsets[z, 1] + croppedTemplateAVW.shape[0]], color = InitialColor)
+			pylab.plot([LKInitialOffsets[z, 0], LKInitialOffsets[z, 0]], [LKInitialOffsets[z, 1], LKInitialOffsets[z, 1] + croppedTemplateAVW.shape[0]], color = InitialColor)
+			pylab.plot([LKInitialOffsets[z, 0] + croppedTemplateAVW.shape[1], LKInitialOffsets[z, 0] + croppedTemplateAVW.shape[1]], [LKInitialOffsets[z, 1], LKInitialOffsets[z, 1] + croppedTemplateAVW.shape[0]], color = InitialColor)
 		
 			AX[1][z] = pylab.subplot(SR, SC, z + 1 + SC)
 			#CCSegUtils.showIMG(segCCLKandOtsuOutput['otsuSegCC'][z])

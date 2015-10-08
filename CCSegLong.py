@@ -18,7 +18,7 @@ def loadLongSubjectFile(fileName):
 		timePointsToReference = dict()
 
 		for line in fp:
-			splitLine = line.strip().split('\t')
+			splitLine = line.strip().split()
 			referenceImage = splitLine[0]
 			otherTimePoints = splitLine[1:]
 			if referenceImage in mainAndTimePoints:

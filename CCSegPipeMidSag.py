@@ -10,6 +10,7 @@ import h5py
 import shutil
 import re
 import gzip
+import subprocess
 
 import errno
 import time
@@ -217,33 +218,51 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False):
 		NIIPixdims = NII.get_header().get_zooms()[1:3]
 		if MSPMethod == 'long':
 			# testing
-			(head, tail) = os.path.split(outputBase)
-			stdMat = os.path.join(head, tail + "_to_std.mat")
+			(head, subjectID) = os.path.split(outputBase)
+			stdMat = os.path.join(head, subjectID + "_to_std.mat")
 			assert(os.path.isfile(stdMat)),"FLIRT MAT file not found, need to run CCSegLongPreprocess: " + stdMat
 			
+			flirtTemplateFile = CCSegUtils.MNI152FLIRTTemplate()
+			flirtTemplateFileBrainMask = flirtTemplateFile[:-7] + "_brain_mask.nii.gz"
+
+			NIITempDir = tempfile.mkdtemp()
+			toStdNII = os.path.join(NIITempDir, subjectID + "_to_std.nii.gz")
+			flirtInterp = 'trilinear'
+
+			commandString = [os.path.join(os.environ['FSLDIR'], 'bin', 'flirt'), '-interp', flirtInterp, '-applyxfm', '-init', stdMat, '-ref', flirtTemplateFile, '-out', toStdNII, '-in', NIFTIFileName]
+			#print " ".join(commandString)
+			subprocess.call(commandString)
+
 			flirtMAT = numpy.loadtxt(stdMat)
-			toStdNII = CCSegUtils.findNIFTIFromPrefix(os.path.join(head, tail + "_to_std"))
-			assert(toStdNII != None),"standard image not found, need to run CCSegLongPreprocess: " + os.path.join(head, tail + "_to_std")
+
+			#toStdNII = CCSegUtils.findNIFTIFromPrefix(os.path.join(head, subjectID + "_to_std"))
+			#assert(toStdNII != None),"standard image not found, need to run CCSegLongPreprocess: " + os.path.join(head, subjectID + "_to_std")
+			NIIBrainMask = nibabel.load(flirtTemplateFileBrainMask)
 
 			NII = nibabel.load(toStdNII)
 			NIIPixdims = NII.get_header().get_zooms()[1:3]
 			NIISize = NII.get_shape()
 			
-			NIIData = NII.get_data()
-			NIIData = numpy.rot90(NIIData, 1)
-			
+			NIIData = numpy.rot90(NII.get_data(), 1)
+			NIIBrainMaskData = numpy.rot90(NIIBrainMask.get_data(), 1)
+
 			T = math.floor(NIIData.shape[1] / 2)
 			# extract the midsagittal slice
 			if (NIIData.shape[1] % 2 == 0):
 				# even number of slices
 				midSagAVW = (numpy.double(NIIData[:, T - 1]) + numpy.double(NIIData[:, T])) / 2.0
+				midSagAVWBrainMask = (numpy.double(NIIBrainMaskData[:, T - 1]) + numpy.double(NIIBrainMaskData[:, T])) / 2.0
 			else:
 				# odd number of slices
 				midSagAVW = numpy.double(NIIData[:, T])
+				midSagAVWBrainMask = numpy.double(NIIBrainMaskData[:, T])
+			
+			midSagAVW[numpy.where(midSagAVWBrainMask < 0.5)] = numpy.nan
+
 			midSagAVW = numpy.rot90(midSagAVW, 1)
 			midSagAVW = numpy.array(midSagAVW[:, ::-1])
 			
-			flirtTemplateFile = CCSegUtils.MNI152FLIRTTemplate()
+			shutil.rmtree(NIITempDir)
 
 		else:
 			Transform = NII.get_sform(coded=True)

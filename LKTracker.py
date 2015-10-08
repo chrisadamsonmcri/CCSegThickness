@@ -201,7 +201,7 @@ def warpImageAffine(targetIMG, templateIMGSize, affineParameters):
 #%WarpedIMG(isnan(WarpedIMG)) = 0;
 #%keyboard;
 
-def weightedAffineInvCompWarpCost(targetIMG, templateIMG, templateWeight, curParameters, displayStuff):
+def weightedAffineInvCompWarpCost(targetIMG, templateIMG, templateWeight, curParameters, displayStuff, targetIMGMask = None):
 	#function [ImageWarpedToTemplate, TX, TY, ErrorIMG, CostValue] = lk_weighted_run_affine_inv_comp_warpcost(targetIMG, templateIMG, TemplateW, CurParameters, displayStuff)
 #	[ImageWarpedToTemplate, TX, TY] = lk_warp_image_affine(targetIMG, size(templateIMG), CurParameters);
 	targetIMGToTemplate, TX, TY = warpImageAffine(targetIMG, templateIMG.shape, curParameters)
@@ -217,8 +217,15 @@ def weightedAffineInvCompWarpCost(targetIMG, templateIMG, templateWeight, curPar
 	#print "oiajfdoijadsf"
 
 	errorIMG = targetIMGToTemplate - templateIMG
+
 	
 	LKCost = numpy.sum(errorIMG * templateWeight * errorIMG)
+	
+	# find out if any coordinates are not in the mask
+	if targetIMGMask != None:
+		T = CCSegUtils.interp2q(numpy.arange(1, targetIMG.shape[1] + 1), numpy.arange(1, targetIMG.shape[0] + 1), targetIMGMask, TX, TY, extrapval = 0)
+		if numpy.any(T == 0):
+			LKCost = numpy.inf
 	
 	return (targetIMGToTemplate, TX, TY, errorIMG, LKCost)
 	#
@@ -304,7 +311,7 @@ def coordsOfAffineWarpedTemplate(parameters, IMG, template):
 #% T = line([TX(end, 1) TX(end, end)], [TY(end, 1), TY(end, end)]); set(T, 'Color', 'r');
 
 
-def weightedAffineInvComp(targetIMG, templateIMG, templateWeight, initialParameters, numIterations):
+def weightedAffineInvComp(targetIMG, templateIMG, templateWeight, initialParameters, numIterations, targetIMGMask = None):
 
 # Python port of lk_run_affine_for_comp
 #% [varargout] = lk_run_affine_for_comp(targetIMG, templateIMG, InitialParameters, NumIterations)
@@ -359,7 +366,10 @@ def weightedAffineInvComp(targetIMG, templateIMG, templateWeight, initialParamet
 		pylab.subplot(4, 3, 10); CCSegUtils.showIMG(Hessian); pylab.title('Hessian');
 
 	curParameters = initialParameters
-	(targetIMGToTemplate, TX, TY, errorIMG, LKCost) = weightedAffineInvCompWarpCost(targetIMG, templateIMG, templateWeight, curParameters, displayStuff)
+	(targetIMGToTemplate, TX, TY, errorIMG, LKCost) = weightedAffineInvCompWarpCost(targetIMG, templateIMG, templateWeight, curParameters, displayStuff, targetIMGMask = targetIMGMask)
+	
+	if numpy.isinf(LKCost):
+		return (curParameters, LKCost)
 
 	del targetIMGToTemplate; del TX; del TY;
 	#[~, ~, ~, ErrorIMG, CostValue] = lk_weighted_run_affine_inv_comp_warpcost(targetIMG, templateIMG, TemplateW, CurParameters, displayStuf    f);
@@ -420,7 +430,10 @@ def weightedAffineInvComp(targetIMG, templateIMG, templateWeight, initialParamet
 			F = pylab.gcf()
 			F.set_size_inches((20, 10), forward = True)
 		
-		(targetIMGToTemplate, TX, TY, errorIMG, LKCost) = weightedAffineInvCompWarpCost(targetIMG, templateIMG, templateWeight, curParameters, displayStuff)
+		(targetIMGToTemplate, TX, TY, errorIMG, LKCost) = weightedAffineInvCompWarpCost(targetIMG, templateIMG, templateWeight, curParameters, displayStuff, targetIMGMask = targetIMGMask)
+		if numpy.isinf(LKCost):
+			#print "InfCost"
+			return (curParameters, LKCost)
 		if displayStuff == True:
 			pylab.draw()
 			pylab.show(block = False)

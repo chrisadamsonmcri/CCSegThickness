@@ -181,12 +181,13 @@ def main():
 	for curFile in sorted(actualInputFiles):
 	#for curFile in ['003_S_1122_sc']:	
 	#for curFile in ['051_S_1338_sc']:	
-		print "Current subject: " + curFile
+		#print "Current subject: " + curFile
 		outputBase = os.path.join(outputDirectory, curFile)
 		
 		if doMidsag:
 			if redoDone or not os.path.isfile(outputBase + "_midsag.hdf5"):
 				try:
+					print curFile + ": midsag"
 					CCSegPipeMidSag.midsagExtract(os.path.join(inputDirectory, curFile), outputBase, MSPMethod, doGraphics = doGraphics)
 				except AssertionError as e:
 					print "MidSag Error: " + str(e) + ", subject " + outputBase
@@ -201,6 +202,7 @@ def main():
 		if doSeg:
 			#print outputBase + "_midsag.hdf5"
 			if redoDone or not os.path.isfile(outputBase + "_seg.hdf5"):
+				print curFile + ": seg"
 				if os.path.isfile(outputBase + "_seg_manedit.hdf5"):
 					print "Found manedit: " + outputBase + "_seg_manedit.hdf5" + ", but redoing segmentation, deleting"
 					try:
@@ -225,8 +227,9 @@ def main():
 					
 		if doThickness:
 			if redoDone or not os.path.isfile(outputBase + "_thickness.hdf5"):
+				print curFile + ": thickness"
 				try:
-					print outputBase + "_seg.hdf5"
+					#print outputBase + "_seg.hdf5"
 					CCSegPipeThickness.thicknessCC(outputBase, doGraphics = doGraphics)
 				except AssertionError as e:
 					print "CCSeg Error: " + str(e) + ", subject " + outputBase
@@ -245,6 +248,7 @@ def main():
 		if doThicknessManedit and os.path.isfile(outputBase + "_seg_manedit.hdf5"):
 			#print outputBase + "_seg.hdf5"
 			if redoDone or not os.path.isfile(outputBase + "_thickness.hdf5"):
+				print curFile + ": thicknessmanedit"
 				try:
 					CCSegPipeThickness.thicknessCC(outputBase, doGraphics = doGraphics)
 				except AssertionError as e:
@@ -261,6 +265,7 @@ def main():
 						continue
 	
 		if doSegToNative and not doThicknessManedit:
+			print curFile + ": segtonative"
 			#print "doing segtonative"
 			if os.path.isfile(outputBase + "_seg.hdf5") and (redoDone or not os.path.isfile(outputBase + "_native.nii.gz")):
 				try:
@@ -276,6 +281,7 @@ def main():
 		if doSegToNative and doThicknessManedit:
 			#print "doing segtonative"
 			if os.path.isfile(outputBase + "_seg.hdf5") and os.path.isfile(outputBase + "_seg_manedit.hdf5") and (redoDone or not os.path.isfile(outputBase + "_native.nii.gz")):
+				print curFile + ": segtonative"
 				try:
 					CCSegPipeSegToNative.segCCToNative(outputBase, dilateToParaSag = dilateToParaSag)
 				except AssertionError as e:
