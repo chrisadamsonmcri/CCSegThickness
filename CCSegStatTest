@@ -354,7 +354,7 @@ def main():
 
 
 	groupFileFID = open(groupFile, 'r')
-	groupFileReader = csv.reader(groupFileFID, delimiter = "\t")
+	groupFileReader = csv.reader(groupFileFID, delimiter = ",") 
 	
 	groupLabels = list()
 	groupLists = dict()
