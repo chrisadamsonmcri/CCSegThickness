@@ -162,6 +162,7 @@ class CCSegStatResultsDisplayer:
 
 		if not os.path.isfile(idealCCFile):
 			print "ideal CC file not found"
+			quit()
 		
 		FID = h5py.File(idealCCFile, 'r')
 		self.idealCCInterpPoints = numpy.array(FID["InterpPoints"]).T

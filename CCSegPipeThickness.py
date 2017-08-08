@@ -178,17 +178,138 @@ import FLIRT
 #	%keyboard;
 #end
 
-def registerProfile(inputProfile):
+# shift the source peaks to the template peaks
+def resampleProfile(inputProfile, sourceLeftPeak, templateLeftPeak, sourceRightPeak, templateRightPeak):
 	
-	templateLeftPeak = numpy.round(inputProfile.size * 0.12) - 1
-	templateRightPeak = numpy.round(inputProfile.size * 0.90) - 1
+	reparamX = numpy.zeros((inputProfile.size))
+	reparamX[:int(sourceLeftPeak) + 1] = numpy.linspace(0, templateLeftPeak, sourceLeftPeak + 1)
+	reparamX[int(sourceLeftPeak):int(sourceRightPeak) + 1] = numpy.linspace(templateLeftPeak, templateRightPeak, sourceRightPeak - sourceLeftPeak + 1)
+	reparamX[int(sourceRightPeak):] = numpy.linspace(templateRightPeak, inputProfile.size - 1, inputProfile.size - sourceRightPeak)
+	
+	inputProfileNoNaNs = numpy.array(inputProfile)
+	inputProfileNoNaNs[numpy.logical_not(numpy.isfinite(inputProfile))] = 0
+	
+	return numpy.interp(numpy.arange(inputProfile.size), reparamX, inputProfileNoNaNs, left=None, right=None)
+
+# get the ideal thickness profile from the "ideal" callosum, numNodesOut is the number of elements to resample the profile to
+
+def getIdealThicknessProfile(numNodesOut, returnPeaks = False):
+	scriptPath = os.path.realpath(__file__)
+	(head, tail) = os.path.split(scriptPath)
+
+	idealCCThicknessFile = os.path.join(head, 'data', 'ideal_cc_thickness.hdf5')
+
+	if not os.path.isfile(idealCCThicknessFile):
+		print "ideal CC thickness file not found"
+		quit()
+	
+	FID = h5py.File(idealCCThicknessFile, 'r')
+	idealThicknessProfile = numpy.ravel(numpy.array(FID["thicknessProfile"]))
+	FID.close()
+	
+	XI = numpy.linspace(0, idealThicknessProfile.size - 1, num = numNodesOut)
+	
+	resampledProfile = numpy.interp(XI, numpy.arange(idealThicknessProfile.size), idealThicknessProfile)
+
+	if returnPeaks == False:
+		return resampledProfile
+	else:
+		T = scipy.ndimage.filters.gaussian_filter1d(idealThicknessProfile, 5, mode='nearest')
+
+		leftPeak = numpy.argmax(T[:250])
+		#print leftPeak
+		S = numpy.array(T)
+		S[:500] = 0
+		rightPeak = numpy.argmax(S)
+		#print rightPeak
+
+		return (resampledProfile, numpy.round(numpy.array([leftPeak, rightPeak]) * (float(numNodesOut) / idealThicknessProfile.size)))
+
+
+def registerProfileCovariance(inputProfile):
+
+	if len(inputProfile.shape) == 1:
+		realInputProfiles = numpy.atleast_2d(inputProfile).T
+	else:
+		realInputProfiles = numpy.array(inputProfile)
+	numNodes = realInputProfiles.shape[0]
+
+	idealThicknessProfile, templatePeaks = getIdealThicknessProfile(numNodes, returnPeaks = True)
+	#print peaks
+	idealThicknessProfile = idealThicknessProfile - numpy.mean(idealThicknessProfile)
+	#print idealThicknessProfile.shape
+	idealThicknessProfile = numpy.atleast_2d(idealThicknessProfile).T
+
+	leftPeakValues = numpy.arange(5, numpy.round(numNodes / 4.0) + 1)
+	rightPeakValues = numpy.arange(numpy.round(numNodes * 3.0 / 4.0), numNodes - 1)
+
+	costFunction = numpy.zeros((leftPeakValues.size, rightPeakValues.size))
+	
+	for curLeftIDX in range(leftPeakValues.size):
+		curLeftPeak = leftPeakValues[curLeftIDX]
+		for curRightIDX in range(rightPeakValues.size):
+			curRightPeak = rightPeakValues[curRightIDX]
+			R = numpy.zeros_like(realInputProfiles)
+			for z in range(realInputProfiles.shape[1]):
+#			R = resampleProfiles(Profiles, curLeftPeak, curRightPeak, TemplateLeftPeak, TemplateRightPeak);
+				R[:, z] = resampleProfile(realInputProfiles[:, z], curLeftPeak, templatePeaks[0], curRightPeak, templatePeaks[1])
+			T = (R - numpy.mean(R, axis = 0)) * idealThicknessProfile
+			costFunction[curLeftIDX, curRightIDX] = numpy.sum(T)
+	
+	I = numpy.argmax(costFunction)
+	ID = numpy.unravel_index(indices = I, dims = costFunction.shape)
+	
+	R = numpy.zeros_like(realInputProfiles)
+	for z in range(realInputProfiles.shape[1]):
+		R[:, z] = resampleProfile(realInputProfiles[:, z], leftPeakValues[ID[0]], templatePeaks[0], rightPeakValues[ID[1]], templatePeaks[1])
+	
+	return R
+	#pylab.clf()
+	#CCSegUtils.showIMG(costFunction)
+	#pylab.show()
+
+	#quit()
+#	for curLeftIDX = 1:numel(leftPeakValues)
+#		curLeftPeak = leftPeakValues(curLeftIDX);
+#		for curRightIDX = 1:numel(rightPeakValues)
+#			curRightPeak = rightPeakValues(curRightIDX);
+#			R = resampleProfiles(Profiles, curLeftPeak, curRightPeak, TemplateLeftPeak, TemplateRightPeak);
+#			T = bsxfun(@times, bsxfun(@minus, R, mean(R)), DeMeanProfile);
+#			CostFunction(curLeftIDX, curRightIDX) = sum(T(:));
+#			
+#			%keyboard;
+#			% resample all profiles as if 
+#		end
+#	end
+#	%keyboard;
+#	[~, I] = max(CostFunction(:));
+#
+#	[ID, JD] = ind2sub(size(CostFunction), I);
+#	BestOffsets = [leftPeakValues(ID), rightPeakValues(JD)];
+#	RegisteredProfiles = resampleProfiles(Profiles, BestOffsets(1), BestOffsets(2), TemplateLeftPeak, TemplateRightPeak);
+#
+	
+	#print idealThicknessProfile
+	#pylab.plot(idealThicknessProfile)
+	#pylab.show()
+	
+def registerProfilePeaks(inputProfile):
+	
+	idealThicknessProfile, peaks = getIdealThicknessProfile(inputProfile.size, returnPeaks = True)
+
+	templateLeftPeak = peaks[0]
+	templateRightPeak = peaks[1]
+
+	#templateLeftPeak = numpy.round(inputProfile.size * 0.12) - 1
+	#templateRightPeak = numpy.round(inputProfile.size * 0.90) - 1
 	#MeanPeaks = [LeftPeak, RightPeak];
 	
 	inputProfileNoNaNs = numpy.array(inputProfile)
-	
 	inputProfileNoNaNs[numpy.logical_not(numpy.isfinite(inputProfile))] = 0
 	
-	SE = numpy.ones((1, numpy.round(inputProfile.size / 5.0)))
+	inputProfileNoNaNs = scipy.ndimage.filters.gaussian_filter1d(inputProfileNoNaNs, 1, mode='nearest')
+
+	SE = numpy.ones((1, int(numpy.round(inputProfile.size / 5.0))))
 	D = scipy.ndimage.morphology.grey_dilation(numpy.atleast_2d(inputProfileNoNaNs), footprint = SE)
 	D = numpy.ravel(D)
 #	pylab.subplot(1, 2, 1)
@@ -209,6 +330,7 @@ def registerProfile(inputProfile):
 	
 	if numpy.size(leftPeaks) > 0:
 		I = numpy.argmax(inputProfileNoNaNs[leftPeaks])
+		leftPeak = leftPeaks[0]
 		leftPeak = leftPeaks[I]
 	else:
 		leftPeak = templateLeftPeak
@@ -216,15 +338,12 @@ def registerProfile(inputProfile):
 	if numpy.size(rightPeaks) > 0:
 		I = numpy.argmax(inputProfileNoNaNs[rightPeaks])
 		rightPeak = rightPeaks[I]
+		#rightPeak = rightPeaks[-1]
+
 	else:
 		rightPeak = templateRightPeak
-
-	reparamX = numpy.zeros((inputProfile.size))
-	reparamX[:leftPeak + 1] = numpy.linspace(0, templateLeftPeak, leftPeak + 1)
-	reparamX[leftPeak:rightPeak + 1] = numpy.linspace(templateLeftPeak, templateRightPeak, rightPeak - leftPeak + 1)
-	reparamX[rightPeak:] = numpy.linspace(templateRightPeak, inputProfile.size - 1, inputProfile.size - rightPeak)
 	
-	resampledProfile = numpy.interp(numpy.arange(inputProfile.size), reparamX, inputProfileNoNaNs, left=None, right=None)
+	return resampleProfile(inputProfileNoNaNs, leftPeak, templateLeftPeak, rightPeak, templateRightPeak)
 
 	#pylab.plot(inputProfileNoNaNs)
 	#pylab.plot(resampledProfile)
@@ -232,7 +351,6 @@ def registerProfile(inputProfile):
 	#pylab.show()
 
 	#quit()
-	return resampledProfile
 	#scipy.ndimage.morphology.grey_dilation(numpy.atleast_2d(T), footprint = numpy.ones((1, dilateSize)
 	#pylab.plot(scaledContours['outer'][0], scaledContours['outer'][1], **lineProps)
 
@@ -251,7 +369,7 @@ def plotRectangle(Position, lineProps):
 #	print("fn says: %s : " % (val))
 #	return numpy.size(val)
 
-def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doGraphics = False):
+def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doGraphics = False, thicknessNoReg = False):
 	
 	assert(isinstance(numThicknessNodes, int) and numThicknessNodes > 0),"number of thickness nodes must be non-zero, positive and of type int"
 
@@ -271,6 +389,12 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
 	#seg['initialSeg'] = numpy.array(FID['initialSeg']) > 0
 	seg['finalSeg'] = numpy.array(FID['finalSeg']) > 0
 	seg['finalSegNoArtefacts'] = numpy.array(FID['finalSegNoArtefacts']) > 0 # the greater than 0 is to convert it to a boolean array
+
+	try:
+		seg['watershedSeg'] = numpy.array(FID['watershedSeg']) > 0
+	except Exception:
+		seg['watershedSeg'] = None
+
 	seg['templatePixdims'] = numpy.array(FID['templatePixdims']) 
 	#print seg['templatePixdims']
 	FID.close()
@@ -291,7 +415,35 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
 		finalSeg = numpy.array(FID['finalSegManEdit']) > 0
 		FID.close()	
 	else:
-		finalSeg = numpy.array(seg['finalSeg'])
+		if seg['watershedSeg'] is None:
+			finalSeg = numpy.array(seg['finalSegNoArtefacts'])
+		else:
+			finalSeg = numpy.array(seg['watershedSeg'])
+	
+	finalSeg = CCSegUtils.largestComponent(finalSeg)
+
+	if doGraphics:
+		try:
+			os.makedirs(os.path.join(outputDir, 'thickness'))
+		except OSError as exc: # Python >2.5
+			if exc.errno == errno.EEXIST and os.path.isdir(os.path.join(outputDir, 'thickness')):
+				pass
+			else:
+				raise Exception
+
+	if doGraphics:
+		outputPNG = os.path.join(outputDir, 'thickness', subjectID + "_seg.png")
+		pylab.clf()
+		
+		CCSegUtils.showIMG(seg['IMG'])
+		finalSegContours, hierarchy = cv2.findContours(numpy.uint8(finalSeg), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+		lineProps = {'color': 'b', 'linewidth': 2}
+		for z in range(len(finalSegContours)):
+			CCSegUtils.plotContour(numpy.squeeze(finalSegContours[z]).T, lineProps = lineProps)
+		
+		pylab.gcf().set_size_inches((20, 10), forward = True)
+		pylab.savefig(outputPNG)
+		CCSegUtils.cropAutoWhitePNG(outputPNG)
 	
 	if doGraphics:
 		outputPNG = os.path.join(outputDir, 'endpoint', subjectID + "_endpoints.png")
@@ -312,11 +464,13 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
 	for z in range(numThicknessNodes):
 		D = numpy.diff(streamlines[z], axis = 1)
 		cumArcLength = numpy.cumsum(numpy.sqrt(numpy.sum(D * D, axis = 0)))
+		del D
 		cumArcLength = cumArcLength / cumArcLength[-1]
 		cumArcLength = numpy.concatenate((numpy.array([0]), cumArcLength))
 
 		startV[0, z] = numpy.interp(0.5, cumArcLength, streamlines[z][0])
 		startV[1, z] = numpy.interp(0.5, cumArcLength, streamlines[z][1])
+		del cumArcLength
 
 	thicknessProfile = numpy.zeros((numThicknessNodes))
 	for z in range(numThicknessNodes):
@@ -324,6 +478,23 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
 
 		thicknessProfile[z] = numpy.sum(numpy.sqrt(numpy.sum(D * D, axis = 0)))
 	
+	# do the bending angle
+	# get the cumulative arc length of the midline
+	D = numpy.diff(startV, axis = 1)
+	cumArcLength = numpy.cumsum(numpy.sqrt(numpy.sum(D * D, axis = 0)))
+	cumArcLength = cumArcLength / cumArcLength[-1]
+	cumArcLength = numpy.concatenate((numpy.array([0]), cumArcLength))
+
+	bendingAngleV = numpy.zeros((2, 3))
+	#print numpy.interp(numpy.array([0, 0.5, 1]), cumArcLength, startV[1])
+	bendingAngleV[0] = numpy.interp(numpy.array([0, 0.5, 1]), cumArcLength, startV[0])
+	bendingAngleV[1] = numpy.interp(numpy.array([0, 0.5, 1]), cumArcLength, startV[1])
+	
+	bendingAngleVectors = numpy.diff(bendingAngleV, axis = 1)
+	#bendingAngleVectors[:, 0] =	-bendingAngleVectors[:, 0]
+	bendingAngleVectors = bendingAngleVectors / numpy.sqrt(numpy.sum(bendingAngleVectors * bendingAngleVectors, axis = 0))
+	bendingAngle = -numpy.sum(bendingAngleVectors[:, 0] * (bendingAngleVectors[:, 1]))
+	del bendingAngleVectors
 	# here, we need to scale if we are using the longitudinal method
 	FID = h5py.File(outputBase + "_midsag.hdf5", 'r')
 	
@@ -343,7 +514,13 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
 	FID.close()
 	thicknessProfile[numpy.logical_not(validStreamlines)] = 0
 
-	registeredThicknessProfile = registerProfile(thicknessProfile)
+	registeredThicknessProfilePeaks = registerProfilePeaks(thicknessProfile)
+	registeredThicknessProfileCov = registerProfileCovariance(thicknessProfile)
+
+	#if thicknessNoReg == True:
+	#	registeredThicknessProfile = numpy.array(thicknessProfile)
+	#else:
+	#	registeredThicknessProfile = registerProfilePeaks(thicknessProfile)
 
 	if doGraphics:
 		PNGDirectory = os.path.join(outputDir, "thickness")
@@ -372,20 +549,27 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
 				pylab.text(startV[0, z], startV[1, z], str(z), horizontalalignment='center', verticalalignment='center', backgroundcolor='w')
 			#CCSegUtils.plotContour(streamlinesOuter[z], closed = False)
 			#CCSegUtils.plotContour(streamlinesInner[z], closed = False)
+		CCSegUtils.plotContour(streamlines[4], closed = False, lineProps = {'color': 'y', 'linewidth': 5})
+		CCSegUtils.plotContour(streamlines[94], closed = False, lineProps = {'color': 'k', 'linewidth': 5})
 		lineProps = {'color': 'g', 'linewidth': 2}
 		pylab.plot(scaledContours['inner'][0], scaledContours['inner'][1], **lineProps)
 		lineProps = {'color': 'r', 'linewidth': 2}
 		pylab.plot(scaledContours['outer'][0], scaledContours['outer'][1], **lineProps)
+		lineProps = {'color': 'b', 'linewidth': 2}
+		pylab.plot(bendingAngleV[0], bendingAngleV[1], **lineProps)
 		
 		pylab.gca().invert_yaxis()
 		pylab.gca().get_xaxis().set_ticks([])
 		pylab.gca().get_yaxis().set_ticks([])
 		pylab.title('Streamlines')
-
+		idealThicknessProfile, templatePeaks = getIdealThicknessProfile(100, returnPeaks = True)
+		
 		pylab.subplot(2, 1, 2)
 		thicknessProfilePlot, = pylab.plot(thicknessProfile)
-		registeredThicknessProfilePlot, = pylab.plot(registeredThicknessProfile)
-		pylab.legend([thicknessProfilePlot, registeredThicknessProfilePlot], ['Original thickness profile', 'Registered thickness profile'], loc = 9)
+		registeredPeaksThicknessProfilePlot, = pylab.plot(registeredThicknessProfilePeaks)
+		registeredCovThicknessProfilePlot, = pylab.plot(registeredThicknessProfileCov)
+		idealThicknessProfilePlot, = pylab.plot(idealThicknessProfile / 25.0)
+		pylab.legend([thicknessProfilePlot, registeredPeaksThicknessProfilePlot, registeredCovThicknessProfilePlot, idealThicknessProfilePlot], ['Original thickness profile', 'Registered thickness profile peaks', 'Registered thickness profile cov', 'Ideal'], loc = 9)
 		pylab.title('Thickness profile')
 		pylab.xlabel('Node')
 		pylab.ylabel('Thickness (mm)')
@@ -402,6 +586,7 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
 #	CCSegUtils.showIMG(FX)
 		
 		#print outputPNG
+		pylab.gcf().set_size_inches((20, 10), forward = True)
 		pylab.savefig(outputPNG)
 		CCSegUtils.cropAutoWhitePNG(outputPNG)
 		
@@ -417,11 +602,11 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
 	maskClosed = numpy.isfinite(solvedImage)
 	I = numpy.where(maskClosed)
 
-	minCol = numpy.min(I[1])
-	maxCol = numpy.max(I[1])
+	minCol = int(numpy.min(I[1]))
+	maxCol = int(numpy.max(I[1]))
 
-	minColRow = numpy.mean(I[0][numpy.where(I[1] == minCol)])  
-	maxColRow = numpy.mean(I[0][numpy.where(I[1] == maxCol)])  
+	minColRow = int(numpy.mean(I[0][numpy.where(I[1] == minCol)]))
+	maxColRow = int(numpy.mean(I[0][numpy.where(I[1] == maxCol)]))
 	pylab.clf()
 
 	minColX = xx[minCol]
@@ -711,10 +896,13 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
 	finalContoursGroup.create_dataset("inner", data = scaledContours['inner'], compression = 'gzip')
 	finalContoursGroup.create_dataset("outer", data = scaledContours['outer'], compression = 'gzip')
 	
+	FID.create_dataset("bendingAngle", data = bendingAngle)
+	
 	#FID.create_dataset("startV", data = startV, compression = 'gzip')
 	FID.create_dataset("validStreamlines", data = numpy.uint8(validStreamlines), compression = 'gzip')
 	FID.create_dataset("thicknessProfile", data = thicknessProfile, compression = 'gzip')
-	FID.create_dataset("registeredThicknessProfile", data = registeredThicknessProfile, compression = 'gzip')
+	FID.create_dataset("registeredThicknessProfilePeaks", data = registeredThicknessProfilePeaks, compression = 'gzip')
+	FID.create_dataset("registeredThicknessProfileCov", data = registeredThicknessProfileCov, compression = 'gzip')
 	
 	streamlinesGroup = FID.create_group("streamlines")
 	for z in range(numThicknessNodes):

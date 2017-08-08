@@ -93,7 +93,7 @@ def contourResampleArcLength(X, n):
 
 	#print cumArcLength.shape
 
-	outContour = numpy.zeros((X.shape[0], n))
+	outContour = numpy.zeros((X.shape[0], int(n)))
 	
 	for z in range(X.shape[0]):
 		outContour[z] = numpy.interp(numpy.linspace(0, 1, n), cumArcLength, X[z])
@@ -111,7 +111,7 @@ def arcLength(X):
 
 def numericGradient2D(IMG, xSpacing = 1.0, ySpacing = 1.0, mask = None):
 	
-	if mask == None:
+	if mask is None:
 		T = numpy.gradient(IMG)
 		return (T[1], T[0])
 	else:
@@ -135,7 +135,7 @@ def numericGradient2D(IMG, xSpacing = 1.0, ySpacing = 1.0, mask = None):
 		
 		northSouthMask = numpy.logical_and(northMask, southMask)
 
-		T = numpy.ones((numpy.sum(mask)))
+		T = numpy.ones((numpy.count_nonzero(mask)))
 		T[numpy.where(northSouthMask)] = 2.0
 		northSouthSpacing = numpy.ones(mask.shape)
 		northSouthSpacing[maskIDX] = T
@@ -1004,7 +1004,7 @@ def endpointsFind(BW, outputPNG = None):
 	del BWLabels; del BWNumLabels;
 	
 	BWCols = numpy.nonzero(BW)[1]
-	midCol = numpy.floor((numpy.min(BWCols) + numpy.max(BWCols)) / 2.0)
+	midCol = int(numpy.floor((numpy.min(BWCols) + numpy.max(BWCols)) / 2.0))
 	BWLeft = numpy.array(BW)
 	BWRight = numpy.array(BW)
 	

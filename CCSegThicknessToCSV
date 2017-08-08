@@ -38,6 +38,7 @@ def main():
 	
 	longOptStrings = []
 	longOptStrings.extend(CCSegSubjectSelection.getOptions())	
+	longOptStrings.extend(['headers'])
 	opts, args = getopt.getopt(sys.argv[1:], "h", longOptStrings)
 	
 	if len(args) != 2:
@@ -49,7 +50,11 @@ def main():
 	inputDirectory = args[0]
 	outputDirectory = args[1]
 	
+	writeHeaders = False
+
 	for o, a in opts:
+		if o == '--headers':
+			writeHeaders = True
 		if o == '-h':
 			usage()
 			quit()
@@ -64,6 +69,8 @@ def main():
 	
 	allThicknessFID = open(os.path.join(outputDirectory, 'all_thickness_profiles.csv'), 'w')
 	allRegisteredThicknessFID = open(os.path.join(outputDirectory, 'all_registered_thickness_profiles.csv'), 'w')
+	
+	allBendingAnglesFID = open(os.path.join(outputDirectory, 'all_bending_angles.csv'), 'w')
 
 	parcellationStatsDirectory = os.path.join(outputDirectory, 'parcellation_stats')
 	try:
@@ -74,7 +81,7 @@ def main():
 		else:
 			raise Exception
 
-	regionalStats = ['area', 'min', 'max', 'median', 'std', 'var']
+	regionalStats = ['area', 'min', 'max', 'mean', 'median', 'std', 'var']
 
 	witelsonStatsFIDS = dict.fromkeys(regionalStats)
 	hoferFrahmStatsFIDS = dict.fromkeys(regionalStats)
@@ -85,22 +92,40 @@ def main():
 		hoferFrahmStatsFIDS[curStat] = open(os.path.join(parcellationStatsDirectory, 'hoferfrahm_stats_' + curStat + '.csv'), 'w')
 		emsellStatsFIDS[curStat] = open(os.path.join(parcellationStatsDirectory, 'emsell_stats_' + curStat + '.csv'), 'w')
 	
+	headersWritten = False
+
 	for curFile in sorted(actualInputFiles):
 		outputBase = os.path.join(outputDirectory, curFile)
 		if os.path.isfile(outputBase + "_thickness.hdf5"):
-			allThicknessFID.write(curFile + ",")
-			allRegisteredThicknessFID.write(curFile + ",")
 			FID = h5py.File(outputBase + "_thickness.hdf5", 'r')
-			
-			#curThicknessProfile = numpy.array(FID['thicknessProfile'])
 			T = numpy.array(FID['thicknessProfile'])
-			TR = numpy.array(FID['registeredThicknessProfile'])
+			TR = numpy.ravel(numpy.array(FID['registeredThicknessProfileCov']))
 			S = numpy.array(FID['validStreamlines'])
+			B = numpy.array(FID['bendingAngle'])
 			
 			T[numpy.where(S == 0)] = numpy.nan
+			if headersWritten == False and writeHeaders == True:
+				headersWritten = True
+				allThicknessFID.write('Subject,')
+				allRegisteredThicknessFID.write('Subject,')
+				
+				allThicknessFID.write(",".join(['Node' + ("%03g" % x) for x in range(1, T.size + 1)]) + "\n")
+				allRegisteredThicknessFID.write(",".join(['Node' + ("%03g" % x) for x in range(1, T.size + 1)]) + "\n")
+				allBendingAnglesFID.write('Subject,BendingAngle\n')
+
+			allThicknessFID.write(curFile + ",")
+			allRegisteredThicknessFID.write(curFile + ",")
+			allBendingAnglesFID.write(curFile + ",")
+
+			
+			#curThicknessProfile = numpy.array(FID['thicknessProfile'])
+			
+			#print ','.join([str(x) for x in TR.tolist()]) + "\n"
 
 			allThicknessFID.write(','.join([str(x) for x in T.tolist()]) + "\n")
 			allRegisteredThicknessFID.write(','.join([str(x) for x in TR.tolist()]) + "\n")
+			allBendingAnglesFID.write(('%f\n' % (B)))
+			
 			for curStat in regionalStats:
 				witelsonStatsFIDS[curStat].write(curFile + ',')
 				hoferFrahmStatsFIDS[curStat].write(curFile + ',')
@@ -115,6 +140,7 @@ def main():
 		pass
 	allThicknessFID.close()
 	allRegisteredThicknessFID.close()
+	allBendingAnglesFID.close()
 	for curStat in regionalStats:
 		witelsonStatsFIDS[curStat].close()
 		hoferFrahmStatsFIDS[curStat].close()

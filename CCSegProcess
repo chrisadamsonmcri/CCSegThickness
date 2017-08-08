@@ -7,6 +7,7 @@ import sys
 import numpy
 import getopt
 import errno
+import shutil
 
 import CCSegPipeThickness
 import CCSegPipeMidSag
@@ -24,40 +25,56 @@ def criticalError(errorString):
 def usage():
 	print "Usage: " + sys.argv[0] + " [options] <input directory> <output directory>"
 	print
-	print "\tDESCRIPTION"
+	print "DESCRIPTION"
 	print
-	print "\t\tFront end script for CC Segmentation and Thickness profile pipeline, processing components"
+	print "Front end script for CC Segmentation and Thickness profile pipeline, processing components"
 	print
-	print "\t\tPerforms the following steps:"
-	print "\t\t\t1. Midsagittal plane extraction"
-	print "\t\t\t2. CC segmentation"
-	print "\t\t\t3. Thickness profile generation"
-	print "\t\t\t4 (optional). Projection of segmentation and parcellations back to native space"
+	print "Performs the following steps:"
+	print "\t1. Midsagittal plane extraction"
+	print "\t2. CC segmentation"
+	print "\t3. Thickness profile generation"
+	print "\t4 (optional). Projection of segmentation and parcellations back to native space"
 	print
 	print "The above steps may be executed with the following switches"
 	print
-	print "\tPROCESSING DIRECTIVES (do options)"
-	print "\t\t--do-midsag: Step 1"
-	print "\t\t--do-seg: Step 2"
-	print "\t\t--do-thickness: Step 3"
-	print "\t\t--do-segtonative: Step 4"
-	print "\t\t--do-all: Steps 1, 2, 3, and 4"
-	print "\t\t--do-thicknessmanedit: Step 3, but only process subjects that have manually edited segmentations"
+	print "PROCESSING DIRECTIVES (do options)"
+	print "\t--do-midsag: Step 1"
+	print "\t--do-seg: Step 2"
+	print "\t--do-thickness: Step 3"
+	print "\t--do-segtonative: Step 4"
+	print "\t--do-all: Steps 1, 2, 3, and 4"
+	print "\t--do-thicknessmanedit: Step 3, but only process subjects that have manually edited segmentations"
 	print
-	print "\tOPTIONS"
-	print "\t\t--num-thickness-nodes=(integer): the number of streamlines and thickness profiles to generate, 100 if not given"
-	print "\t\t--msp-method=(string): the method to use for MSP extraction, supported values are 'flirt', 'acpcdetect' and 'long', 'acpcdetect' is the default if not specified"
-	print "\t\t--redo-done: each processing step will not overwrite existing output, this forces existing output to be overwritten"
-	print "\t\t--dilate-parasag: when performing the backprojection to native, dilate the segmentation and parcellations to the neighbouring parasagittal slices"
-	print "\t\t--save-graphics: output graphics showing results of processing steps, look in subdirectories of output directory"
-	print "\t\t--seg-no-lk: do not perform Lucas-Kanade tracking"
-	print "\t\t--seg-no-auto: do not perform automatic segmentation, leave empty segmentation on midsagittal slice, use if all automatic options fail"
+	print "OPTIONS"
+	print "MSP options (--do-midsag) options:"
+	print "\t--msp-method=(string): the method to use for MSP extraction, supported values are 'flirt', 'acpcdetect' and 'long', 'acpcdetect' is the default if not specified"
 	print
+	print "Segmentation (--do-seg) options:"
+	print "\t--seg-no-lk: do not perform Lucas-Kanade tracking"
+	print "\t--seg-choose-first: choose the first initialisation point for the segmentation output"
+	print "\t--seg-no-auto: do not perform automatic segmentation, leave empty segmentation on midsagittal slice, use if all automatic options fail"
+	print
+	print "Thickness profile (--do-thickness) options:"
+	print "\t--num-thickness-nodes=(integer): the number of streamlines and thickness profiles to generate, 100 if not given"
+	print
+	print "Segmentation to native (--do-segtonative) options:"
+	print "\t--dilate-parasag: when performing the backprojection to native, dilate the segmentation and parcellations to the neighbouring parasagittal slices"
+	print
+	print "Misc options:"
+	print "\t--redo-done: each processing step will not overwrite existing output, this forces existing output to be overwritten"
+	print "\t--save-graphics: output graphics showing results of processing steps, look in subdirectories of output directory"
 	CCSegSubjectSelection.printHelpText()
 
 def main():
 	
-	longOptStrings = ['num-thickness-nodes=', 'msp-method=', 'redo-done', 'do-midsag', 'do-seg', 'do-thickness', 'do-segtonative', 'do-all', 'do-thicknessmanedit', 'save-graphics', 'seg-no-lk', 'seg-no-auto', 'dilate-parasag', 'long-subject-timepoint-file=']
+	longOptStrings = ['do-midsag', 'do-seg', 'do-thickness', 'do-segtonative', 'do-all', 'do-thicknessmanedit'] # do directives
+	longOptStrings.extend(['skullstripped']) # midsag options
+	longOptStrings.extend(['msp-method=']) # midsag options
+	longOptStrings.extend(['seg-no-lk', 'seg-no-auto', 'seg-choose-first', 'seg-grid-initpoints']) # seg options
+	longOptStrings.extend(['num-thickness-nodes=', 'thickness-no-reg']) # thickess options
+	longOptStrings.extend(['dilate-parasag']) # segtonative options
+	longOptStrings.extend(['long-subject-timepoint-file=']) # longitudinal options
+	longOptStrings.extend(['redo-done', 'save-graphics']) # misc options
 	longOptStrings.extend(CCSegSubjectSelection.getOptions())	
 	opts, args = getopt.getopt(sys.argv[1:], "h", longOptStrings)
 	
@@ -74,16 +91,21 @@ def main():
 	doThickness = False
 	doThicknessManedit = False
 
-	MSPMethod = 'acpcdetect'
+	MSPMethod = 'symmetric'
 	numThicknessNodes = 100
 	redoDone = False
 	doGraphics = False
 	dilateToParaSag = False
-	
+	thicknessNoReg = False
+
 	quitOnError = False
 
 	segLK = True
 	segNoAuto = False
+	segChooseFirst = False
+	segGridInitPoints = True
+
+	skullStripped = False
 
 	longSubjectTimepointFile = None
 	# do the mandatory arguments first
@@ -130,12 +152,20 @@ def main():
 			doThicknessManedit = True
 		if o == '--save-graphics':
 			doGraphics = True
+		if o == '--skullstripped':
+			skullStripped = True
 		if o == '--seg-no-lk':
 			segLK = False
 		if o == '--seg-no-auto':
 			segNoAuto = True
+		if o == '--seg-choose-first':
+			segChooseFirst = True
+		if o == '--seg-grid-initpoints':
+			segGridInitPoints = True
 		if o == '--dilate-parasag':
 			dilateToParaSag = True
+		if o == '--thickness-no-reg':
+			thicknessNoReg = True
 		if o == '--long-subject-timepoint-file':
 			longSubjectTimepointFile = a
 	#for o, a in opts:
@@ -144,10 +174,11 @@ def main():
 	#if MSPMethod == "acpcdetect":
 	#	print "Warning: the acpcdetect method does not yet give me backprojection to native space"
 	
-	MSPMethods = ['flirt', 'acpcdetect', 'long', 'none']
+	MSPMethods = ['flirt', 'flirt_affine', 'acpcdetect', 'long', 'symmetric', 'none']
+	MSPMethods = ['symmetric']
 
 	if not MSPMethod in MSPMethods:
-		criticalError("The MSP Method specified is unsupported")
+		criticalError("Only the MSP Method \"symmetric\" is supported now, the others have been deprecated")
 
 	if numThicknessNodes <= 0:
 		criticalError("The number of thickness nodes specified was not positive")
@@ -168,41 +199,36 @@ def main():
 	if len(actualInputFiles) == 0:
 		criticalError("No subjects to process")
 	
-	try:
-		os.makedirs(outputDirectory)
-	except OSError as exc: # Python >2.5
-		if exc.errno == errno.EEXIST and os.path.isdir(outputDirectory):
-			pass
-		else:
-			raise Exception
+	CCSegUtils.mkdirSafe(outputDirectory)
+
 	#quit()
 	#03_S_1122_sc_seg.hdf5
 	#for curFile in inputNIFTIFiles:
-	for curFile in sorted(actualInputFiles):
+	for curSubject in sorted(actualInputFiles):
 	#for curFile in ['003_S_1122_sc']:	
 	#for curFile in ['051_S_1338_sc']:	
 		#print "Current subject: " + curFile
-		outputBase = os.path.join(outputDirectory, curFile)
-		
+		outputBase = os.path.join(outputDirectory, curSubject)
+
 		if doMidsag:
 			if redoDone or not os.path.isfile(outputBase + "_midsag.hdf5"):
-				try:
-					print curFile + ": midsag"
-					CCSegPipeMidSag.midsagExtract(os.path.join(inputDirectory, curFile), outputBase, MSPMethod, doGraphics = doGraphics)
-				except AssertionError as e:
-					print "MidSag Error: " + str(e) + ", subject " + outputBase
-					if quitOnError:
-						quit()
-					else:
-						continue
-				except Exception as e:
-					print "Midsag Error: " + str(e) + ", subject " + outputBase
-					print traceback.print_exc(file=sys.stdout)
-					continue
+				#try:
+					print curSubject + ": midsag"
+					CCSegPipeMidSag.midsagExtract(os.path.join(inputDirectory, curSubject), outputBase, MSPMethod, doGraphics = doGraphics, skullStripped = skullStripped)
+				#except AssertionError as e:
+				#	print "MidSag Error: " + str(e) + ", subject " + outputBase
+				#	if quitOnError:
+				#		quit()
+				#	else:
+				#		continue
+				#except Exception as e:
+				#	print "Midsag Error: " + str(e) + ", subject " + outputBase
+				#	print traceback.print_exc(file=sys.stdout)
+				#	continue
 		if doSeg:
 			#print outputBase + "_midsag.hdf5"
 			if redoDone or not os.path.isfile(outputBase + "_seg.hdf5"):
-				print curFile + ": seg"
+				print curSubject + ": seg"
 				if os.path.isfile(outputBase + "_seg_manedit.hdf5"):
 					print "Found manedit: " + outputBase + "_seg_manedit.hdf5" + ", but redoing segmentation, deleting"
 					try:
@@ -214,43 +240,71 @@ def main():
 						else:
 							continue
 				try:
-					CCSegPipeSeg.segCC(outputBase, doGraphics = doGraphics, doLK = segLK, segNoAuto = segNoAuto)
+					CCSegPipeSeg.segCC(outputBase, doGraphics = doGraphics, doLK = segLK, segNoAuto = segNoAuto, segChooseFirst = segChooseFirst, segGridInitPoints = segGridInitPoints)
+	
 				except AssertionError as e:
 					print "CCSeg Error: " + str(e) + ", subject " + outputBase
+					
+					L = os.listdir(os.path.join(outputDirectory, 'seg'))
+					CCSegUtils.mkdirSafe(os.path.join(outputDirectory, 'seg_bad'))
+					for curFile in sorted(L):
+						if curFile.startswith(curSubject) and os.path.isfile(os.path.join(outputDirectory, 'seg', curFile)):
+							shutil.copy(os.path.join(outputDirectory, 'seg', curFile), os.path.join(outputDirectory, 'seg_bad'))
+
 					if quitOnError:
 						quit()	
 					else:
 						continue
 				except Exception as e:
 					print "CCSeg Error: " + str(e) + ", subject " + outputBase
+					L = os.listdir(os.path.join(outputDirectory, 'seg'))
+					CCSegUtils.mkdirSafe(os.path.join(outputDirectory, 'seg_bad'))
+					for curFile in sorted(L):
+						if curFile.startswith(curSubject) and os.path.isfile(os.path.join(outputDirectory, 'seg', curFile)):
+							shutil.copy(os.path.join(outputDirectory, 'seg', curFile), os.path.join(outputDirectory, 'seg_bad'))
+
+
+					print traceback.print_exc(file=sys.stdout)
 					continue
 					
 		if doThickness:
 			if redoDone or not os.path.isfile(outputBase + "_thickness.hdf5"):
-				print curFile + ": thickness"
+				print curSubject + ": thickness"
 				try:
 					#print outputBase + "_seg.hdf5"
-					CCSegPipeThickness.thicknessCC(outputBase, doGraphics = doGraphics)
+					CCSegPipeThickness.thicknessCC(outputBase, doGraphics = doGraphics, thicknessNoReg = thicknessNoReg)
 				except AssertionError as e:
-					print "CCSeg Error: " + str(e) + ", subject " + outputBase
+					print "CCSeg thickness Error: " + str(e) + ", subject " + outputBase
+					L = os.listdir(os.path.join(outputDirectory, 'seg'))
+					CCSegUtils.mkdirSafe(os.path.join(outputDirectory, 'seg_bad'))
+					for curFile in sorted(L):
+						if curFile.startswith(curSubject) and os.path.isfile(os.path.join(outputDirectory, 'seg', curFile)):
+							shutil.copy(os.path.join(outputDirectory, 'seg', curFile), os.path.join(outputDirectory, 'seg_bad'))
 					if quitOnError:
 						quit()
 					else:
 						continue
 				except Exception as e:
 					print "CCSeg Thickness Error: " + str(e) + ", subject " + outputBase
+					L = os.listdir(os.path.join(outputDirectory, 'seg'))
+					CCSegUtils.mkdirSafe(os.path.join(outputDirectory, 'seg_bad'))
+					for curFile in sorted(L):
+						if curFile.startswith(curSubject) and os.path.isfile(os.path.join(outputDirectory, 'seg', curFile)):
+							shutil.copy(os.path.join(outputDirectory, 'seg', curFile), os.path.join(outputDirectory, 'seg_bad'))
+
+					print traceback.print_exc(file=sys.stdout)
 					if quitOnError:
 						quit()
 					else:
 						continue
-	
+
 
 		if doThicknessManedit and os.path.isfile(outputBase + "_seg_manedit.hdf5"):
 			#print outputBase + "_seg.hdf5"
 			if redoDone or not os.path.isfile(outputBase + "_thickness.hdf5"):
-				print curFile + ": thicknessmanedit"
+				print curSubject + ": thicknessmanedit"
 				try:
-					CCSegPipeThickness.thicknessCC(outputBase, doGraphics = doGraphics)
+					CCSegPipeThickness.thicknessCC(outputBase, doGraphics = doGraphics, thicknessNoReg = thicknessNoReg)
 				except AssertionError as e:
 					print "CCSeg Error: " + str(e) + ", subject " + outputBase
 					if quitOnError:
@@ -265,13 +319,13 @@ def main():
 						continue
 	
 		if doSegToNative and not doThicknessManedit:
-			print curFile + ": segtonative"
+			print curSubject + ": segtonative"
 			#print "doing segtonative"
-			if os.path.isfile(outputBase + "_seg.hdf5") and (redoDone or not os.path.isfile(outputBase + "_native.nii.gz")):
+			if os.path.isfile(outputBase + "_seg.hdf5"):# and (redoDone or not os.path.isfile(outputBase + "_native.nii.gz")):
 				try:
 					CCSegPipeSegToNative.segCCToNative(outputBase, dilateToParaSag = dilateToParaSag)
 				except AssertionError as e:
-					print "CCSeg Error: " + str(e) + ", subject " + outputBase
+					print "CCSegToNative Error: " + str(e) + ", subject " + outputBase
 					if quitOnError:
 						quit()
 					else:
@@ -281,7 +335,7 @@ def main():
 		if doSegToNative and doThicknessManedit:
 			#print "doing segtonative"
 			if os.path.isfile(outputBase + "_seg.hdf5") and os.path.isfile(outputBase + "_seg_manedit.hdf5") and (redoDone or not os.path.isfile(outputBase + "_native.nii.gz")):
-				print curFile + ": segtonative"
+				print curSubject + ": segtonative"
 				try:
 					CCSegPipeSegToNative.segCCToNative(outputBase, dilateToParaSag = dilateToParaSag)
 				except AssertionError as e:
@@ -295,7 +349,7 @@ def main():
 
 	#quit()
 
-	#for curFile in inputNIFTIFiles:
+	#for curSubject in inputNIFTIFiles:
 #def main():
 
 

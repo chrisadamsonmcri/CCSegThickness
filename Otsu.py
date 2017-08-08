@@ -342,7 +342,7 @@ def robustOtsu(IMG, PercentageCutoff, NumberClasses=2, maskOutZeros = False):
 	bottomIDX = numpy.floor(T.size * PercentageCutoff[0]) - 1
 	topIDX    = numpy.ceil(T.size * PercentageCutoff[1])
 	
-	T = T[bottomIDX:topIDX]
+	T = T[int(bottomIDX):int(topIDX)]
 	originalRange = numpy.max(T) - numpy.min(T)
 	originalMin = numpy.min(T)
 

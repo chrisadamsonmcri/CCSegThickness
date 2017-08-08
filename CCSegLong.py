@@ -32,6 +32,7 @@ def loadLongSubjectFile(fileName):
 						else:
 							timePointsToReference[otherImage] = referenceImage
 				else:
+					mainAndTimePoints[referenceImage] = None
 					timePointsToReference[referenceImage] = None
 		fp.close()
 		return (mainAndTimePoints, timePointsToReference)

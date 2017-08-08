@@ -29,7 +29,7 @@ def jacobianAffine(IMGSize):
 	assert(numpy.size(IMGSize) == 2),"Affine Jacobian calculation, image shape is not 2D"
 
 #	NumPixels = prod(IMGSize);
-	numPixels = numpy.prod(IMGSize)
+	numPixels = int(numpy.prod(IMGSize))
 
 #	[X, Y] = meshgrid(1:IMGSize(2), 1:IMGSize(1));
 	X, Y = numpy.meshgrid(numpy.arange(1, IMGSize[1] + 1), numpy.arange(1, IMGSize[0] + 1))
@@ -217,15 +217,14 @@ def weightedAffineInvCompWarpCost(targetIMG, templateIMG, templateWeight, curPar
 	#print "oiajfdoijadsf"
 
 	errorIMG = targetIMGToTemplate - templateIMG
-
 	
 	LKCost = numpy.sum(errorIMG * templateWeight * errorIMG)
 	
 	# find out if any coordinates are not in the mask
-	if targetIMGMask != None:
-		T = CCSegUtils.interp2q(numpy.arange(1, targetIMG.shape[1] + 1), numpy.arange(1, targetIMG.shape[0] + 1), targetIMGMask, TX, TY, extrapval = 0)
-		if numpy.any(T == 0):
-			LKCost = numpy.inf
+	#if targetIMGMask != None:
+	#	T = CCSegUtils.interp2q(numpy.arange(1, targetIMG.shape[1] + 1), numpy.arange(1, targetIMG.shape[0] + 1), targetIMGMask, TX, TY, extrapval = 0)
+	#	if numpy.count_nonzero(T == 0) > T.size / 4:
+	#		LKCost = numpy.inf
 	
 	return (targetIMGToTemplate, TX, TY, errorIMG, LKCost)
 	#

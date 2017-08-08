@@ -20,6 +20,10 @@ import CCSegUtils
 import scipy
 import scipy.ndimage
 
+import CCSegPipeSeg
+
+import pylab
+
 def usage():
 	print "Usage: " + sys.argv[0] + " [options] <output directory>"
 	print
@@ -36,8 +40,8 @@ def usage():
 
 class UIManagerExample:
 
-	WIDTH = 800
-	HEIGHT = 600
+	WIDTH = 1000
+	HEIGHT = 800
 	
 #	ui = '''<ui>
 #	<toolbar name="BrushToolbar">
@@ -90,7 +94,7 @@ class UIManagerExample:
 	
 	def undo_cb(self, b):
 		
-		if not self.curUndoIMG == None:
+		if not self.curUndoIMG is None:
 			self.CCSegs[self.curUndoSubjectID]['finalSegManEdit'] = numpy.array(self.curUndoIMG)
 
 		if self.curSubjectID == self.curUndoSubjectID:	
@@ -140,7 +144,24 @@ class UIManagerExample:
 				I = numpy.argmax(H)
 				self.CCSegs[self.curSubjectID]['finalSegManEdit'] = (CCSegLabels == bin_edges[I])
 			pass
-
+		elif data == 'watershed':
+			watershedSeg, watershedMarkers, watershedTransform, edgeMAG = CCSegPipeSeg.watershedTransformSeg(self.CCSegs[self.curSubjectID]['IMG'], self.CCSegs[self.curSubjectID]['finalSegManEdit'])
+#			print numpy.count_nonzero(self.CCSegs[self.curSubjectID]['finalSegManEdit'])
+#			print numpy.mean(self.CCSegs[self.curSubjectID]['IMG'])
+#			pylab.clf()
+#			pylab.subplot(2, 2, 1)
+#			CCSegUtils.showIMG(watershedMarkers)
+#			pylab.subplot(2, 2, 2)
+#			CCSegUtils.showIMG(watershedTransform)
+#			pylab.subplot(2, 2, 3)
+#			CCSegUtils.showIMG(edgeMAG)
+#			pylab.subplot(2, 2, 4)
+#			CCSegUtils.showIMG(watershedSeg)
+#			pylab.gcf().set_size_inches((20, 10), forward = True)
+#			pylab.show()
+			
+			self.CCSegs[self.curSubjectID]['finalSegManEdit'] = numpy.array(watershedSeg)
+			pass
 		self.updateSubject()
 
 	def saveSegs(self):
@@ -168,7 +189,7 @@ class UIManagerExample:
 	
 	def initSegChanging(self):
 
-		if self.CCSegs[self.curSubjectID]['finalSegManEdit'] == None:
+		if self.CCSegs[self.curSubjectID]['finalSegManEdit'] is None:
 			self.CCSegs[self.curSubjectID]['finalSegManEdit'] = numpy.array(self.CCSegs[self.curSubjectID]['originalSeg'])
 
 		# copy the current segmentation to the undo image
@@ -217,6 +238,20 @@ class UIManagerExample:
 		T = numpy.ravel(numpy.uint16(T))
 		return gtk.gdk.Color(red = T[0], green = T[1], blue = T[2])
 
+	def on_key_press_event(self, widget, event):
+		keyname = gtk.gdk.keyval_name(event.keyval)
+		#print "Key %s (%d) was pressed" % (keyname, event.keyval)
+		curSubjectIDX = int(self.curSubjectSlider.get_value())
+
+		if keyname == 'space':
+			if curSubjectIDX < len(self.CCSegSubjectIDs):
+				self.curSubjectSlider.set_value(curSubjectIDX + 1)
+				self.updateSubject()
+		if keyname == 'BackSpace':
+			if curSubjectIDX > 1:
+				self.curSubjectSlider.set_value(curSubjectIDX - 1)
+				self.updateSubject()
+
 	def __init__(self):
 		# Create the toplevel window
 		window = gtk.Window()
@@ -224,6 +259,8 @@ class UIManagerExample:
 		window.set_size_request(self.WIDTH, self.HEIGHT)
 		window.set_title("CCSegPipe manual editing tool")
 		window.connect("delete-event", self.window_deleting_cb)
+		window.connect('key_press_event', self.on_key_press_event)
+
 		self.lwidth = self.WIDTH
 		self.lheight = self.HEIGHT
 
@@ -368,9 +405,12 @@ class UIManagerExample:
 		morphFillHolesButton = gtk.Button(label = "Fill holes")
 		morphFillHolesButton.connect("clicked", self.morphother_cb, 'fillholes')
 		morphFrameBox.pack_start(morphFillHolesButton, expand = False, fill = False)
+		
+		watershedHolesButton = gtk.Button(label = "Watershed")
+		watershedHolesButton.connect("clicked", self.morphother_cb, 'watershed')
+		morphFrameBox.pack_start(watershedHolesButton, expand = False, fill = False)
 
 		leftVBox.pack_start(morphFrame, expand = False, fill = False)
-		
 				
 		coloursFrame = gtk.Frame("Colours")
 		leftVBox.pack_start(coloursFrame, expand = False, fill = False)
@@ -514,7 +554,6 @@ class UIManagerExample:
 		self.curUndoIMG = None
 		self.curUndoSubjectID = None
 		self.curSegModMode = None
-		
 
 		window.show_all()
 	
@@ -602,11 +641,11 @@ class UIManagerExample:
 					self.curSegModColour = None
 					self.curSegModMode = None
 			
-			if self.curSegModColour != None:
+			if not self.curSegModColour is None:
 				M = self.maskFromClick(imgCoords)
 				self.curSegChangeIMG = numpy.logical_or(self.curSegChangeIMG, M)
 				
-				if self.CCSegs[self.curSubjectID]['finalSegManEdit'] == None:
+				if self.CCSegs[self.curSubjectID]['finalSegManEdit'] is None:
 					self.CCSegs[self.curSubjectID]['finalSegManEdit'] = numpy.zeros(self.curIMGShape, dtype = numpy.bool)
 				
 				T = numpy.array(self.curIMGRGB)
@@ -629,7 +668,7 @@ class UIManagerExample:
 				self.CCSegs[self.curSubjectID]['finalSegManEdit'] = numpy.logical_and(self.CCSegs[self.curSubjectID]['finalSegManEdit'], numpy.logical_not(self.curSegChangeIMG))
 
 			# update the image
-			if self.curSegModMode != None:
+			if not self.curSegModMode is None:
 				
 				T = numpy.array(self.curIMGRGB)
 				T = self.addSegToRGBIMG(T, self.CCSegs[self.curSubjectID]['finalSegManEdit'], self.segColours['seg'])
@@ -662,7 +701,7 @@ class UIManagerExample:
 			self.mainImageAllocationWidth = allocation.width
 			
 			T = numpy.array(self.curIMGRGB)
-			if self.CCSegs[self.curSubjectID]['finalSegManEdit'] != None:
+			if not self.CCSegs[self.curSubjectID]['finalSegManEdit'] is None:
 				T = self.addSegToRGBIMG(T, self.CCSegs[self.curSubjectID]['finalSegManEdit'], self.segColours['seg'])
 			else:
 				T = self.addSegToRGBIMG(T, self.CCSegs[self.curSubjectID]['originalSeg'], self.segColours['seg'])
@@ -717,7 +756,7 @@ class UIManagerExample:
 		
 		self.curIMGRGB = numpy.array(T)
 		
-		if self.CCSegs[self.curSubjectID]['finalSegManEdit'] != None:
+		if not self.CCSegs[self.curSubjectID]['finalSegManEdit'] is None:
 			T = self.addSegToRGBIMG(T, self.CCSegs[self.curSubjectID]['finalSegManEdit'], self.segColours['seg'])
 		else:
 			T = self.addSegToRGBIMG(T, self.CCSegs[self.curSubjectID]['originalSeg'], self.segColours['seg'])
@@ -776,7 +815,7 @@ def main():
 	inputSegHDF5Files = [x for x in sorted(inputDirectoryFileList) if x.endswith("_seg.hdf5")]
 	inputSegHDF5FilesPrefixes = [x[:-len("_seg.hdf5")] for x in inputSegHDF5Files]
 	
-	if startSubject == None:
+	if startSubject is None:
 		startSubjectIDX = 0
 	else:
 		try:
@@ -804,7 +843,11 @@ def main():
 			FIDManedit.close()
 		else:
 			#print curFile + "_seg.hdf5"
-			CCSegs[curFile]['originalSeg'] = numpy.array(FID['finalSegNoArtefacts'])
+			try:
+				CCSegs[curFile]['originalSeg'] = numpy.array(FID['watershedSeg'])
+			except Exception:
+				CCSegs[curFile]['originalSeg'] = numpy.array(FID['finalSegNoArtefacts'])
+			CCSegs[curFile]['originalSeg'] = numpy.array(CCSegs[curFile]['originalSeg']) > 0
 			CCSegs[curFile]['finalSegManEdit'] = None
 		FID.close()
 	

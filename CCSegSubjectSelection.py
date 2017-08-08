@@ -9,14 +9,14 @@ def criticalError(errorString):
 	quit()
 
 def printHelpText():
-	print "\tSUBJECT SELECTION - use these options to select which images in <input directory> are processed"
-	print "\tEach of these options take an option <file> that point to a file containing a newline delimited list of image prefixes"
+	print "SUBJECT SELECTION - use these options to select which images in <input directory> are processed"
+	print "Each of these options take an option <file> that point to a file containing a newline delimited list of image prefixes"
 	print
-	print "\t\t--single-subject=<nifti file prefix>: only this subject will be processed"
-	print "\t\t--subjects-include=<comma separated list>: comma separated list of subjects to process"
-	print "\t\t--subjects-include-file=<file>: file name that contains a newline-delimited list of subjects to process"
-	print "\t\t--subjects-exclude=<comma separated list>: comma separated list of subjects to exclude"
-	print "\t\t--subjects-exclude-file=<file>: file name that contains a newline-delimited list of subjects to exclude"
+	print "\t--single-subject=<nifti file prefix>: only this subject will be processed"
+	print "\t--subjects-include=<comma separated list>: comma separated list of subjects to process"
+	print "\t--subjects-include-file=<file>: file name that contains a newline-delimited list of subjects to process"
+	print "\t--subjects-exclude=<comma separated list>: comma separated list of subjects to exclude"
+	print "\t--subjects-exclude-file=<file>: file name that contains a newline-delimited list of subjects to exclude"
 
 def getOptions():
 	return ['subjects-include=', 'subjects-exclude=', 'subjects-include-file=', 'subjects-exclude-file=', 'single-subject=']

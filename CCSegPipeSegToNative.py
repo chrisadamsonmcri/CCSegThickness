@@ -14,7 +14,8 @@ import h5py
 import shutil
 
 import CCSegUtils
-
+import CCSegPipeMidSagSymmetric
+import subprocess
 
 def segCCToNativeOneFile(segIMG, outputBase, midSagMATFile, segMATFile, dilateToParaSag = False, flirtInterpType = 'trilinear'):
 	
@@ -36,106 +37,83 @@ def segCCToNativeOneFile(segIMG, outputBase, midSagMATFile, segMATFile, dilateTo
 	
 	MSPMethod = str(numpy.array(FID['MSPMethod']))
 	
-	FID.close()
+	if not MSPMethod == 'symmetric':
+		raise
 
 	midSagAVW = numpy.array(FID['midSagAVW'])
-	
 	skullCrop = numpy.array(FID["skullCrop"]) # the initial cropping indices of the background
-	originalOrientationString = str(numpy.array(FID['originalOrientationString']))
-	originalNativeFile = str(numpy.array(FID['originalNativeFile']))
-	originalNativeCroppedFile = str(numpy.array(FID['originalNativeCroppedFile']))
-	flirtTemplateFile = str(numpy.array(FID['flirtTemplateFile']))
-	
-	if flirtTemplateFile == "***":
-		flirtTemplateFile = CCSegUtils.MNI152FLIRTTemplate()
-	
-	flirtMAT = numpy.array(FID["flirtMAT"]) # the transformation between  originalNativeCroppedFile -> flirtTemplateFile
-	flirtCropZerosRows = numpy.array(FID["flirtCropZerosRows"])
-	flirtCropZerosCols = numpy.array(FID["flirtCropZerosCols"])
+	NIIOrnt = numpy.int16(numpy.array(FID["NIIOrnt"]))
+	NIIAffine = numpy.array(FID["NIIAffine"])
+	NIIShape = numpy.int16(numpy.array(FID["NIIShape"]))
+	axialNIIShape = numpy.int16(numpy.array(FID["axialNIIShape"]))
+	midSlice = numpy.int16(numpy.array(FID["midSlice"]))
+	IMGxx = numpy.array(FID["IMGxx"])
+	IMGyy = numpy.array(FID["IMGyy"])
+	IMGzz = numpy.array(FID["IMGzz"])
+	finalRotY = numpy.array(FID["finalRotY"])
+	finalRotZ = numpy.array(FID["finalRotZ"])
+	finalTransX = numpy.array(FID["finalTransX"])
 
-	
+
 	#midSagAVW = midSagAVW[:, ::-1]
 	#midSagAVW = numpy.rot90(midSagAVW, -1)
 	FID.close()
 	
-	if not numpy.array_equal(flirtMAT.shape, (4, 4)):
-		print "the flirt matrix should be a 4x4 array, it is not"
-		return
-
-	del FID
-
-
 	#pylab.subplot(1, 4, 1); CCSegUtils.showIMG(seg['initialSeg'])
 	#pylab.subplot(1, 4, 2); CCSegUtils.showIMG(seg['finalSeg'])
 	#pylab.subplot(1, 4, 3); CCSegUtils.showIMG(seg['finalSegNoArtefacts'])
 	#pylab.subplot(1, 4, 4); CCSegUtils.showIMG(seg['IMG'])
 	
+	# this is going to be the segmentation in original resampled shape
 	finalSegResampledAVWSpace = numpy.zeros(resampledAVWShape, dtype = numpy.uint8)
-
-	#finalSegResampledAVWSpace[LKOutput['cropRows'], LKOutput['cropCols']] = finalSeg
+	
+	# place the segmentation in the bounding box specified by the Lucas Kanade bounding box
 	finalSegResampledAVWSpace[LKCropRows[0]:(LKCropRows[1] + 1), LKCropCols[0]:(LKCropCols[1] + 1)] = segIMG
 	midSagAVWX, midSagAVWY = numpy.meshgrid(midSagAVWxx, midSagAVWyy)
 	
+	# resample the midsagittal slice in resampled space to the original space
 	finalSegMidSagAVWSpace = CCSegUtils.interp2q(resamplexx, resampleyy, numpy.double(finalSegResampledAVWSpace), midSagAVWX, midSagAVWY, interpmethod = 'nearest', extrapval = 0)
 	
-	flirtTemplateNII = nibabel.load(flirtTemplateFile)
-	
+	finalSegNativeAxialCroppedSpace = numpy.zeros(axialNIIShape, dtype = numpy.int8)
+	#print axialNIIShape
+	#print finalSegNativeAxialCroppedSpace.shape
 	#print finalSegMidSagAVWSpace.shape
-	finalSegTemplateSpace = numpy.zeros((flirtTemplateNII.shape[2], flirtTemplateNII.shape[1]), dtype = numpy.uint8)
-	#print finalSegTemplateSpace.shape
-	finalSegTemplateSpace[flirtCropZerosRows[0]:(flirtCropZerosRows[-1] + 1), flirtCropZerosCols[0]:(flirtCropZerosCols[-1] + 1)] = finalSegMidSagAVWSpace
-	
-	finalSegTemplateSpaceNIIData = numpy.zeros((flirtTemplateNII.shape[1], flirtTemplateNII.shape[0], flirtTemplateNII.shape[2]), dtype = numpy.uint8)
+	#quit()
+	finalSegNativeAxialCroppedSpace[midSlice] = numpy.rot90(finalSegMidSagAVWSpace, -1)
+	#if dilateToParaSag:
+	finalSegNativeAxialCroppedSpace[midSlice - 1] = numpy.rot90(finalSegMidSagAVWSpace, -1)
+	finalSegNativeAxialCroppedSpace[midSlice + 1] = numpy.rot90(finalSegMidSagAVWSpace, -1)
 
-	#NIIData = flirtTemplateNII.get_data()
-	#NIIData = numpy.rot90(NIIData, 1)
+	#NIISaving = nibabel.Nifti1Image(finalSegNativeAxialCroppedSpace, NIIAffine)
 	
-	#print "flirt template: " + flirtTemplateFile
-
-	T = math.floor(flirtTemplateNII.shape[0] / 2)
-	
-	#print flirtTemplateNII
-	#print finalSegTemplateSpaceNIIData.shape
-	#print finalSegTemplateSpace.shape
-	finalSegTemplateSpaceNIIData[:, T] = numpy.rot90(finalSegTemplateSpace[:, ::-1], -1)
-	if dilateToParaSag == True:
-		finalSegTemplateSpaceNIIData[:, T - 1] = numpy.rot90(finalSegTemplateSpace[:, ::-1], -1)
-		finalSegTemplateSpaceNIIData[:, T + 1] = numpy.rot90(finalSegTemplateSpace[:, ::-1], -1)
-
-	finalSegTemplateSpaceNIIData = numpy.uint8(numpy.rot90(finalSegTemplateSpaceNIIData, -1))
-	
-	newNII = nibabel.Nifti1Image(finalSegTemplateSpaceNIIData, flirtTemplateNII.get_affine())
-	
-	NIITempDir = tempfile.mkdtemp()
-	nibabel.save(newNII, os.path.join(NIITempDir, 'test.nii.gz'))
-	
-	invFlirtMAT = numpy.linalg.inv(flirtMAT)
-	numpy.savetxt(os.path.join(NIITempDir, 'test.mat'), invFlirtMAT, fmt = '%.18f')
-
-	# run flirt to project the segmentation to native space
-	CommandString = os.environ['FSLDIR'] + '/bin/flirt -in ' + os.path.join(NIITempDir, 'test') + ' -ref ' + originalNativeCroppedFile + ' -applyxfm -init ' + os.path.join(NIITempDir, 'test.mat') + ' -interp ' + flirtInterpType + ' -out ' + (outputBase + "_native_axial_cropped.nii.gz")
-	#print CommandString
-	os.system(CommandString)
-	
-	segNativeCroppedNII = nibabel.load((outputBase + "_native_axial_cropped.nii.gz"))
-
-	originalNativeNII = nibabel.load(originalNativeFile)
-	finalSegNativeNIIData = numpy.zeros(originalNativeNII.shape, dtype = segNativeCroppedNII.get_data().dtype)
-	finalSegNativeNIIData = numpy.rot90(finalSegNativeNIIData, 1)
-	finalSegNativeNIIData[skullCrop[0, 0]:(skullCrop[0, 1] + 1), skullCrop[1, 0]:(skullCrop[1, 1] + 1), skullCrop[2, 0]:(skullCrop[2, 1] + 1)] = numpy.rot90(segNativeCroppedNII.get_data(), 1)
-	finalSegNativeNIIData = numpy.rot90(finalSegNativeNIIData, -1)
-	
+	#nibabel.save(NIISaving, outputBase + "_native_test_axial.nii.gz")
 	#print skullCrop
-	finalSegNativeSpaceNII = nibabel.Nifti1Image(finalSegNativeNIIData, originalNativeNII.get_affine())
 	
-	nibabel.save(finalSegNativeSpaceNII, (outputBase + "_native_axial.nii.gz"))
-		
-	os.system(os.environ['FSLDIR'] + '/bin/fslswapdim ' + (outputBase + "_native_axial.nii.gz") + ' ' + originalOrientationString + ' ' + (outputBase + "_native.nii.gz"))
+	#print finalSegNativeAxialCroppedSpace.shape
+	#print IMGxx.shape
+	#print IMGyy.shape
+	#print IMGzz.shape
+	finalSegNativeAxialCroppedSpace = CCSegPipeMidSagSymmetric.transformIMG(finalSegNativeAxialCroppedSpace, IMGxx, IMGyy, IMGzz, -finalRotY, -finalRotZ, -finalTransX, interpmethod = 'nearest') 
+	
+	finalSegNativeAxialCroppedSpace = numpy.rot90(finalSegNativeAxialCroppedSpace, 1)
+	# uncrop using skull crop
+	finalSegNativeAxialSpace = numpy.zeros((NIIShape[1], NIIShape[0], NIIShape[2]), dtype = numpy.int8)
+	finalSegNativeAxialSpace[skullCrop[0, 0]:(skullCrop[0, 1] + 1), skullCrop[1, 0]:(skullCrop[1, 1] + 1), skullCrop[2, 0]:(skullCrop[2, 1] + 1)] = numpy.array(finalSegNativeAxialCroppedSpace)
+	
+	finalSegNativeAxialSpace = numpy.rot90(finalSegNativeAxialSpace, -1);
+	# transform to original orientation
 
-	shutil.rmtree(NIITempDir)
-
-	del newNII
-	del T
+	MNITemplate = CCSegUtils.MNI152FLIRTTemplate(skullStripped = False)
+	MNITemplateNII = nibabel.load(MNITemplate)
+	MNIAXCodes = nibabel.aff2axcodes(MNITemplateNII.get_affine())
+	MNIOrnt = nibabel.orientations.axcodes2ornt(MNIAXCodes)
+	
+	MNIToNIITransformOrnt = nibabel.orientations.ornt_transform(MNIOrnt, NIIOrnt)
+	
+	nativeNIIIMG = nibabel.orientations.apply_orientation(finalSegNativeAxialSpace, MNIToNIITransformOrnt)
+	NIISaving = nibabel.Nifti1Image(nativeNIIIMG, NIIAffine)
+	
+	nibabel.save(NIISaving, outputBase + "_native.nii.gz")
 
 def segCCToNative(outputBase, doGraphics = False, dilateToParaSag = False):
 	midSagMATFile = outputBase + "_midsag.hdf5"
@@ -173,9 +151,8 @@ def segCCToNative(outputBase, doGraphics = False, dilateToParaSag = False):
 		FID.close()	
 	else:
 		finalSeg = numpy.array(autoFinalSeg)
-	
+		
 	segCCToNativeOneFile(numpy.uint8(finalSeg), outputBase + "_seg", midSagMATFile, segMATFile, dilateToParaSag = dilateToParaSag)
-	#print finalSeg.shape
 	thicknessMATFile = outputBase + "_thickness.hdf5"
 	
 	if os.path.isfile(thicknessMATFile):

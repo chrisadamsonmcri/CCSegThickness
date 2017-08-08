@@ -396,10 +396,10 @@ def main():
 				FID = h5py.File(curThicknessFile, 'r')
 				
 				if useRegisteredProfiles == True:
-					curThicknessProfile = numpy.atleast_2d(numpy.array(FID['registeredThicknessProfile']))
+					curThicknessProfile = numpy.atleast_2d(numpy.ravel(numpy.array(FID['registeredThicknessProfileCov'])))
 				else:
-					curThicknessProfile = numpy.atleast_2d(numpy.array(FID['thicknessProfile']))
-					curValidStreamlines = numpy.atleast_2d(numpy.array(FID['validStreamlines'])) > 0
+					curThicknessProfile = numpy.atleast_2d(numpy.ravel(numpy.array(FID['thicknessProfile'])))
+					curValidStreamlines = numpy.atleast_2d(numpy.ravel(numpy.array(FID['validStreamlines']))) > 0
 					curThicknessProfile[numpy.where(numpy.logical_not(curValidStreamlines))] = numpy.nan
 				
 				thicknessProfiles[curGroupLabel].append(numpy.array(curThicknessProfile))
@@ -408,13 +408,14 @@ def main():
 				print "Subject thickness file not found: " + curThicknessFile
 				quit()
 		thicknessProfiles[curGroupLabel] = numpy.concatenate(thicknessProfiles[curGroupLabel])
+		print thicknessProfiles[curGroupLabel].shape
 		#print thicknessProfiles[curGroupLabel].shape
 	#print thicknessProfiles
 	
 	numNodes = thicknessProfiles[groupLabels[0]].shape[1]
 	
 	cutoffNumber = numpy.int64(numpy.round(numNodes * cullPercent / 100.0))
-
+	
 	validNodeIDX = numpy.arange(cutoffNumber - 1, numNodes - cutoffNumber)
 	#print validNodeIDX
 	if testType == "2sample":
