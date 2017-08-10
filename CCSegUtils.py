@@ -760,7 +760,7 @@ def parasagittalSlicesAndGradients(TIMG, axialNIIPixdims, numSlices = 3):
 	
 	# store the parasagittal slices
 	parasagittalIDX = range(numpy.maximum(0, midSlice - numSlices), numpy.minimum(TIMG.shape[0], midSlice + numSlices + 1))
-	print parasagittalIDX
+	#print parasagittalIDX
 	parasagittalSlices = numpy.take(TIMG, parasagittalIDX, axis = 0)
 #
 	# get gradients

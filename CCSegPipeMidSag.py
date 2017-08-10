@@ -242,6 +242,7 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 		# we may not need this
 		
 		NIIPixdims = NII.get_header().get_zooms()[1:3]
+		#print NII.shape
 
 		if MSPMethod == 'long':
 			# testing
@@ -333,8 +334,10 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 
 			axialNII = nibabel.Nifti1Image(axialNIIIMG, affine = axialAffine)
 			nibabel.save(axialNII, outputBase + "_native.nii.gz")
+			
+			axialNIIShape = axialNII.shape
 
-			axialNIIIMG = numpy.rot90(axialNIIIMG, 1)
+			#axialNIIIMG = numpy.rot90(axialNIIIMG, 1)
 			axialNIIPixdims = axialNII.get_header().get_zooms()
 			#print NIIPixdims
 			#print NewNII.header.get_zooms()
@@ -380,10 +383,12 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 				axialNIIIMG = numpy.round(axialNIIIMG * 1000.0)
 			
 			axialNIIIMG = numpy.int16(axialNIIIMG)
-			axialNIIIMG = numpy.rot90(axialNIIIMG, -1)
+			#axialNIIIMG = numpy.rot90(axialNIIIMG, -1)
 
 			NIISaving = nibabel.Nifti1Image(axialNIIIMG, axialNII.get_affine(), axialNII.get_header())
-			axialNIIShape = NIISaving.shape
+			axialCroppedNIIShape = NIISaving.shape
+			#print "axialNIIShape"
+			#print axialNIIShape
 			NIISaving.set_data_dtype(numpy.int16)
 			
 			if not MSPMethod == 'symmetric':
@@ -646,7 +651,7 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 				midSagAVW = numpy.rot90(midSagAVW, 1)
 				midSagBrainMask = numpy.rot90(midSagBrainMask, 1)
 				midSagAVW[numpy.logical_not(midSagBrainMask > 0)] = 0
-				parasagittalSlices, parasagittalFX, parasagittalFY, parasagittalFZ = CCSegUtils.parasagittalSlicesAndGradients(TIMG, axialNIIPixdims, numSlices = 3)
+				#parasagittalSlices, parasagittalFX, parasagittalFY, parasagittalFZ = CCSegUtils.parasagittalSlicesAndGradients(TIMG, axialNIIPixdims, numSlices = 3)
 
 				#pylab.subplot(1, 2, 1)
 				#pylab.imshow(midSagAVW)
@@ -783,6 +788,7 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 		FID.create_dataset("NIIAffine", data=NII.get_affine())
 		FID.create_dataset("NIIShape", data=NIIShape)
 		FID.create_dataset("axialNIIShape", data=axialNIIShape)
+		FID.create_dataset("axialCroppedNIIShape", data=axialCroppedNIIShape)
 		FID.create_dataset("midSlice", data=midSlice)
 		FID.create_dataset("IMGxx", data=IMGxx)
 		FID.create_dataset("IMGyy", data=IMGyy)

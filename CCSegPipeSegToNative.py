@@ -46,6 +46,7 @@ def segCCToNativeOneFile(segIMG, outputBase, midSagMATFile, segMATFile, dilateTo
 	NIIAffine = numpy.array(FID["NIIAffine"])
 	NIIShape = numpy.int16(numpy.array(FID["NIIShape"]))
 	axialNIIShape = numpy.int16(numpy.array(FID["axialNIIShape"]))
+	axialCroppedNIIShape = numpy.int16(numpy.array(FID["axialCroppedNIIShape"]))
 	midSlice = numpy.int16(numpy.array(FID["midSlice"]))
 	IMGxx = numpy.array(FID["IMGxx"])
 	IMGyy = numpy.array(FID["IMGyy"])
@@ -73,8 +74,11 @@ def segCCToNativeOneFile(segIMG, outputBase, midSagMATFile, segMATFile, dilateTo
 	
 	# resample the midsagittal slice in resampled space to the original space
 	finalSegMidSagAVWSpace = CCSegUtils.interp2q(resamplexx, resampleyy, numpy.double(finalSegResampledAVWSpace), midSagAVWX, midSagAVWY, interpmethod = 'nearest', extrapval = 0)
-	
-	finalSegNativeAxialCroppedSpace = numpy.zeros(axialNIIShape, dtype = numpy.int8)
+	#print finalSegMidSagAVWSpace.shape	
+	#print axialCroppedNIIShape
+	#print axialNIIShape
+
+	finalSegNativeAxialCroppedSpace = numpy.zeros(axialCroppedNIIShape, dtype = numpy.int8)
 	#print axialNIIShape
 	#print finalSegNativeAxialCroppedSpace.shape
 	#print finalSegMidSagAVWSpace.shape
@@ -95,12 +99,18 @@ def segCCToNativeOneFile(segIMG, outputBase, midSagMATFile, segMATFile, dilateTo
 	#print IMGzz.shape
 	finalSegNativeAxialCroppedSpace = CCSegPipeMidSagSymmetric.transformIMG(finalSegNativeAxialCroppedSpace, IMGxx, IMGyy, IMGzz, -finalRotY, -finalRotZ, -finalTransX, interpmethod = 'nearest') 
 	
-	finalSegNativeAxialCroppedSpace = numpy.rot90(finalSegNativeAxialCroppedSpace, 1)
+	#finalSegNativeAxialCroppedSpace = numpy.rot90(finalSegNativeAxialCroppedSpace, 1)
+	
+	#print skullCrop
+	#print finalSegNativeAxialCroppedSpace.shape
+	#print axialNIIShape
+	#print NIIShape
 	# uncrop using skull crop
-	finalSegNativeAxialSpace = numpy.zeros((NIIShape[1], NIIShape[0], NIIShape[2]), dtype = numpy.int8)
+	#finalSegNativeAxialSpace = numpy.zeros((NIIShape[1], NIIShape[0], NIIShape[2]), dtype = numpy.int8)
+	finalSegNativeAxialSpace = numpy.zeros(axialNIIShape, dtype = numpy.int8)
 	finalSegNativeAxialSpace[skullCrop[0, 0]:(skullCrop[0, 1] + 1), skullCrop[1, 0]:(skullCrop[1, 1] + 1), skullCrop[2, 0]:(skullCrop[2, 1] + 1)] = numpy.array(finalSegNativeAxialCroppedSpace)
 	
-	finalSegNativeAxialSpace = numpy.rot90(finalSegNativeAxialSpace, -1);
+	#finalSegNativeAxialSpace = numpy.rot90(finalSegNativeAxialSpace, -1);
 	# transform to original orientation
 
 	MNITemplate = CCSegUtils.MNI152FLIRTTemplate(skullStripped = False)

@@ -46,9 +46,6 @@ def usage():
 	print "\t--do-thicknessmanedit: Step 3, but only process subjects that have manually edited segmentations"
 	print
 	print "OPTIONS"
-	print "MSP options (--do-midsag) options:"
-	print "\t--msp-method=(string): the method to use for MSP extraction, supported values are 'flirt', 'acpcdetect' and 'long', 'acpcdetect' is the default if not specified"
-	print
 	print "Segmentation (--do-seg) options:"
 	print "\t--seg-no-lk: do not perform Lucas-Kanade tracking"
 	print "\t--seg-choose-first: choose the first initialisation point for the segmentation output"
@@ -69,7 +66,6 @@ def main():
 	
 	longOptStrings = ['do-midsag', 'do-seg', 'do-thickness', 'do-segtonative', 'do-all', 'do-thicknessmanedit'] # do directives
 	longOptStrings.extend(['skullstripped']) # midsag options
-	longOptStrings.extend(['msp-method=']) # midsag options
 	longOptStrings.extend(['seg-no-lk', 'seg-no-auto', 'seg-choose-first', 'seg-grid-initpoints']) # seg options
 	longOptStrings.extend(['num-thickness-nodes=', 'thickness-no-reg']) # thickess options
 	longOptStrings.extend(['dilate-parasag']) # segtonative options
@@ -126,8 +122,6 @@ def main():
 		if o == '-h':
 			usage()
 			quit()
-		if o == '--msp-method':
-			MSPMethod = a
 		if o == '--num-thickness-nodes':
 			try:
 				numThicknessNodes = int(a)
