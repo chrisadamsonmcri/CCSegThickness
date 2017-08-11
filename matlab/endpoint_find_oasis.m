@@ -1,0 +1,41 @@
+clear;
+
+D = dir(fullfile('oasis_database', 'flipped', 'OAS*_msp.nii.gz'));
+FigureDir = 'oasis_endpoint_manual_find_figures_local_opt_exhuast_right';
+[~, ~, ~] = mkdir(FigureDir);
+%cc_seg_one_subject('0001_acpc.nii.gz', 'test.png');
+for z = 1:length(D)
+	%disp(['Subject ' num2str(z)]);
+	BaseName = strrep(D(z).name, '.nii.gz', '');
+	CCName = strrep(D(z).name, 'msp', 'cc');
+	%cc_seg_one_subject_final(fullfile('oasis_database', 'flipped', D(z).name), fullfile('oasis_database', 'flipped', CCName), fullfile(FigureDir, [sprintf('%04d', z) '-' BaseName]));
+	NII = load_nii(fullfile('oasis_database', 'flipped', CCName));
+	AVW = flipdim(NII.img', 1);
+	[Contours, SolvedImage, InitialPoints, ArcLengthsLeft, ArcLengthsRight, LeftOffsetIDXStart, CurLeftOffsetIDX, RightOffsetIDXStart, CurRightOffsetIDX] = endpoint_find_one_subject(AVW > 0);
+	[I, J] = find(AVW);
+	W = 5;
+	XData = min(J) - W:max(J) + W;
+	YData = min(I) - W:max(I) + W;
+	subplot(2, 2, [1 2]);
+	hold off;
+	imshow(AVW(YData, XData), [], 'XData', XData, 'YData', YData);
+	hold on;
+	plot(Contours.xo, Contours.yo, 'r', Contours.xi, Contours.yi, 'g', 'LineWidth', 3);
+	plot(InitialPoints(1, 2), InitialPoints(1, 1), 'b*', InitialPoints(2, 2), InitialPoints(2, 1), 'm*');
+	subplot(2, 2, 3);
+	hold off;
+	plot(ArcLengthsLeft);
+	hold on;
+	plot(LeftOffsetIDXStart, ArcLengthsLeft(LeftOffsetIDXStart), '*r', CurLeftOffsetIDX, ArcLengthsLeft(CurLeftOffsetIDX), '*g');
+	title('Left arc lengths, start point red, final point green');
+	subplot(2, 2, 4);
+	hold off;
+	plot(ArcLengthsRight);
+	hold on;
+	plot(RightOffsetIDXStart, ArcLengthsRight(RightOffsetIDXStart), '*r', CurRightOffsetIDX, ArcLengthsRight(CurRightOffsetIDX), '*g');
+	title('Right arc lengths, start point red, final point green');
+	OutputPNG = fullfile(FigureDir, [sprintf('%04d', z) '-' BaseName]);
+	FigPos = fullscreen_fig_pos;
+	set(gcf, 'Position', FigPos, 'PaperPosition', FigPos, 'PaperUnits', 'points');
+	exportfig(gcf, OutputPNG, 'Format', 'png', 'Width', FigPos(3), 'Height', FigPos(4), 'Color', 'rgb');
+end
