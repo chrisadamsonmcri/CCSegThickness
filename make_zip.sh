@@ -20,7 +20,7 @@ mkdir -p doc
 cp ~/AARNETownCloud/cc_seg/doc/user_guide.pdf doc
 
 rm -f ${OUTFILE}
-tar cp CCSegThicknessToCSV CCSegManedit CCSegPipe*.py CCSegProcess CCSegStatResultDisplay CCSegStatTest CCSegUtils.py CCSegSubjectSelection.py LaplaceThicknessMethod.py LKTracker.py Streamline2DCython.c Streamline2DCython.pyx Streamline2DCythonSetup.py Streamline2DCython.so Otsu.py ART data doc FLIRT.py make_cython.sh | 7z a -txz -m0=lzma2 -mx=9 -si ${OUTFILE}
+tar cp CCSegThicknessToCSV CCSegManedit CCSegPipe*.py CCSegProcess CCSegStatResultDisplay CCSegStatTest CCSegUtils.py CCSegSubjectSelection.py LaplaceThicknessMethod.py LKTracker.py Streamline2DCython.c Streamline2DCython.pyx Streamline2DCythonSetup.py Streamline2DCython.so Otsu.py ART data doc FLIRT.py make_cython.sh matlab | 7z a -txz -m0=lzma2 -mx=9 -si ${OUTFILE}
 
-rm -fr matlab
+#rm -fr matlab
 rm -fr doc
