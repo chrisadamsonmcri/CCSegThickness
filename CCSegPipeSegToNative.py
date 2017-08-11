@@ -46,6 +46,7 @@ def segCCToNativeOneFile(segIMG, outputBase, midSagMATFile, segMATFile, dilateTo
 	NIIAffine = numpy.array(FID["NIIAffine"])
 	NIIShape = numpy.int16(numpy.array(FID["NIIShape"]))
 	axialNIIShape = numpy.int16(numpy.array(FID["axialNIIShape"]))
+	axialNIIAffine = numpy.array(FID["axialNIIAffine"])
 	axialCroppedNIIShape = numpy.int16(numpy.array(FID["axialCroppedNIIShape"]))
 	midSlice = numpy.int16(numpy.array(FID["midSlice"]))
 	IMGxx = numpy.array(FID["IMGxx"])
@@ -54,7 +55,6 @@ def segCCToNativeOneFile(segIMG, outputBase, midSagMATFile, segMATFile, dilateTo
 	finalRotY = numpy.array(FID["finalRotY"])
 	finalRotZ = numpy.array(FID["finalRotZ"])
 	finalTransX = numpy.array(FID["finalTransX"])
-
 
 	#midSagAVW = midSagAVW[:, ::-1]
 	#midSagAVW = numpy.rot90(midSagAVW, -1)
@@ -70,14 +70,15 @@ def segCCToNativeOneFile(segIMG, outputBase, midSagMATFile, segMATFile, dilateTo
 	
 	# place the segmentation in the bounding box specified by the Lucas Kanade bounding box
 	finalSegResampledAVWSpace[LKCropRows[0]:(LKCropRows[1] + 1), LKCropCols[0]:(LKCropCols[1] + 1)] = segIMG
-	midSagAVWX, midSagAVWY = numpy.meshgrid(midSagAVWxx, midSagAVWyy)
 	
+	midSagAVWX, midSagAVWY = numpy.meshgrid(midSagAVWxx, midSagAVWyy)
 	# resample the midsagittal slice in resampled space to the original space
 	finalSegMidSagAVWSpace = CCSegUtils.interp2q(resamplexx, resampleyy, numpy.double(finalSegResampledAVWSpace), midSagAVWX, midSagAVWY, interpmethod = 'nearest', extrapval = 0)
 	#print finalSegMidSagAVWSpace.shape	
 	#print axialCroppedNIIShape
 	#print axialNIIShape
-
+	#print skullCrop
+	#print axialCroppedNIIShape
 	finalSegNativeAxialCroppedSpace = numpy.zeros(axialCroppedNIIShape, dtype = numpy.int8)
 	#print axialNIIShape
 	#print finalSegNativeAxialCroppedSpace.shape
@@ -87,6 +88,9 @@ def segCCToNativeOneFile(segIMG, outputBase, midSagMATFile, segMATFile, dilateTo
 	#if dilateToParaSag:
 	finalSegNativeAxialCroppedSpace[midSlice - 1] = numpy.rot90(finalSegMidSagAVWSpace, -1)
 	finalSegNativeAxialCroppedSpace[midSlice + 1] = numpy.rot90(finalSegMidSagAVWSpace, -1)
+	
+	#NIISaving = nibabel.Nifti1Image(numpy.uint8(finalSegNativeAxialCroppedSpace), axialNIIAffine)
+	#nibabel.save(NIISaving, outputBase + "_native_cropped_beforetransform.nii.gz")
 
 	#NIISaving = nibabel.Nifti1Image(finalSegNativeAxialCroppedSpace, NIIAffine)
 	
@@ -98,6 +102,9 @@ def segCCToNativeOneFile(segIMG, outputBase, midSagMATFile, segMATFile, dilateTo
 	#print IMGyy.shape
 	#print IMGzz.shape
 	finalSegNativeAxialCroppedSpace = CCSegPipeMidSagSymmetric.transformIMG(finalSegNativeAxialCroppedSpace, IMGxx, IMGyy, IMGzz, -finalRotY, -finalRotZ, -finalTransX, interpmethod = 'nearest') 
+	#NIISaving = nibabel.Nifti1Image(numpy.uint8(finalSegNativeAxialCroppedSpace), axialNIIAffine)
+	#nibabel.save(NIISaving, outputBase + "_native_cropped_aftertransform.nii.gz")
+	
 	
 	#finalSegNativeAxialCroppedSpace = numpy.rot90(finalSegNativeAxialCroppedSpace, 1)
 	
@@ -122,7 +129,6 @@ def segCCToNativeOneFile(segIMG, outputBase, midSagMATFile, segMATFile, dilateTo
 	
 	nativeNIIIMG = nibabel.orientations.apply_orientation(finalSegNativeAxialSpace, MNIToNIITransformOrnt)
 	NIISaving = nibabel.Nifti1Image(nativeNIIIMG, NIIAffine)
-	
 	nibabel.save(NIISaving, outputBase + "_native.nii.gz")
 
 def segCCToNative(outputBase, doGraphics = False, dilateToParaSag = False):

@@ -1061,13 +1061,13 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 		FID.create_dataset("templatePixdims", data = templatePixdims)
 
 		# for backprojection
-		FID.create_dataset("resampledAVWShape", data = resampledAVW.shape)
+		FID.create_dataset("resampledAVWShape", data = numpy.array([midSagAVWyy.size, midSagAVWxx.size]))
 		FID.create_dataset("LKCropRows", data = numpy.array([0, midSagAVW.shape[0] - 1]))
 		FID.create_dataset("LKCropCols", data = numpy.array([0, midSagAVW.shape[1] - 1]))
 		FID.create_dataset("midSagAVWxx", data = midSagAVWxx)
 		FID.create_dataset("midSagAVWyy", data = midSagAVWyy)
-		FID.create_dataset("resamplexx", data = resamplexx)
-		FID.create_dataset("resampleyy", data = resampleyy)
+		FID.create_dataset("resamplexx", data = midSagAVWxx)
+		FID.create_dataset("resampleyy", data = midSagAVWyy)
 
 		FID.close()
 		return

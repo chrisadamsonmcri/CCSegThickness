@@ -242,6 +242,7 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 		# we may not need this
 		
 		NIIPixdims = NII.get_header().get_zooms()[1:3]
+		NIIAffine = NII.get_affine()
 		#print NII.shape
 
 		if MSPMethod == 'long':
@@ -323,7 +324,7 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 			#print "Transform ornt"
 			#print NIIToMNITransformOrnt
 			
-			axialAffine = applyOrntToNIIAffine(NII, NIIToMNITransformOrnt)
+			axialNIIAffine = applyOrntToNIIAffine(NII, NIIToMNITransformOrnt)
 
 			# transforms the image array
 			axialNIIIMG = nibabel.orientations.apply_orientation(NII.get_data(), NIIToMNITransformOrnt)
@@ -332,7 +333,7 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 			#rint "Affine of original image"
 			#rint NII.get_affine()
 
-			axialNII = nibabel.Nifti1Image(axialNIIIMG, affine = axialAffine)
+			axialNII = nibabel.Nifti1Image(axialNIIIMG, affine = axialNIIAffine)
 			nibabel.save(axialNII, outputBase + "_native.nii.gz")
 			
 			axialNIIShape = axialNII.shape
@@ -785,8 +786,9 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 		FID.create_dataset("MSPMethod", data=MSPMethod)
 		FID.create_dataset("skullCrop", data=skullCrop)
 		FID.create_dataset("NIIOrnt", data=NIIOrnt)
-		FID.create_dataset("NIIAffine", data=NII.get_affine())
+		FID.create_dataset("NIIAffine", data=NIIAffine)
 		FID.create_dataset("NIIShape", data=NIIShape)
+		FID.create_dataset("axialNIIAffine", data=axialNIIAffine)
 		FID.create_dataset("axialNIIShape", data=axialNIIShape)
 		FID.create_dataset("axialCroppedNIIShape", data=axialCroppedNIIShape)
 		FID.create_dataset("midSlice", data=midSlice)
