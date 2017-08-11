@@ -40,7 +40,7 @@ def usage():
 	print "\tOPTIONS"
 	print "\t\t--cull-percent=<>: the percentage of profiles at the anterior and posterior borders to ignore, 10 if not given"
 	print "\t\t--num-perms=<>: the number of permutations in permutation tests, 100000 by default"
-	print "\t\t--registered-profiles: use the registered profiles"
+	print "\t\t--no-registered-profiles: don't use the registered profiles, not recommended"
 
 def pairedTTest(thicknessA, thicknessB, numPerms):
 	assert(numpy.array_equal(thicknessA.shape, thicknessB.shape)),"Thickness profiles must have the same dimensions"
@@ -290,7 +290,7 @@ def twoSampleTTest(thicknessA, thicknessB, numPerms):
 
 
 def main():
-	opts, args = getopt.getopt(sys.argv[1:], "h", ["test-type=", "cull-percent=", "num-perms=", 'registered-profiles'])
+	opts, args = getopt.getopt(sys.argv[1:], "h", ["test-type=", "cull-percent=", "num-perms=", 'no-registered-profiles'])
 
 	numpy.set_printoptions(precision = 3, formatter = {'float':lambda x: "%.3f" % x})
 	
@@ -332,7 +332,7 @@ def main():
 	cullPercent = float(10)
 	numPerms = int(100000)
 	#numPerms = int(100)
-	useRegisteredProfiles = False
+	useRegisteredProfiles = True
 	for o, a in opts:
 		if o == '--cull-percent':
 			try:
@@ -347,8 +347,8 @@ def main():
 			except Exception:
 				print "Number of permutations was invalid, it must be an integer"
 				quit()
-		if o == '--registered-profiles':
-			useRegisteredProfiles = True
+		if o == '--no-registered-profiles':
+			useRegisteredProfiles = False
 	
 	# read the subjects file
 
