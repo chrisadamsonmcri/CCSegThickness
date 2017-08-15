@@ -56,6 +56,7 @@ def usage():
 	print
 	print "Segmentation to native (--do-segtonative) options:"
 	print "\t--dilate-parasag: when performing the backprojection to native, dilate the segmentation and parcellations to the neighbouring parasagittal slices"
+	print "\t--dilate-parasag-slices=(integer): when performing the backprojection to native, dilate the segmentation a given number of slices, implies --dilate-parasag"
 	print
 	print "Misc options:"
 	print "\t--redo-done: each processing step will not overwrite existing output, this forces existing output to be overwritten"
@@ -68,7 +69,7 @@ def main():
 	longOptStrings.extend(['skullstripped']) # midsag options
 	longOptStrings.extend(['seg-no-lk', 'seg-no-auto', 'seg-choose-first', 'seg-grid-initpoints']) # seg options
 	longOptStrings.extend(['num-thickness-nodes=', 'thickness-no-reg']) # thickess options
-	longOptStrings.extend(['dilate-parasag']) # segtonative options
+	longOptStrings.extend(['dilate-parasag', 'dilate-parasag-slices=']) # segtonative options
 	longOptStrings.extend(['long-subject-timepoint-file=']) # longitudinal options
 	longOptStrings.extend(['redo-done', 'save-graphics']) # misc options
 	longOptStrings.extend(CCSegSubjectSelection.getOptions())	
@@ -91,7 +92,7 @@ def main():
 	numThicknessNodes = 100
 	redoDone = False
 	doGraphics = False
-	dilateToParaSag = False
+	dilateToParaSagSlices = 0
 	thicknessNoReg = False
 
 	quitOnError = False
@@ -157,7 +158,12 @@ def main():
 		if o == '--seg-grid-initpoints':
 			segGridInitPoints = True
 		if o == '--dilate-parasag':
-			dilateToParaSag = True
+			dilateToParaSagSlices = 1
+		if o == '--dilate-parasag-slices':
+			try:
+				dilateToParaSagSlices = int(a)
+			except ValueError:
+				criticalError("the --dilate-parasag-slices value was not an integer")
 		if o == '--thickness-no-reg':
 			thicknessNoReg = True
 		if o == '--long-subject-timepoint-file':
@@ -189,6 +195,11 @@ def main():
 		print "Warning: --do-midsag and --do-thickness were specified but the middle step --do-seg was not, setting --do-seg"
 		doSeg = True
 	
+	if dilateParaSagSlices < 0:
+		print "--dilate-parasag-slices must be a positive integer"
+		usage()
+		quit()
+
 	actualInputFiles = CCSegSubjectSelection.selectSubjectsFromOpts(inputDirectory, opts = opts)
 	if len(actualInputFiles) == 0:
 		criticalError("No subjects to process")
@@ -317,7 +328,7 @@ def main():
 			#print "doing segtonative"
 			if os.path.isfile(outputBase + "_seg.hdf5"):# and (redoDone or not os.path.isfile(outputBase + "_native.nii.gz")):
 				try:
-					CCSegPipeSegToNative.segCCToNative(outputBase, dilateToParaSag = dilateToParaSag)
+					CCSegPipeSegToNative.segCCToNative(outputBase, dilateToParaSagSlices = dilateToParaSagSlices)
 				except AssertionError as e:
 					print "CCSegToNative Error: " + str(e) + ", subject " + outputBase
 					if quitOnError:
@@ -331,7 +342,7 @@ def main():
 			if os.path.isfile(outputBase + "_seg.hdf5") and os.path.isfile(outputBase + "_seg_manedit.hdf5") and (redoDone or not os.path.isfile(outputBase + "_native.nii.gz")):
 				print curSubject + ": segtonative"
 				try:
-					CCSegPipeSegToNative.segCCToNative(outputBase, dilateToParaSag = dilateToParaSag)
+					CCSegPipeSegToNative.segCCToNative(outputBase, dilateToParaSagSlices = dilateToParaSagSlices)
 				except AssertionError as e:
 					print "CCSeg Error: " + str(e) + ", subject " + outputBase
 					if quitOnError:

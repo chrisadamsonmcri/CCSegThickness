@@ -17,7 +17,7 @@ import CCSegUtils
 import CCSegPipeMidSagSymmetric
 import subprocess
 
-def segCCToNativeOneFile(segIMG, outputBase, midSagMATFile, segMATFile, dilateToParaSag = False, flirtInterpType = 'trilinear'):
+def segCCToNativeOneFile(segIMG, outputBase, midSagMATFile, segMATFile, dilateToParaSagSlices = 0, flirtInterpType = 'trilinear'):
 	
 	FID = h5py.File(segMATFile, 'r')
 	
@@ -46,7 +46,7 @@ def segCCToNativeOneFile(segIMG, outputBase, midSagMATFile, segMATFile, dilateTo
 	NIIAffine = numpy.array(FID["NIIAffine"])
 	NIIShape = numpy.int16(numpy.array(FID["NIIShape"]))
 	axialNIIShape = numpy.int16(numpy.array(FID["axialNIIShape"]))
-	axialNIIAffine = numpy.array(FID["axialNIIAffine"])
+	#axialNIIAffine = numpy.array(FID["axialNIIAffine"])
 	axialCroppedNIIShape = numpy.int16(numpy.array(FID["axialCroppedNIIShape"]))
 	midSlice = numpy.int16(numpy.array(FID["midSlice"]))
 	IMGxx = numpy.array(FID["IMGxx"])
@@ -85,9 +85,11 @@ def segCCToNativeOneFile(segIMG, outputBase, midSagMATFile, segMATFile, dilateTo
 	#print finalSegMidSagAVWSpace.shape
 	#quit()
 	finalSegNativeAxialCroppedSpace[midSlice] = numpy.rot90(finalSegMidSagAVWSpace, -1)
-	#if dilateToParaSag:
-	finalSegNativeAxialCroppedSpace[midSlice - 1] = numpy.rot90(finalSegMidSagAVWSpace, -1)
-	finalSegNativeAxialCroppedSpace[midSlice + 1] = numpy.rot90(finalSegMidSagAVWSpace, -1)
+	if dilateToParaSagSlices > 0:
+		for z in range(dilateToParaSagSlices):
+			
+			finalSegNativeAxialCroppedSpace[numpy.maximum(midSlice - z - 1, 0)] = numpy.rot90(finalSegMidSagAVWSpace, -1)
+			finalSegNativeAxialCroppedSpace[numpy.minimum(midSlice + z + 1, finalSegNativeAxialCroppedSpace.shape[0])] = numpy.rot90(finalSegMidSagAVWSpace, -1)
 	
 	#NIISaving = nibabel.Nifti1Image(numpy.uint8(finalSegNativeAxialCroppedSpace), axialNIIAffine)
 	#nibabel.save(NIISaving, outputBase + "_native_cropped_beforetransform.nii.gz")
