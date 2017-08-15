@@ -423,7 +423,7 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 #				shutil.rmtree(NIITempDir)
 #				quit()
 				OtsuSeg = Otsu.robustOtsu(axialNIIIMG, [0.02, 0.98], NumberClasses = 2)
-				
+				print "Midsagittal extraction, symmetry method iterations"				
 				IMG = axialNIIIMG * OtsuSeg
 				I = numpy.where(OtsuSeg)
 				
@@ -545,14 +545,14 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 					bestInitialRotYIDX = numpy.argmax(initialRotYCosts)
 					curRotY = initialRotY[bestInitialRotYIDX]
 					#print "Best initial RotY: " + str(curRotY)
-					if doGraphics:
-						pylab.clf()
-						TIMG = CCSegPipeMidSagSymmetric.transformIMG(IMG, IMGxx, IMGyy, IMGzz, curRotY, curRotZ, curTransX) 
-						CCSegPipeMidSagSymmetric.showMidSag(TIMG)
-						pylab.gcf().set_size_inches((20, 10), forward = True)
-						outputPNG = os.path.join(PNGDirectory, subjectID + "_sym_iter_" + str(curIter + 1) + "_3.png")
-						pylab.savefig(outputPNG)
-						CCSegUtils.cropAutoWhitePNG(outputPNG)
+					#if doGraphics:
+					#	pylab.clf()
+					#	TIMG = CCSegPipeMidSagSymmetric.transformIMG(IMG, IMGxx, IMGyy, IMGzz, curRotY, curRotZ, curTransX) 
+					#	CCSegPipeMidSagSymmetric.showMidSag(TIMG)
+					#	pylab.gcf().set_size_inches((20, 10), forward = True)
+					#	outputPNG = os.path.join(PNGDirectory, subjectID + "_sym_iter_" + str(curIter + 1) + "_3.png")
+					#	pylab.savefig(outputPNG)
+					#	CCSegUtils.cropAutoWhitePNG(outputPNG)
 
 					TIMG = CCSegPipeMidSagSymmetric.transformIMG(SIMG, SIMGxx, SIMGyy, SIMGzz, curRotY, curRotZ, curTransX) 
 #					SR = 2
@@ -665,7 +665,7 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 					pylab.clf()
 					CCSegPipeMidSagSymmetric.showMidSag(TIMG, midSagAVW)
 					pylab.gcf().set_size_inches((20, 10), forward = True)
-					outputPNG = os.path.join(PNGDirectory, subjectID + "_allplanes.png")
+					outputPNG = os.path.join(PNGDirectory, subjectID + ".png")
 					pylab.savefig(outputPNG)
 					CCSegUtils.cropAutoWhitePNG(outputPNG)
 
@@ -829,16 +829,16 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 
 	#if len(NIIShape) == 2:
 	
-	if doGraphics:
-		T = numpy.double(midSagAVW)
-		T[numpy.isnan(T)] = 0
-
-		T = (T - numpy.min(T)) / (numpy.max(T) - numpy.min(T))
-		T = numpy.uint8(numpy.round(T * 255))
-		outputPNG = os.path.join(PNGDirectory, subjectID + "_midsag.png")
-			
-		scipy.misc.imsave(outputPNG, T)
-		del T
+	#if doGraphics:
+	#	T = numpy.double(midSagAVW)
+	#	T[numpy.isnan(T)] = 0
+#
+#		T = (T - numpy.min(T)) / (numpy.max(T) - numpy.min(T))
+#		T = numpy.uint8(numpy.round(T * 255))
+#		outputPNG = os.path.join(PNGDirectory, subjectID + "_midsag.png")
+#			
+#		scipy.misc.imsave(outputPNG, T)
+#		del T
 
 #def midsagExtract(inputBase, outputBase, MSPMethod):
 
