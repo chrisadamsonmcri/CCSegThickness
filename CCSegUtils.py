@@ -234,18 +234,21 @@ def empty2DList(SZ):
 		I.append([None,] * SZ[1])
 	return I
 
-def removeWhiteRowsColsPNG(IMGFileName, padding = (10, 10)):
+def removeWhiteRowsColsPNG(IMGFileName, padding = (10, 10), blackImage = False):
 	assert(os.path.isfile(IMGFileName)),"PNG file does not exist"
 
 	IMG = pylab.imread(IMGFileName)
 	
+	if blackImage == True:
+		IMG = 1 - IMG
+
 	if IMG.ndim < 3:
 		T = (IMG < 1)
 	elif IMG.shape[2] == 4:
 		T = numpy.squeeze(numpy.take(IMG, [0, 1, 2], axis = 2))
 		T = numpy.any(T < 1, axis = 2)
 	elif IMG.shape[2] == 3:
-		T = numpy.any(T < 1, axis = 2)
+		T = numpy.any(IMG < 1, axis = 2)
 
 	I = numpy.where(T)
 	
@@ -254,7 +257,6 @@ def removeWhiteRowsColsPNG(IMGFileName, padding = (10, 10)):
 	for z in range(2):
 		H = numpy.bincount(I[z])
 		croppedIMG = numpy.take(croppedIMG, numpy.where(H > 0)[0], axis = z)
-	
 	
 	if IMG.ndim < 3:
 		cornerPadding = numpy.ones((padding[0], padding[1]))
@@ -269,6 +271,9 @@ def removeWhiteRowsColsPNG(IMGFileName, padding = (10, 10)):
 	numpy.concatenate((cornerPadding, topBottomPadding, cornerPadding), axis = 1),
 	numpy.concatenate((leftRightPadding, croppedIMG, leftRightPadding), axis = 1),
 	numpy.concatenate((cornerPadding, topBottomPadding, cornerPadding), axis = 1)), axis = 0)
+	
+	if blackImage == True:
+		T = 1 - T
 
 	scipy.misc.imsave(IMGFileName, T)
 
@@ -281,9 +286,9 @@ def cropAutoWhitePNG(IMGFileName, padding = (10, 10)):
 		T = numpy.squeeze(numpy.take(IMG, [0, 1, 2], axis = 2))
 		T = numpy.any(T < 1, axis = 2)
 	elif IMG.shape[2] == 3:
-		T = numpy.any(T < 1, axis = 2)
+		T = numpy.any(IMG < 1, axis = 2)
 	elif IMG.ndim < 3:
-		T = (T < 1)
+		T = (IMG < 1)
 
 	I = numpy.where(T)
 	
