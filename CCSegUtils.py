@@ -9,6 +9,7 @@ import scipy.misc
 import errno
 
 import math
+import numexpr
 
 # regionProps
 # for the label image returns a dictionary with
@@ -369,6 +370,7 @@ def MNI152FLIRTTemplate(skullStripped = False):
 
 	return os.path.join(head, 'data', T)
 #import CCSegUtilsInterpCython
+
 #@profile
 def interp3q(xx, yy, zz, V, xi, yi, zi, interpmethod = 'linear', extrapval = numpy.nan):
 	
@@ -473,8 +475,11 @@ def interp3q(xx, yy, zz, V, xi, yi, zi, interpmethod = 'linear', extrapval = num
 			#	(    YFrac) * (1 - XFrac) * (    ZFrac) * V[(YIDX + 1, XIDX    , ZIDX + 1)] + \
 			#	(    YFrac) * (    XFrac) * (1 - ZFrac) * V[(YIDX + 1, XIDX + 1, ZIDX    )] + \
 			#	(    YFrac) * (    XFrac) * (    ZFrac) * V[(YIDX + 1, XIDX + 1, ZIDX + 1)]
-
 			flatV = numpy.ravel(V, order = 'F')
+			
+			#outV[inMaskIDX] = (1 - YFrac) * (1 - XFrac) * (1 - ZFrac) * flatV[linearIDX] + (1 - YFrac) * (1 - XFrac) * (    ZFrac) * flatV[linearIDX + numInSlice] + (1 - YFrac) * (    XFrac) * (1 - ZFrac) * flatV[linearIDX + V.shape[0]] + (1 - YFrac) * (    XFrac) * (    ZFrac) * flatV[linearIDX + V.shape[0] + numInSlice] + (    YFrac) * (1 - XFrac) * (1 - ZFrac) * flatV[linearIDX + 1] + (    YFrac) * (1 - XFrac) * (    ZFrac) * flatV[linearIDX + 1 + numInSlice] + (    YFrac) * (    XFrac) * (1 - ZFrac) * flatV[linearIDX + 1 + V.shape[0]] + (    YFrac) * (    XFrac) * (    ZFrac) * flatV[linearIDX + 1 + V.shape[0] + numInSlice]
+#
+			outV[inMaskIDX] = numexpr.evaluate('(1 - YFrac) * (1 - XFrac) * (1 - ZFrac) * a + (1 - YFrac) * (1 - XFrac) * (    ZFrac) * b + (1 - YFrac) * (    XFrac) * (1 - ZFrac) * c + (1 - YFrac) * (    XFrac) * (    ZFrac) * d + (    YFrac) * (1 - XFrac) * (1 - ZFrac) * e + (    YFrac) * (1 - XFrac) * (    ZFrac) * f + (    YFrac) * (    XFrac) * (1 - ZFrac) * g + (    YFrac) * (    XFrac) * (    ZFrac) * h', {'a': flatV[linearIDX], 'b': flatV[linearIDX + numInSlice], 'c': flatV[linearIDX + V.shape[0]], 'd': flatV[linearIDX + V.shape[0] + numInSlice], 'e': flatV[linearIDX + 1], 'f': flatV[linearIDX + 1 + numInSlice], 'g': flatV[linearIDX + 1 + V.shape[0]], 'h': flatV[linearIDX + 1 + V.shape[0] + numInSlice], 'XFrac': XFrac, 'YFrac': YFrac, 'ZFrac': ZFrac})
 			
 			#I = YIDX + XIDX * V.shape[0] + ZIDX * numInSlice
 			
@@ -487,15 +492,16 @@ def interp3q(xx, yy, zz, V, xi, yi, zi, interpmethod = 'linear', extrapval = num
 #			outV[inMaskIDX] += (    YFrac) * (    XFrac) * (1 - ZFrac) * flatV[linearIDX + 1 + V.shape[0]] # V[(YIDX + 1, XIDX + 1, ZIDX    )]
 #			outV[inMaskIDX] += (    YFrac) * (    XFrac) * (    ZFrac) * flatV[linearIDX + 1 + V.shape[0] + numInSlice] # V[(YIDX + 1, XIDX + 1, ZIDX + 1)]
 			
-			T =  (1 - YFrac) * (1 - XFrac) * (1 - ZFrac) * flatV[linearIDX]
-			T += (1 - YFrac) * (1 - XFrac) * (    ZFrac) * flatV[linearIDX + numInSlice] # V[(YIDX    , XIDX    , ZIDX + 1)]
-			T += (1 - YFrac) * (    XFrac) * (1 - ZFrac) * flatV[linearIDX + V.shape[0]] # V[(YIDX    , XIDX + 1, ZIDX    )]
-			T += (1 - YFrac) * (    XFrac) * (    ZFrac) * flatV[linearIDX + V.shape[0] + numInSlice] # V[(YIDX    , XIDX + 1, ZIDX + 1)]
-			T += (    YFrac) * (1 - XFrac) * (1 - ZFrac) * flatV[linearIDX + 1] # V[(YIDX + 1, XIDX    , ZIDX    )]
-			T += (    YFrac) * (1 - XFrac) * (    ZFrac) * flatV[linearIDX + 1 + numInSlice] # V[(YIDX + 1, XIDX    , ZIDX + 1)]
-			T += (    YFrac) * (    XFrac) * (1 - ZFrac) * flatV[linearIDX + 1 + V.shape[0]] # V[(YIDX + 1, XIDX + 1, ZIDX    )]
-			T += (    YFrac) * (    XFrac) * (    ZFrac) * flatV[linearIDX + 1 + V.shape[0] + numInSlice] # V[(YIDX + 1, XIDX + 1, ZIDX + 1)]
-			outV[inMaskIDX] = T
+#			T =  (1 - YFrac) * (1 - XFrac) * (1 - ZFrac) * flatV[linearIDX]
+#			T += (1 - YFrac) * (1 - XFrac) * (    ZFrac) * flatV[linearIDX + numInSlice] # V[(YIDX    , XIDX    , ZIDX + 1)]
+#			T += (1 - YFrac) * (    XFrac) * (1 - ZFrac) * flatV[linearIDX + V.shape[0]] # V[(YIDX    , XIDX + 1, ZIDX    )]
+#			T += (1 - YFrac) * (    XFrac) * (    ZFrac) * flatV[linearIDX + V.shape[0] + numInSlice] # V[(YIDX    , XIDX + 1, ZIDX + 1)]
+#			T += (    YFrac) * (1 - XFrac) * (1 - ZFrac) * flatV[linearIDX + 1] # V[(YIDX + 1, XIDX    , ZIDX    )]
+#			T += (    YFrac) * (1 - XFrac) * (    ZFrac) * flatV[linearIDX + 1 + numInSlice] # V[(YIDX + 1, XIDX    , ZIDX + 1)]
+#			T += (    YFrac) * (    XFrac) * (1 - ZFrac) * flatV[linearIDX + 1 + V.shape[0]] # V[(YIDX + 1, XIDX + 1, ZIDX    )]
+#			T += (    YFrac) * (    XFrac) * (    ZFrac) * flatV[linearIDX + 1 + V.shape[0] + numInSlice] # V[(YIDX + 1, XIDX + 1, ZIDX + 1)]
+#			outV[inMaskIDX] = T
+#			
 
 			#T = outV[inMaskIDX]
 			#outV[inMaskIDX] =  (1 - YFrac) * (1 - XFrac) * (1 - ZFrac) * V[(YIDX    , XIDX    , ZIDX    )]
@@ -658,7 +664,7 @@ def interp3q(xx, yy, zz, V, xi, yi, zi, interpmethod = 'linear', extrapval = num
 #yi = numpy.array([-1, 0, 3])
 #zi = numpy.array([-1, 1.4, 3])
 #G = interp3q(xx, yy, zz, V, xi, yi, zi)
-
+#@profile
 def interp2q(xx, yy, V, xi, yi, interpmethod = 'linear', extrapval = numpy.nan):
 	
 	assert(numpy.size(xx) == V.shape[1] and numpy.size(yy) == V.shape[0]),"numpy.size(xx) == V.shape[1] and numpy.size(yy) == V.shape[0]"
@@ -707,7 +713,8 @@ def interp2q(xx, yy, V, xi, yi, interpmethod = 'linear', extrapval = numpy.nan):
 			if numpy.any(I):
 				XFrac[I] = 1.0
 				XI[I] = xx.size - 2
-				
+			linearIDX = XI * V.shape[0]
+
 			YFrac = YI - numpy.floor(YI)
 			#I = numpy.where(YI == yy.size - 1)
 			I = (YI == yy.size - 1)
@@ -719,10 +726,12 @@ def interp2q(xx, yy, V, xi, yi, interpmethod = 'linear', extrapval = numpy.nan):
 			
 			XI = numpy.int32(XI)
 			YI = numpy.int32(YI)
-			outV[inMaskIDX] =	(1 - YFrac) * (1 - XFrac) * V[(YI    , XI    )] + \
-								(1 - YFrac) * (    XFrac) * V[(YI    , XI + 1)] + \
-								(    YFrac) * (1 - XFrac) * V[(YI + 1, XI    )] + \
-								(    YFrac) * (    XFrac) * V[(YI + 1, XI + 1)]
+			#linearIDX = YI * V.shape[0] + XI
+
+			#flatV = numpy.ravel(V, order = 'F')
+			
+			outV[inMaskIDX] =	(1 - YFrac) * (1 - XFrac) * V[(YI    , XI    )] + (1 - YFrac) * (    XFrac) * V[(YI    , XI + 1)] + (    YFrac) * (1 - XFrac) * V[(YI + 1, XI    )] + (    YFrac) * (    XFrac) * V[(YI + 1, XI + 1)]
+			#outV[inMaskIDX] =	numexpr.evaluate('(1 - YFrac) * (1 - XFrac) * a + (1 - YFrac) * (    XFrac) * b + (    YFrac) * (1 - XFrac) * c + (    YFrac) * (    XFrac) * d', {'a': flatV[linearIDX], 'b': flatV[linearIDX + 1], 'c': flatV[linearIDX + V.shape[1]], 'd': flatV[linearIDX + V.shape[1] + 1], 'XFrac': XFrac, 'YFrac': YFrac})
 	return outV
 
 def maxGaussian1D(SIGMA, Derivative = 0):
