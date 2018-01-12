@@ -11,6 +11,8 @@ import h5py
 import numpy
 import scipy.stats
 
+import pandas
+
 def usage():
 	print "Usage: " + sys.argv[0] + " [options] <output directory> <test type> <group label file> <output hdf5 file>"
 	print
@@ -265,7 +267,8 @@ def twoSampleTTest(thicknessA, thicknessB, numPerms):
 	observedT = observedT * observedTSign
 
 	return (permP, observedP, observedT, omnibusP) 
-	#print observedT
+
+#print observedT
 	#print PValues
 
 	#print omniP
@@ -352,43 +355,69 @@ def main():
 	
 	# read the subjects file
 
-
-	groupFileFID = open(groupFile, 'r')
-	groupFileReader = csv.reader(groupFileFID, delimiter = "\t")
+#	groupFileFID = open(groupFile, 'r')
+#	groupFileReader = csv.reader(groupFileFID, delimiter = "\t")
+#	
+#	groupLabels = list()
+#	groupLists = dict()
+#	thicknessProfiles = dict()
+#
+#	if testType == "2sample":
+#		for curRow in groupFileReader:
+#			if not curRow[0] in groupLists:
+#				groupLabels.append(curRow[0])
+#				groupLists[curRow[0]] = list()
+#				thicknessProfiles[curRow[0]] = list()
+#			groupLists[curRow[0]].append(curRow[1])
+#
+#		if len(groupLabels) != 2:
+#			print "2-sample test"
+#			print "The number of groups was not 2, it was: " + str(len(groupLabels)) + " the groups were: " + str(groupLabels)
+#			#quit()
+#	elif testType == "paired":
+#		groupLabels = groupFileReader.next()
+#		
+#		for curGroupLabel in groupLabels:
+#			thicknessProfiles[curGroupLabel] = list()
+#			groupLists[curGroupLabel] = list()
+#
+#		for curRow in groupFileReader:
+#			groupLists[groupLabels[0]].append(curRow[0])
+#			groupLists[groupLabels[1]].append(curRow[1])
+#	
+#	print groupLabels
+#	print thicknessProfiles
+#	print groupLists
 	
-	groupLabels = list()
-	groupLists = dict()
-	thicknessProfiles = dict()
-
+	# pandas method, much better since it detects the delimiters
 	if testType == "2sample":
-		for curRow in groupFileReader:
-			if not curRow[0] in groupLists:
-				groupLabels.append(curRow[0])
-				groupLists[curRow[0]] = list()
-				thicknessProfiles[curRow[0]] = list()
-			groupLists[curRow[0]].append(curRow[1])
-
+		DF = pandas.read_table(groupFile, header = None, names = ['labels', 'filenames'], index_col = 1)
+		
+		groupLabels = DF.loc[:, 'labels'].unique().tolist()
+		
 		if len(groupLabels) != 2:
 			print "2-sample test"
 			print "The number of groups was not 2, it was: " + str(len(groupLabels)) + " the groups were: " + str(groupLabels)
 			quit()
-	elif testType == "paired":
-		groupLabels = groupFileReader.next()
-		
-		for curGroupLabel in groupLabels:
-			thicknessProfiles[curGroupLabel] = list()
-			groupLists[curGroupLabel] = list()
 
-		for curRow in groupFileReader:
-			groupLists[groupLabels[0]].append(curRow[0])
-			groupLists[groupLabels[1]].append(curRow[1])
+		groupLists = dict.fromkeys(groupLabels)
+		
+		for curLabel in groupLabels:
+			#I = DF.loc[:, 'labels'] == curLabel
+			groupLists[curLabel] = DF.index[DF.loc[:, 'labels'] == curLabel].tolist()
+	elif testType == "paired":
+		DF = pandas.read_table(groupFile)
+		
+		groupLabels = DF.columns.tolist()
+		
+		groupLists2 = DF.to_dict(orient = 'list')
+		thicknessProfiles2 = dict.fromkeys(groupLabels)
+
+	thicknessProfiles = dict.fromkeys(groupLabels)
 	
-	#print groupLabels
-	#print thicknessProfiles
-	#print groupLists
-	#quit()
 	# go through each group label and load the thickness profile for each member subject
 	for curGroupLabel in groupLabels:
+		thicknessProfiles[curGroupLabel] = list()
 		for curSubject in groupLists[curGroupLabel]:
 			curThicknessFile = os.path.join(inputDirectory, curSubject + "_thickness.hdf5")
 			
@@ -408,7 +437,7 @@ def main():
 				print "Subject thickness file not found: " + curThicknessFile
 				quit()
 		thicknessProfiles[curGroupLabel] = numpy.concatenate(thicknessProfiles[curGroupLabel])
-		print thicknessProfiles[curGroupLabel].shape
+		#print thicknessProfiles[curGroupLabel].shape
 		#print thicknessProfiles[curGroupLabel].shape
 	#print thicknessProfiles
 	
