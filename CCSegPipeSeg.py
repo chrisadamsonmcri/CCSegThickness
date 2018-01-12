@@ -1345,13 +1345,81 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 	LKSegFits['RigidFactor'] = numpy.abs(LKSegFits['TransformAngleX'] - LKSegFits['TransformAngleY'])
 	#print LKSegFits
 	validTransform = numpy.logical_and(numpy.logical_and(numpy.logical_and(LKSegFits['TransformAngleX'] < numpy.pi / 3.0, LKSegFits['TransformAngleY'] < numpy.pi / 3.0), LKSegFits['RigidFactor'] < numpy.pi / 4.0), numpy.isfinite(LKSegFits['DiceCoefficients']))
-	
+	LKSegFits['RotationAmount'] = (numpy.abs(LKSegFits['TransformAngleX']) + numpy.abs(LKSegFits['TransformAngleY'])) / 2.0
 	validTransform = numpy.logical_and(validTransform, numpy.logical_not(LKEdgeSegs))
+	
+	# make a 2D histogram of corner locations of transformed coordinates
+	# 
+
+	TCoordHistTopL = numpy.zeros_like(resampledAVW, dtype = numpy.uint32)
+	TCoordHistTopR = numpy.zeros_like(resampledAVW, dtype = numpy.uint32)
+	TCoordHistBotL = numpy.zeros_like(resampledAVW, dtype = numpy.uint32)
+	TCoordHistBotR = numpy.zeros_like(resampledAVW, dtype = numpy.uint32)
+
+	for z in range(LKInitialOffsets.shape[0]):
+		TCoordHistTopL[int(numpy.round(segCCLKandOtsuOutput['TY'][z][ 0,  0])), int(numpy.round(segCCLKandOtsuOutput['TX'][z][ 0,  0]))] += 1
+		TCoordHistTopR[int(numpy.round(segCCLKandOtsuOutput['TY'][z][ 0, -1])), int(numpy.round(segCCLKandOtsuOutput['TX'][z][ 0, -1]))] += 1
+		TCoordHistBotL[int(numpy.round(segCCLKandOtsuOutput['TY'][z][-1,  0])), int(numpy.round(segCCLKandOtsuOutput['TX'][z][-1,  0]))] += 1
+		TCoordHistBotR[int(numpy.round(segCCLKandOtsuOutput['TY'][z][-1, -1])), int(numpy.round(segCCLKandOtsuOutput['TX'][z][-1, -1]))] += 1
+	
+	# smooth them a bit
+	TCoordHistTopL = scipy.ndimage.filters.gaussian_filter(numpy.double(TCoordHistTopL), 1.0)
+	TCoordHistTopR = scipy.ndimage.filters.gaussian_filter(numpy.double(TCoordHistTopR), 1.0)
+	TCoordHistBotL = scipy.ndimage.filters.gaussian_filter(numpy.double(TCoordHistBotL), 1.0)
+	TCoordHistBotR = scipy.ndimage.filters.gaussian_filter(numpy.double(TCoordHistBotR), 1.0)
+	
+	# find the most common location
+	TCoordHistTopLMax = numpy.argmax(TCoordHistTopL)
+	TCoordHistTopLMaxIDX = numpy.unravel_index(TCoordHistTopLMax, TCoordHistTopL.shape)
+	TCoordHistTopRMax = numpy.argmax(TCoordHistTopR)
+	TCoordHistTopRMaxIDX = numpy.unravel_index(TCoordHistTopRMax, TCoordHistTopR.shape)
+	TCoordHistBotLMax = numpy.argmax(TCoordHistBotL)
+	TCoordHistBotLMaxIDX = numpy.unravel_index(TCoordHistBotLMax, TCoordHistBotL.shape)
+	TCoordHistBotRMax = numpy.argmax(TCoordHistBotR)
+	TCoordHistBotRMaxIDX = numpy.unravel_index(TCoordHistBotRMax, TCoordHistBotR.shape)
+
+	# find the start point whose transformed coordinates are closest to the most occurring one in the histogram
+	TCoordDistances = numpy.zeros(LKInitialOffsets.shape[0])
+	for z in range(LKInitialOffsets.shape[0]):
+		DXTopL = TCoordHistTopLMaxIDX[1] - segCCLKandOtsuOutput['TX'][z][ 0,  0]
+		DYTopL = TCoordHistTopLMaxIDX[0] - segCCLKandOtsuOutput['TY'][z][ 0,  0]
+		DXTopR = TCoordHistTopRMaxIDX[1] - segCCLKandOtsuOutput['TX'][z][ 0, -1]
+		DYTopR = TCoordHistTopRMaxIDX[0] - segCCLKandOtsuOutput['TY'][z][ 0, -1]
+		DXBotL = TCoordHistBotLMaxIDX[1] - segCCLKandOtsuOutput['TX'][z][-1,  0]
+		DYBotL = TCoordHistBotLMaxIDX[0] - segCCLKandOtsuOutput['TY'][z][-1,  0]
+		DXBotR = TCoordHistBotRMaxIDX[1] - segCCLKandOtsuOutput['TX'][z][-1, -1]
+		DYBotR = TCoordHistBotRMaxIDX[0] - segCCLKandOtsuOutput['TY'][z][-1, -1]
+
+		TCoordDistances[z] = numpy.sqrt(
+			DXTopL * DXTopL + DYTopL * DYTopL +
+			DXTopR * DXTopR + DYTopR * DYTopR +
+			DXBotL * DXBotL + DYBotL * DYBotL +
+			DXBotR * DXBotR + DYBotR * DYBotR)
+		del DXTopL
+		del DYTopL
+		del DXTopR
+		del DYTopR
+		del DXBotL
+		del DYBotL
+		del DXBotR
+		del DYBotR
+
+	TCoordDistancesMinIDX = numpy.argmin(TCoordDistances)
+	
+	del TCoordHistTopL
+	del TCoordHistTopR
+	del TCoordHistBotL
+	del TCoordHistBotR
+	del TCoordHistTopLMax
+	del TCoordHistTopRMax
+	del TCoordHistBotLMax
+	del TCoordHistBotRMax
+	del TCoordHistTopLMaxIDX
+	del TCoordHistTopRMaxIDX
+	del TCoordHistBotLMaxIDX
+	del TCoordHistBotRMaxIDX
 
 	# take out the indices where the segmentation is at the edge of the image, this happens when the "best" registration is the wrong one
-	
-
-	# testing
 	#validTransform[1] = True
 	#print LKSegFits
 	validTransformIDX = numpy.where(validTransform)[0]
@@ -1377,6 +1445,7 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 		LKSegFitsWeights['SumDistances'] = 1
 		LKSegFitsWeights['SumTangentDots'] = 1
 		LKSegFitsWeights['RigidFactor'] = 4
+		LKSegFitsWeights['RotationAmount'] = 5
 		
 		# make a dict that tells me whether the lowest or highest value wins for each measure
 		LKSegFitsWinDirection = dict()
@@ -1387,6 +1456,7 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 		LKSegFitsWinDirection['SumDistances'] = 'lowest'
 		LKSegFitsWinDirection['SumTangentDots'] = 'highest'
 		LKSegFitsWinDirection['RigidFactor'] = 'lowest'
+		LKSegFitsWinDirection['RotationAmount'] = 'lowest'
 		
 		LKSegFitsScores = numpy.zeros(numpy.size(validTransformIDX))
 		
@@ -1416,6 +1486,9 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 			bestLKIDX = validTransformIDX[numpy.argmax(LKSegFitsScores)]
 		#del LKSegFitsWeights
 		del LKSegFitsWinDirection
+	print "best based on mode: " + str(LKInitialOffsets[TCoordDistancesMinIDX]) + ", best LK: " + str(LKInitialOffsets[bestLKIDX])
+	
+	bestLKIDX = TCoordDistancesMinIDX
 	#print LKSegFitsScores.size
 	#print LKInitialOffsets.shape[0]
 	#print len(segCCLKandOtsuOutput['TX'])
@@ -1474,6 +1547,7 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 				FID.write('offset')
 				for curKey in LKSegFits.keys():
 					FID.write(",%s" % curKey)
+				FID.write(",valid,score");
 				FID.write("\n")
 				for z in range(LKInitialOffsets.shape[0]):
 					pylab.clf()
@@ -1507,6 +1581,11 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 
 					for curKey in LKSegFits.keys():
 						FID.write(",%f" % LKSegFits[curKey][z])
+					if z in validTransformIDX:
+						FID.write(',1')
+					else:
+						FID.write(',0')
+					#FID.write(",%d" % LKSegFitsScores[z])
 					FID.write("\n")
 					pylab.gcf().set_size_inches((10, 5), forward = True)
 
