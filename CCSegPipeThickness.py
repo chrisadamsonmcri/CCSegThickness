@@ -664,8 +664,10 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
 	witelsonI[numpy.where(numpy.logical_and(antPostProportion < (2.0 / 3.0), witelsonI == 0))] = 3	
 	witelsonI[numpy.where(numpy.logical_and(antPostProportion < (4.0 / 5.0), witelsonI == 0))] = 4	
 	witelsonI[numpy.where(witelsonI == 0)] = 5	
-	
 	witelsonI[midLineCrossInMask > 0] = 0
+	witelsonI[numpy.where(numpy.logical_and(witelsonI == 0, antPostProportion > (1.0 / 2.0)))] = 5
+	witelsonI[numpy.where(numpy.logical_and(witelsonI == 0, antPostProportion < (1.0 / 2.0)))] = 1
+	
 	
 	#SIMG = numpy.zeros(maskClosed.shape)
 	#SIMG[I] = witelsonI
@@ -677,8 +679,9 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
 	hoferFrahmI[numpy.where(numpy.logical_and(antPostProportion < (1.0 / 2.0), hoferFrahmI == 0))] = 2	
 	hoferFrahmI[numpy.where(numpy.logical_and(antPostProportion < (2.0 / 3.0), hoferFrahmI == 0))] = 3	
 	hoferFrahmI[numpy.where(numpy.logical_and(antPostProportion < (3.0 / 4.0), hoferFrahmI == 0))] = 4	
-	hoferFrahmI[numpy.where(hoferFrahmI == 0)] = 5
 	hoferFrahmI[midLineCrossInMask > 0] = 0
+	hoferFrahmI[numpy.where(numpy.logical_and(hoferFrahmI == 0, antPostProportion > (1.0 / 2.0)))] = 5
+	hoferFrahmI[numpy.where(numpy.logical_and(hoferFrahmI == 0, antPostProportion < (1.0 / 2.0)))] = 1
 	
 	hoferFrahmLabels[I] = hoferFrahmI
 
@@ -691,7 +694,7 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
 	emsellI[numpy.where(numpy.logical_and(antPostProportion < (4.0 / 5.0), numpy.logical_and(emsellI == 0, midLineCrossInMask <= 0)))] = 6
 	emsellI[numpy.where(numpy.logical_and(emsellI == 0, midLineCrossInMask <= 0))] = 7
 	emsellI[numpy.where(numpy.logical_and(emsellI == 0, antPostProportion > (1.0 / 2.0)))] = 8
-	
+	emsellI[numpy.where(numpy.logical_and(emsellI == 0, antPostProportion < (1.0 / 2.0)))] = 2
 	
 	# we need to find the apex of the genu
 	
