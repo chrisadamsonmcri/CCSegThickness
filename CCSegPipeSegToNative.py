@@ -17,7 +17,7 @@ import CCSegUtils
 import CCSegPipeMidSagSymmetric
 import subprocess
 
-def segCCToNativeOneFile(segIMG, outputBase, midSagMATFile, segMATFile, dilateToParaSagSlices = 0, flirtInterpType = 'trilinear'):
+def segCCToNativeOneFile(segIMG, outputBase, midSagMATFile, segMATFile, dilateParaSagSlices = 0, flirtInterpType = 'trilinear'):
 	
 	FID = h5py.File(segMATFile, 'r')
 	
@@ -85,8 +85,8 @@ def segCCToNativeOneFile(segIMG, outputBase, midSagMATFile, segMATFile, dilateTo
 	#print finalSegMidSagAVWSpace.shape
 	#quit()
 	finalSegNativeAxialCroppedSpace[midSlice] = numpy.rot90(finalSegMidSagAVWSpace, -1)
-	if dilateToParaSagSlices > 0:
-		for z in range(dilateToParaSagSlices):
+	if dilateParaSagSlices > 0:
+		for z in range(dilateParaSagSlices):
 			
 			finalSegNativeAxialCroppedSpace[numpy.maximum(midSlice - z - 1, 0)] = numpy.rot90(finalSegMidSagAVWSpace, -1)
 			finalSegNativeAxialCroppedSpace[numpy.minimum(midSlice + z + 1, finalSegNativeAxialCroppedSpace.shape[0])] = numpy.rot90(finalSegMidSagAVWSpace, -1)
@@ -133,7 +133,7 @@ def segCCToNativeOneFile(segIMG, outputBase, midSagMATFile, segMATFile, dilateTo
 	NIISaving = nibabel.Nifti1Image(nativeNIIIMG, NIIAffine)
 	nibabel.save(NIISaving, outputBase + "_native.nii.gz")
 
-def segCCToNative(outputBase, doGraphics = False, dilateToParaSag = False):
+def segCCToNative(outputBase, doGraphics = False, dilateParaSagSlices = 0):
 	midSagMATFile = outputBase + "_midsag.hdf5"
 	
 	assert(os.path.isfile(midSagMATFile)),"midsag hdf5 file not found"
@@ -170,7 +170,7 @@ def segCCToNative(outputBase, doGraphics = False, dilateToParaSag = False):
 	else:
 		finalSeg = numpy.array(autoFinalSeg)
 		
-	segCCToNativeOneFile(numpy.uint8(finalSeg), outputBase + "_seg", midSagMATFile, segMATFile, dilateToParaSag = dilateToParaSag)
+	segCCToNativeOneFile(numpy.uint8(finalSeg), outputBase + "_seg", midSagMATFile, segMATFile, dilateParaSagSlices = dilateParaSagSlices)
 	thicknessMATFile = outputBase + "_thickness.hdf5"
 	
 	if os.path.isfile(thicknessMATFile):
@@ -198,7 +198,7 @@ def segCCToNative(outputBase, doGraphics = False, dilateToParaSag = False):
 			#pylab.gcf().set_size_inches((20, 10), forward = True)
 			#pylab.show()
 			#quit()	
-			segCCToNativeOneFile(numpy.uint8(curLabelIMG), outputBase + "_parcellation_" + curLabels.lower(), midSagMATFile, segMATFile, flirtInterpType = 'nearestneighbour', dilateToParaSag = dilateToParaSag)
+			segCCToNativeOneFile(numpy.uint8(curLabelIMG), outputBase + "_parcellation_" + curLabels.lower(), midSagMATFile, segMATFile, flirtInterpType = 'nearestneighbour', dilateParaSagSlices = dilateParaSagSlices)
 			
 		FID.close()
 

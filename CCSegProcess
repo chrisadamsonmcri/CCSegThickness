@@ -92,7 +92,7 @@ def main():
 	numThicknessNodes = 100
 	redoDone = False
 	doGraphics = False
-	dilateToParaSagSlices = 0
+	dilateParaSagSlices = 0
 	thicknessNoReg = False
 
 	quitOnError = False
@@ -158,10 +158,10 @@ def main():
 		if o == '--seg-grid-initpoints':
 			segGridInitPoints = True
 		if o == '--dilate-parasag':
-			dilateToParaSagSlices = 1
+			dilateParaSagSlices = 1
 		if o == '--dilate-parasag-slices':
 			try:
-				dilateToParaSagSlices = int(a)
+				dilateParaSagSlices = int(a)
 			except ValueError:
 				criticalError("the --dilate-parasag-slices value was not an integer")
 		if o == '--thickness-no-reg':
@@ -328,7 +328,7 @@ def main():
 			#print "doing segtonative"
 			if os.path.isfile(outputBase + "_seg.hdf5"):# and (redoDone or not os.path.isfile(outputBase + "_native.nii.gz")):
 				try:
-					CCSegPipeSegToNative.segCCToNative(outputBase, dilateToParaSagSlices = dilateToParaSagSlices)
+					CCSegPipeSegToNative.segCCToNative(outputBase, dilateParaSagSlices = dilateParaSagSlices)
 				except AssertionError as e:
 					print "CCSegToNative Error: " + str(e) + ", subject " + outputBase
 					if quitOnError:
@@ -342,7 +342,7 @@ def main():
 			if os.path.isfile(outputBase + "_seg.hdf5") and os.path.isfile(outputBase + "_seg_manedit.hdf5") and (redoDone or not os.path.isfile(outputBase + "_native.nii.gz")):
 				print curSubject + ": segtonative"
 				try:
-					CCSegPipeSegToNative.segCCToNative(outputBase, dilateToParaSagSlices = dilateToParaSagSlices)
+					CCSegPipeSegToNative.segCCToNative(outputBase, dilateParaSagSlices = dilateParaSagSlices)
 				except AssertionError as e:
 					print "CCSeg Error: " + str(e) + ", subject " + outputBase
 					if quitOnError:
