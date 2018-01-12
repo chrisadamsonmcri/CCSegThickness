@@ -410,8 +410,8 @@ def main():
 		
 		groupLabels = DF.columns.tolist()
 		
-		groupLists2 = DF.to_dict(orient = 'list')
-		thicknessProfiles2 = dict.fromkeys(groupLabels)
+		groupLists = DF.to_dict(orient = 'list')
+		thicknessProfiles = dict.fromkeys(groupLabels)
 
 	thicknessProfiles = dict.fromkeys(groupLabels)
 	
