@@ -126,17 +126,10 @@ def pairedTTest(thicknessA, thicknessB, numPerms):
 	return (permP, observedP, observedT, omnibusP) 
 
 # performs false discovery rate correction on P at the threshold Q
-def FDR(P, Q = 0.05, validNodeIDX = None):
+def FDR(P, Q = 0.05):
 
-	if validNodeIDX is None:
-		validNodeMask = numpy.ones(P.shape, dtype = numpy.bool)
-	else:
-		validNodeMask = numpy.zeros(P.shape, dtype = numpy.bool)
-		validNodeMask[validNodeIDX] = True
-	
-	n = numpy.double(numpy.sum(validNodeMask))
-
-	sortedP = numpy.sort(P[validNodeMask])
+	sortedP = numpy.sort(P)
+	n = P.size
 
 	I = numpy.double(numpy.arange(1, n + 1)) / n
 
@@ -461,7 +454,7 @@ def main():
 	elif testType == "paired":
 		permP, observedP, observedT, omnibusP = pairedTTest(numpy.take(thicknessProfiles[groupLabels[0]], validNodeIDX, axis = 1), numpy.take(thicknessProfiles[groupLabels[1]], validNodeIDX, axis = 1), numPerms)
 	
-	observedPFDR = FDR(observedP, validNodeIDX = validNodeIDX)
+	observedPFDR = FDR(observedP)
 	
 	# put in the dummy values for the nodes that werent tested
 
