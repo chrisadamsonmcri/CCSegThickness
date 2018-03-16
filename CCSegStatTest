@@ -126,10 +126,19 @@ def pairedTTest(thicknessA, thicknessB, numPerms):
 	return (permP, observedP, observedT, omnibusP) 
 
 # performs false discovery rate correction on P at the threshold Q
-def FDR(P, Q = 0.05):
-	sortedP = numpy.sort(P)
+def FDR(P, Q = 0.05, validNodeIDX = None):
 
-	I = numpy.arange(1, numpy.size(P) + 1) / numpy.size(P)
+	if validNodeIDX is None:
+		validNodeMask = numpy.ones(P.shape, dtype = numpy.bool)
+	else:
+		validNodeMask = numpy.zeros(P.shape, dtype = numpy.bool)
+		validNodeMask[validNodeIDX] = True
+	
+	n = numpy.double(numpy.sum(validNodeMask))
+
+	sortedP = numpy.sort(P[validNodeMask])
+
+	I = numpy.double(numpy.arange(1, n + 1)) / n
 
 	PBelowFDRThresh = numpy.where(sortedP <= (I * Q))[0]
 
@@ -138,6 +147,7 @@ def FDR(P, Q = 0.05):
 	else:
 		# the last index where sortedP <= (I * Q)
 		FDRPThresh = sortedP[PBelowFDRThresh[-1]]
+		
 		return numpy.minimum(P / FDRPThresh, 1)
 
 def twoSampleTTestCalcT(thicknessA, thicknessB, returnP = False):
@@ -411,7 +421,6 @@ def main():
 		groupLabels = DF.columns.tolist()
 		
 		groupLists = DF.to_dict(orient = 'list')
-		thicknessProfiles = dict.fromkeys(groupLabels)
 
 	thicknessProfiles = dict.fromkeys(groupLabels)
 	
@@ -452,7 +461,7 @@ def main():
 	elif testType == "paired":
 		permP, observedP, observedT, omnibusP = pairedTTest(numpy.take(thicknessProfiles[groupLabels[0]], validNodeIDX, axis = 1), numpy.take(thicknessProfiles[groupLabels[1]], validNodeIDX, axis = 1), numPerms)
 	
-	observedPFDR = FDR(observedP)
+	observedPFDR = FDR(observedP, validNodeIDX = validNodeIDX)
 	
 	# put in the dummy values for the nodes that werent tested
 
