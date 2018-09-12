@@ -141,7 +141,24 @@ def FDR(P, Q = 0.05):
 		# the last index where sortedP <= (I * Q)
 		FDRPThresh = sortedP[PBelowFDRThresh[-1]]
 		
-		return numpy.minimum(P / FDRPThresh, 1)
+		return numpy.minimum(P / FDRPThresh * Q, 1)
+
+# BH algorithm from R
+def RFDR(P, Q = 0.05):
+	# find the ordering of the P values in DESCENDING order
+	o = numpy.argsort(-P)
+	# find the ordering that returns the ordering from descending sorted back to original
+	ro = numpy.argsort(o)
+	
+	# make a vector that goes from the size of the array to one
+	i = numpy.double(numpy.arange(P.size, 0, -1))
+
+	# numpy.minimum.accumulate(P.size / i * P[o])
+	# P[o] is the P-values in descending order
+	# as soon as P[o] * P.size / i is less than 0.05, the remaining ones will be since we are doing
+	# a cumulative minimum
+	# the [ro] at the end returns the original ordering
+	return numpy.minimum(1, numpy.minimum.accumulate(P.size / i * P[o]))[ro]
 
 def twoSampleTTestCalcT(thicknessA, thicknessB, returnP = False):
 	NA = numpy.double(thicknessA.shape[0])
@@ -454,7 +471,7 @@ def main():
 	elif testType == "paired":
 		permP, observedP, observedT, omnibusP = pairedTTest(numpy.take(thicknessProfiles[groupLabels[0]], validNodeIDX, axis = 1), numpy.take(thicknessProfiles[groupLabels[1]], validNodeIDX, axis = 1), numPerms)
 	
-	observedPFDR = FDR(observedP)
+	observedPFDR = RFDR(observedP)
 	
 	# put in the dummy values for the nodes that werent tested
 
