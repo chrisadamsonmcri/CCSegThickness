@@ -1119,6 +1119,11 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 	numpy.int64(numpy.round(centresI - croppedTemplateAVW.shape[0] / 2.0)),\
 	numpy.int64(numpy.round(centresJ - croppedTemplateAVW.shape[1] / 2.0)), indexing = 'ij')
 	LKInitialOffsets = numpy.concatenate((numpy.atleast_2d(LKInitialOffsetsJ.ravel()).T, numpy.atleast_2d(LKInitialOffsetsI.ravel()).T), axis = 1)
+	
+	# check for initial offsets that go past the end of the image
+	
+	I = numpy.where(numpy.logical_and(LKInitialOffsets[:, 0] + croppedTemplateAVW.shape[1] <= resampledAVW.shape[1], LKInitialOffsets[:, 1] + croppedTemplateAVW.shape[0] <= resampledAVW.shape[0]))[0]
+	LKInitialOffsets = numpy.take(LKInitialOffsets, I, axis = 0)
 	#print str(LKInitialOffsets.shape[0]) + " offsets to compute"
 	if doGraphics:
 		pylab.clf()
@@ -1357,17 +1362,22 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 	TCoordHistBotR = numpy.zeros_like(resampledAVW, dtype = numpy.uint32)
 
 	for z in range(LKInitialOffsets.shape[0]):
-		TCoordHistTopL[int(numpy.round(segCCLKandOtsuOutput['TY'][z][ 0,  0])), int(numpy.round(segCCLKandOtsuOutput['TX'][z][ 0,  0]))] += 1
-		TCoordHistTopR[int(numpy.round(segCCLKandOtsuOutput['TY'][z][ 0, -1])), int(numpy.round(segCCLKandOtsuOutput['TX'][z][ 0, -1]))] += 1
-		TCoordHistBotL[int(numpy.round(segCCLKandOtsuOutput['TY'][z][-1,  0])), int(numpy.round(segCCLKandOtsuOutput['TX'][z][-1,  0]))] += 1
-		TCoordHistBotR[int(numpy.round(segCCLKandOtsuOutput['TY'][z][-1, -1])), int(numpy.round(segCCLKandOtsuOutput['TX'][z][-1, -1]))] += 1
+		try:
+			TCoordHistTopL[int(numpy.round(segCCLKandOtsuOutput['TY'][z][ 0,  0])), int(numpy.round(segCCLKandOtsuOutput['TX'][z][ 0,  0]))] += 1
+			TCoordHistTopR[int(numpy.round(segCCLKandOtsuOutput['TY'][z][ 0, -1])), int(numpy.round(segCCLKandOtsuOutput['TX'][z][ 0, -1]))] += 1
+			TCoordHistBotL[int(numpy.round(segCCLKandOtsuOutput['TY'][z][-1,  0])), int(numpy.round(segCCLKandOtsuOutput['TX'][z][-1,  0]))] += 1
+			TCoordHistBotR[int(numpy.round(segCCLKandOtsuOutput['TY'][z][-1, -1])), int(numpy.round(segCCLKandOtsuOutput['TX'][z][-1, -1]))] += 1
+		except Exception:
+			pass
 	
 	# smooth them a bit
 	TCoordHistTopL = scipy.ndimage.filters.gaussian_filter(numpy.double(TCoordHistTopL), 1.0)
 	TCoordHistTopR = scipy.ndimage.filters.gaussian_filter(numpy.double(TCoordHistTopR), 1.0)
 	TCoordHistBotL = scipy.ndimage.filters.gaussian_filter(numpy.double(TCoordHistBotL), 1.0)
 	TCoordHistBotR = scipy.ndimage.filters.gaussian_filter(numpy.double(TCoordHistBotR), 1.0)
-	
+	#pylab.imshow(TCoordHistTopL)
+	#pylab.show()
+	#quit()
 	# find the most common location
 	TCoordHistTopLMax = numpy.argmax(TCoordHistTopL)
 	TCoordHistTopLMaxIDX = numpy.unravel_index(TCoordHistTopLMax, TCoordHistTopL.shape)
@@ -1489,6 +1499,7 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 	print "best based on mode: " + str(LKInitialOffsets[TCoordDistancesMinIDX]) + ", best LK: " + str(LKInitialOffsets[bestLKIDX])
 	
 	bestLKIDX = TCoordDistancesMinIDX
+	#bestLKIDX = bestLKIDX
 	#print LKSegFitsScores.size
 	#print LKInitialOffsets.shape[0]
 	#print len(segCCLKandOtsuOutput['TX'])
