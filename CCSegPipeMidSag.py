@@ -195,7 +195,7 @@ def applyOrntToNIIAffine(NII, ornt_transform):
 
 	return numpy.matrix(NIIAffine) * numpy.diag(1.0 / pixDimsVector) * numpy.matrix(transformAffine) * numpy.diag(pixDimsVector)
 	
-def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStripped = False):
+def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStripped = False, useMNIBrainMask = True):
 	
 	# check for the presence of FSLDIR in the enviornment variables
 	assert('FSLDIR' in os.environ),"FSLDIR not set, FSL must be set up"
@@ -293,7 +293,11 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 				# odd number of slices
 				midSagAVW = numpy.double(NIIData[:, T])
 				midSagAVWBrainMask = numpy.double(NIIBrainMaskData[:, T])
-			
+			pylab.clf()
+			pylab.imshow(midSagAVWBrainMask)
+			pylab.show()
+	#print NIIPixdims
+	#	
 			midSagAVW[numpy.where(midSagAVWBrainMask < 0.5)] = numpy.nan
 
 			midSagAVW = numpy.rot90(midSagAVW, 1)
@@ -604,7 +608,8 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 				# register to our 2mm MNI template, project brain mask from template space back to native to perform
 				# a cropping to remove neck
 				flirtROTDegrees = 15
-				if not os.path.isfile(outputBase + "_native_midsag_sym_to_template.mat"):
+				
+				if skullStripped == False: #$not os.path.isfile(outputBase + "_native_midsag_sym_to_template.mat"):
 					CMD = [os.environ['FSLDIR'] + '/bin/flirt', 
 					'-in', outputBase + "_native_midsag_sym", 
 					'-out', outputBase + "_native_midsag_sym_to_template", 
@@ -618,40 +623,47 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 					'-interp', flirtInterp]
 					subprocess.call(CMD)
 					
-				T = numpy.loadtxt(outputBase + "_native_midsag_sym_to_template.mat")
-				invT = numpy.linalg.inv(T)
-				numpy.savetxt(outputBase + "_native_midsag_template_to_sym.mat", invT)
+					T = numpy.loadtxt(outputBase + "_native_midsag_sym_to_template.mat")
+					invT = numpy.linalg.inv(T)
+					numpy.savetxt(outputBase + "_native_midsag_template_to_sym.mat", invT)
 
-				CMD = [os.environ['FSLDIR'] + '/bin/flirt', 
-				'-in', CCSegUtils.MNI152FLIRTSymNeckCropTemplate() + "_brain_mask", 
-				'-out', outputBase + "_MNI_brain_mask", 
-				'-ref', outputBase + "_native_midsag_sym",
-				'-applyxfm',
-				'-init', outputBase + "_native_midsag_template_to_sym.mat",
-				'-interp', 'nearestneighbour',
-				'-datatype', 'char']
-				subprocess.call(CMD)
+					CMD = [os.environ['FSLDIR'] + '/bin/flirt', 
+					'-in', CCSegUtils.MNI152FLIRTSymNeckCropTemplate() + "_brain_mask", 
+					'-out', outputBase + "_MNI_brain_mask", 
+					'-ref', outputBase + "_native_midsag_sym",
+					'-applyxfm',
+					'-init', outputBase + "_native_midsag_template_to_sym.mat",
+					'-interp', 'nearestneighbour',
+					'-datatype', 'char']
+					subprocess.call(CMD)
 
-				brainMaskNII = nibabel.load(outputBase + "_MNI_brain_mask.nii.gz")
-				I = numpy.where(brainMaskNII.get_data() > 0)
+					brainMaskNII = nibabel.load(outputBase + "_MNI_brain_mask.nii.gz")
+					I = numpy.where(brainMaskNII.get_data() > 0)
 				#CCSegPipeMidSagSymmetric.showMidSag(TIMG)
 				#brainMaskBoundingBox = 	
 				#brainMaskCrop = numpy.array([[numpy.min(I[0]), numpy.max(I[0])], [numpy.min(I[1]), numpy.max(I[1])], [numpy.min(I[2]), numpy.max(I[2])]])
 				midSlice = int(math.floor(TIMG.shape[0] / 2))
+				
+				if skullStripped == False: #$not os.path.isfile(outputBase + "_native_midsag_sym_to_template.mat"):
+					if (TIMG.shape[0] % 2 == 0):
+						midSagBrainMask = (numpy.double(brainMaskNII.get_data()[midSlice - 1, :, :]) + numpy.double(brainMaskNII.get_data()[midSlice, :, :])) / 2.0
+					else:
+						midSagBrainMask = numpy.double(brainMaskNII.get_data()[midSlice, :, :])
 
 				# extract the midsagittal slice
 				if (TIMG.shape[0] % 2 == 0):
 					# even number of slices
 					midSagAVW = (numpy.double(TIMG[midSlice - 1, :, :]) + numpy.double(TIMG[midSlice, :, :])) / 2.0
-					midSagBrainMask = (numpy.double(brainMaskNII.get_data()[midSlice - 1, :, :]) + numpy.double(brainMaskNII.get_data()[midSlice, :, :])) / 2.0
 				else:
 					# odd number of slices
 					midSagAVW = numpy.double(TIMG[midSlice, :, :])
-					midSagBrainMask = numpy.double(brainMaskNII.get_data()[midSlice, :, :])
 				
 				midSagAVW = numpy.rot90(midSagAVW, 1)
-				midSagBrainMask = numpy.rot90(midSagBrainMask, 1)
-				midSagAVW[numpy.logical_not(midSagBrainMask > 0)] = 0
+				
+				if skullStripped == False:
+
+					midSagBrainMask = numpy.rot90(midSagBrainMask, 1)
+					midSagAVW[numpy.logical_not(midSagBrainMask > 0)] = 0
 				#parasagittalSlices, parasagittalFX, parasagittalFY, parasagittalFZ = CCSegUtils.parasagittalSlicesAndGradients(TIMG, axialNIIPixdims, numSlices = 3)
 
 				#pylab.subplot(1, 2, 1)

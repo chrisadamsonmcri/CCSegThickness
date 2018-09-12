@@ -66,7 +66,7 @@ def usage():
 def main():
 	
 	longOptStrings = ['do-midsag', 'do-seg', 'do-thickness', 'do-segtonative', 'do-all', 'do-thicknessmanedit'] # do directives
-	longOptStrings.extend(['skullstripped']) # midsag options
+	longOptStrings.extend(['skullstripped', 'midsag-no-brainmask']) # midsag options
 	longOptStrings.extend(['seg-no-lk', 'seg-no-auto', 'seg-choose-first', 'seg-grid-initpoints']) # seg options
 	longOptStrings.extend(['num-thickness-nodes=', 'thickness-no-reg']) # thickess options
 	longOptStrings.extend(['dilate-parasag', 'dilate-parasag-slices=']) # segtonative options
@@ -94,6 +94,7 @@ def main():
 	doGraphics = False
 	dilateParaSagSlices = 0
 	thicknessNoReg = False
+	useMNIBrainMask = True
 
 	quitOnError = False
 
@@ -149,6 +150,8 @@ def main():
 			doGraphics = True
 		if o == '--skullstripped':
 			skullStripped = True
+		if o == '--midsag-no-brainmask':
+			useMNIBrainMask = False
 		if o == '--seg-no-lk':
 			segLK = False
 		if o == '--seg-no-auto':
@@ -219,7 +222,7 @@ def main():
 			if redoDone or not os.path.isfile(outputBase + "_midsag.hdf5"):
 				#try:
 					print curSubject + ": midsag"
-					CCSegPipeMidSag.midsagExtract(os.path.join(inputDirectory, curSubject), outputBase, MSPMethod, doGraphics = doGraphics, skullStripped = skullStripped)
+					CCSegPipeMidSag.midsagExtract(os.path.join(inputDirectory, curSubject), outputBase, MSPMethod, doGraphics = doGraphics, skullStripped = skullStripped, useMNIBrainMask = useMNIBrainMask)
 				#except AssertionError as e:
 				#	print "MidSag Error: " + str(e) + ", subject " + outputBase
 				#	if quitOnError:

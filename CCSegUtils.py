@@ -476,7 +476,8 @@ def interp3q(xx, yy, zz, V, xi, yi, zi, interpmethod = 'linear', extrapval = num
 			#	(    YFrac) * (    XFrac) * (1 - ZFrac) * V[(YIDX + 1, XIDX + 1, ZIDX    )] + \
 			#	(    YFrac) * (    XFrac) * (    ZFrac) * V[(YIDX + 1, XIDX + 1, ZIDX + 1)]
 			flatV = numpy.ravel(V, order = 'F')
-			
+			#flatinMaskIDX = numpy.ravel(inMaskIDX, order = 'F')
+			#print flatV.shape
 			#outV[inMaskIDX] = (1 - YFrac) * (1 - XFrac) * (1 - ZFrac) * flatV[linearIDX] + (1 - YFrac) * (1 - XFrac) * (    ZFrac) * flatV[linearIDX + numInSlice] + (1 - YFrac) * (    XFrac) * (1 - ZFrac) * flatV[linearIDX + V.shape[0]] + (1 - YFrac) * (    XFrac) * (    ZFrac) * flatV[linearIDX + V.shape[0] + numInSlice] + (    YFrac) * (1 - XFrac) * (1 - ZFrac) * flatV[linearIDX + 1] + (    YFrac) * (1 - XFrac) * (    ZFrac) * flatV[linearIDX + 1 + numInSlice] + (    YFrac) * (    XFrac) * (1 - ZFrac) * flatV[linearIDX + 1 + V.shape[0]] + (    YFrac) * (    XFrac) * (    ZFrac) * flatV[linearIDX + 1 + V.shape[0] + numInSlice]
 #
 			outV[inMaskIDX] = numexpr.evaluate('(1 - YFrac) * (1 - XFrac) * (1 - ZFrac) * a + (1 - YFrac) * (1 - XFrac) * (    ZFrac) * b + (1 - YFrac) * (    XFrac) * (1 - ZFrac) * c + (1 - YFrac) * (    XFrac) * (    ZFrac) * d + (    YFrac) * (1 - XFrac) * (1 - ZFrac) * e + (    YFrac) * (1 - XFrac) * (    ZFrac) * f + (    YFrac) * (    XFrac) * (1 - ZFrac) * g + (    YFrac) * (    XFrac) * (    ZFrac) * h', {'a': flatV[linearIDX], 'b': flatV[linearIDX + numInSlice], 'c': flatV[linearIDX + V.shape[0]], 'd': flatV[linearIDX + V.shape[0] + numInSlice], 'e': flatV[linearIDX + 1], 'f': flatV[linearIDX + 1 + numInSlice], 'g': flatV[linearIDX + 1 + V.shape[0]], 'h': flatV[linearIDX + 1 + V.shape[0] + numInSlice], 'XFrac': XFrac, 'YFrac': YFrac, 'ZFrac': ZFrac})
