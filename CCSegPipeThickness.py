@@ -436,7 +436,7 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
 		pylab.clf()
 		
 		CCSegUtils.showIMG(seg['IMG'])
-		finalSegContours, hierarchy = cv2.findContours(numpy.uint8(finalSeg), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+		junk, finalSegContours, hierarchy = cv2.findContours(numpy.uint8(finalSeg), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 		lineProps = {'color': 'b', 'linewidth': 2}
 		for z in range(len(finalSegContours)):
 			CCSegUtils.plotContour(numpy.squeeze(finalSegContours[z]).T, lineProps = lineProps)

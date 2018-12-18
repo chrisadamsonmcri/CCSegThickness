@@ -476,7 +476,7 @@ def nearestAnglesDistances(templateSegMask, estSegMask):
 	if numpy.all(templateSegMask == False) or numpy.all(estSegMask == False):
 		return (None, None)
 	
-	templateSegContours, hierarchy = cv2.findContours(numpy.uint8(templateSegMask), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+	junk, templateSegContours, hierarchy = cv2.findContours(numpy.uint8(templateSegMask), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
 	#assert(len(templateSegContours) == 1),"Template CC seg has multiple contours, this should never happen"
 	if(not (len(templateSegContours) == 1)):
@@ -516,7 +516,7 @@ def nearestAnglesDistances(templateSegMask, estSegMask):
 	#pylab.gcf().set_size_inches((20, 10), forward = True)
 	#pylab.show()
 	#quit()
-	estSegContoursFirst, hierarchy = cv2.findContours(numpy.uint8(estSegMask), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+	junk, estSegContoursFirst, hierarchy = cv2.findContours(numpy.uint8(estSegMask), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 	del hierarchy
 	
 	estSegContours = list()
@@ -614,7 +614,7 @@ def bwJoinMSTBoundaries(BW):
 	assert(isinstance(BW, numpy.ndarray) and BW.dtype == numpy.bool)
 	
 #	[B] = bwboundaries(BW, 8);
-	firstcontours, hierarchy = cv2.findContours(numpy.uint8(BW), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+	junk, firstcontours, hierarchy = cv2.findContours(numpy.uint8(BW), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 	del hierarchy
 	
 	
@@ -1865,7 +1865,7 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 			#pylab.subplot(SR, SC, 1); CCSegUtils.showIMG(CCSegBeforeRegionDel); pylab.title('penaltyA')
 			pylab.subplot(SR, SC, 2); CCSegUtils.showIMG(CCSeg); pylab.title('Updated')
 			pylab.subplot(SR, SC, 1); CCSegUtils.showIMG(LKOutput['croppedTemplateCCProbLKIMG']); pylab.title('Before delete')
-			segContours, hierarchy = cv2.findContours(numpy.uint8(CCSegBeforeRegionDel), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+			junk, segContours, hierarchy = cv2.findContours(numpy.uint8(CCSegBeforeRegionDel), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 			lineProps = {'color': 'r', 'linewidth': 2}
 			for z in range(len(segContours)):
 				CCSegUtils.plotContour(numpy.squeeze(segContours[z]).T, lineProps = lineProps)
@@ -2188,12 +2188,12 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 		pylab.subplot(SR, SC, 4)
 		CCSegUtils.showIMG(LKOutput['croppedIMG'])
 		
-		watershedSegContours, hierarchy = cv2.findContours(numpy.uint8(watershedSeg), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+		junk, watershedSegContours, hierarchy = cv2.findContours(numpy.uint8(watershedSeg), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 		lineProps = {'color': 'r', 'linewidth': 2}
 		for z in range(len(watershedSegContours)):
 			CCSegUtils.plotContour(numpy.squeeze(watershedSegContours[z]).T, lineProps = lineProps)
 			
-		watershedSegContours, hierarchy = cv2.findContours(numpy.uint8(watershedSegPenaltyIMG), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+		junk, watershedSegContours, hierarchy = cv2.findContours(numpy.uint8(watershedSegPenaltyIMG), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 		lineProps = {'color': 'b', 'linewidth': 2}
 		for z in range(len(watershedSegContours)):
 			CCSegUtils.plotContour(numpy.squeeze(watershedSegContours[z]).T, lineProps = lineProps)
@@ -2230,7 +2230,7 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 		pylab.subplot(SR, SC, 1)
 		CCSegUtils.showIMG(LKOutput['croppedIMG'])
 		
-		finalSegContours, hierarchy = cv2.findContours(numpy.uint8(finalSeg), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+		junk, finalSegContours, hierarchy = cv2.findContours(numpy.uint8(finalSeg), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 		lineProps = {'color': 'b', 'linewidth': 2}
 		for z in range(len(finalSegContours)):
 			CCSegUtils.plotContour(numpy.squeeze(finalSegContours[z]).T, lineProps = lineProps)
@@ -2238,7 +2238,7 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 		
 		pylab.subplot(SR, SC, 2)
 		CCSegUtils.showIMG(LKOutput['croppedIMG'])
-		finalSegNoArtefactsContours, hierarchy = cv2.findContours(numpy.uint8(finalSegNoArtefacts), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+		junk, finalSegNoArtefactsContours, hierarchy = cv2.findContours(numpy.uint8(finalSegNoArtefacts), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 		lineProps = {'color': 'r', 'linewidth': 2}
 		for z in range(len(finalSegNoArtefactsContours)):
 			CCSegUtils.plotContour(numpy.squeeze(finalSegNoArtefactsContours[z]).T, lineProps = lineProps)
@@ -2247,7 +2247,7 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 		pylab.subplot(SR, SC, 3)
 		CCSegUtils.showIMG(LKOutput['croppedIMG'])
 		
-		watershedSegContours, hierarchy = cv2.findContours(numpy.uint8(watershedSeg), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+		junk, watershedSegContours, hierarchy = cv2.findContours(numpy.uint8(watershedSeg), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 		lineProps = {'color': 'r', 'linewidth': 2}
 		for z in range(len(watershedSegContours)):
 			CCSegUtils.plotContour(numpy.squeeze(watershedSegContours[z]).T, lineProps = lineProps)
@@ -2259,16 +2259,16 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 		for z in range(len(watershedSegContours)):
 			CCSegUtils.plotContour(numpy.squeeze(watershedSegContours[z]).T, lineProps = lineProps)
 			
-		watershedSegContours, hierarchy = cv2.findContours(numpy.uint8(watershedMarkers == 1), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+		junk, watershedSegContours, hierarchy = cv2.findContours(numpy.uint8(watershedMarkers == 1), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 		lineProps = {'color': 'b', 'linewidth': 2}
 		for z in range(len(watershedSegContours)):
 			CCSegUtils.plotContour(numpy.squeeze(watershedSegContours[z]).T, lineProps = lineProps)
-		watershedSegContours, hierarchy = cv2.findContours(numpy.uint8(watershedMarkers == 2), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+		junk, watershedSegContours, hierarchy = cv2.findContours(numpy.uint8(watershedMarkers == 2), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 		lineProps = {'color': 'y', 'linewidth': 2}
 		for z in range(len(watershedSegContours)):
 			CCSegUtils.plotContour(numpy.squeeze(watershedSegContours[z]).T, lineProps = lineProps)
 		
-		watershedSegContours, hierarchy = cv2.findContours(numpy.uint8(finalSeg), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+		junk, watershedSegContours, hierarchy = cv2.findContours(numpy.uint8(finalSeg), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 		lineProps = {'color': 'm', 'linewidth': 2}
 		for z in range(len(watershedSegContours)):
 			CCSegUtils.plotContour(numpy.squeeze(watershedSegContours[z]).T, lineProps = lineProps)

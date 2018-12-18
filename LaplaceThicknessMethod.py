@@ -1032,7 +1032,7 @@ def endpointsFind(BW, outputPNG = None):
 	
 	del BWLeftExtrema; del BWRightExtrema;
 	
-	BWContours, hierarchy = cv2.findContours(numpy.uint8(BW), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+	junk, BWContours, hierarchy = cv2.findContours(numpy.uint8(BW), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 	del hierarchy
 
 	BWContour = numpy.squeeze(BWContours[0]).T
