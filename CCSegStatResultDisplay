@@ -178,7 +178,7 @@ class CCSegStatResultsDisplayer:
 		T = numpy.pad(T, [1, 1], mode='constant', constant_values=0)
 		#print T 
 		#print T.dtype
-		junk, boundaryContour, hierarchy = cv2.findContours(T, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+		boundaryContour, hierarchy = CCSegUtils.findContours(T, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 		del hierarchy
 		del T
 
