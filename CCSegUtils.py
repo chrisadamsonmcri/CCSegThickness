@@ -15,7 +15,7 @@ import cv2
 
 cv2.findContours
 def findContours(IMG, mode, method):
-    T = = cv2.findContours(IMG, mode, method)
+    T = cv2.findContours(IMG, mode, method)
     if len(T) == 2:
         # old API
         return T
