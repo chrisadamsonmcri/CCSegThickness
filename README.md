@@ -16,10 +16,10 @@ The pipeline performs the following sequence of steps:
 
 ## Installation
 
-Tested in Ubuntu 16.04 LTS
+Tested in Ubuntu 16.04 LTS, 18.04 LTS.
 
 
-`git clone https://github.com/R3DDY97/CCSegThickness`
+`git clone https://github.com/chrisadamsonmcri/CCSegThickness`
 
 `cd CCSegThickness`
 
