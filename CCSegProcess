@@ -294,8 +294,9 @@ def main():
 						continue
 				except Exception as e:
 					print "CCSeg Thickness Error: " + str(e) + ", subject " + outputBase
-					L = os.listdir(os.path.join(outputDirectory, 'seg'))
 					CCSegUtils.mkdirSafe(os.path.join(outputDirectory, 'seg_bad'))
+					CCSegUtils.mkdirSafe(os.path.join(outputDirectory, 'seg'))
+					L = os.listdir(os.path.join(outputDirectory, 'seg'))
 					for curFile in sorted(L):
 						if curFile.startswith(curSubject) and os.path.isfile(os.path.join(outputDirectory, 'seg', curFile)):
 							shutil.copy(os.path.join(outputDirectory, 'seg', curFile), os.path.join(outputDirectory, 'seg_bad'))
