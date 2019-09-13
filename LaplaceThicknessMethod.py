@@ -429,8 +429,14 @@ def laplaceEquation2DContours(xi, yi, xo, yo, xScale, yScale, delta, numStreamli
 		laplaceAMatrix[(numpy.arange(numVariables), numpy.arange(numVariables))] = 2.0 * (xSpacing * xSpacing + ySpacing * ySpacing)
 		
 		if usingCholesky:
-			CholeskyOfA = cholesky(laplaceAMatrix.tocsc())
+                    try:
+                        CholeskyOfA = cholesky(laplaceAMatrix.tocsc())
 			LUOfA = None
+                    except Exception:
+			
+                        LUOfA = scipy.sparse.linalg.splu(scipy.sparse.csc_matrix(laplaceAMatrix))
+			CholeskyOfA = None
+
 			#Z = L(laplaceBVector)
 			#del L
 		else:#	except Exception:
@@ -558,7 +564,7 @@ def laplaceEquation2DContours(xi, yi, xo, yo, xScale, yScale, delta, numStreamli
 	
 	#laplaceCholeskyDecompPrecomputed = None, laplaceLUDecompPrecomputed = None
 	#quit()
-	if usingCholesky:
+	if not CholeskyOfA is None:
 		#if laplaceCholeskyDecompPrecomputed != None:
 		#	CholeskyOfA
 
