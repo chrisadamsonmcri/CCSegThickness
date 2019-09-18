@@ -131,6 +131,8 @@ def main():
                 criticalError("the --num-thickness-nodes value was not an integer")
         if o == '--redo-done':
             redoDone = True
+        if o == '--msp-method':
+            print('--msp-method is deprecated, ignored')
         if o == '--do-midsag':
             doMidsag = True
         if o == '--do-seg':
