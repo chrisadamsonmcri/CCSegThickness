@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 import os
 import shutil
@@ -22,13 +22,13 @@ def loadLongSubjectFile(fileName):
 			referenceImage = splitLine[0]
 			otherTimePoints = splitLine[1:]
 			if referenceImage in mainAndTimePoints:
-				print "Warning: reference image appears twice in file - " + referenceImage
+				print(("Warning: reference image appears twice in file - " + referenceImage))
 			else:
 				if len(otherTimePoints) > 0:
 					mainAndTimePoints[referenceImage] = otherTimePoints[:]
 					for otherImage in otherTimePoints:
 						if otherImage in timePointsToReference or otherImage in mainAndTimePoints:
-							print "Warning: image appears twice - " + otherImage
+							print(("Warning: image appears twice - " + otherImage))
 						else:
 							timePointsToReference[otherImage] = referenceImage
 				else:
@@ -50,7 +50,7 @@ if __name__ == "__main__":
 	
 	inDir = 'T1NeckCroppedRegToFirstTimepoint'
 	
-	for curFile in timePointsToReference.iterkeys():
+	for curFile in list(timePointsToReference.keys()):
 		if timePointsToReference[curFile] != None:
 
 			extensions = ['.mat', '.nii.gz']
@@ -59,5 +59,5 @@ if __name__ == "__main__":
 				curInFile = os.path.join(inDir, curFile + curExtension)
 				curOutFile = os.path.join(inDir, curFile + "_to_" + timePointsToReference[curFile] + curExtension)
 				if os.path.isfile(curInFile):
-					print curInFile + " -> " + curOutFile
+					print((curInFile + " -> " + curOutFile))
 					shutil.move(curInFile, curOutFile)

@@ -1,22 +1,22 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 import os
 
 import CCSegUtils
 
 def criticalError(errorString):
-	print "Error: " + str(errorString)
+	print(("Error: " + str(errorString)))
 	quit()
 
 def printHelpText():
-	print "SUBJECT SELECTION - use these options to select which images in <input directory> are processed"
-	print "Each of these options take an option <file> that point to a file containing a newline delimited list of image prefixes"
-	print
-	print "\t--single-subject=<nifti file prefix>: only this subject will be processed"
-	print "\t--subjects-include=<comma separated list>: comma separated list of subjects to process"
-	print "\t--subjects-include-file=<file>: file name that contains a newline-delimited list of subjects to process"
-	print "\t--subjects-exclude=<comma separated list>: comma separated list of subjects to exclude"
-	print "\t--subjects-exclude-file=<file>: file name that contains a newline-delimited list of subjects to exclude"
+	print("SUBJECT SELECTION - use these options to select which images in <input directory> are processed")
+	print("Each of these options take an option <file> that point to a file containing a newline delimited list of image prefixes")
+	print()
+	print("\t--single-subject=<nifti file prefix>: only this subject will be processed")
+	print("\t--subjects-include=<comma separated list>: comma separated list of subjects to process")
+	print("\t--subjects-include-file=<file>: file name that contains a newline-delimited list of subjects to process")
+	print("\t--subjects-exclude=<comma separated list>: comma separated list of subjects to exclude")
+	print("\t--subjects-exclude-file=<file>: file name that contains a newline-delimited list of subjects to exclude")
 
 def getOptions():
 	return ['subjects-include=', 'subjects-exclude=', 'subjects-include-file=', 'subjects-exclude-file=', 'single-subject=']
@@ -56,22 +56,22 @@ def selectSubjectsFromOpts(inputDirectory, opts = None):
 
 	subjectsInclude = None
 	if subjectsIncludeFile != None:
-		print "using include file: " + subjectsIncludeFile
+		print(("using include file: " + subjectsIncludeFile))
 		if not os.path.isfile(subjectsIncludeFile):
 			criticalError("The subjects include file was given, but the file was not found")
 		fp = open(subjectsIncludeFile, 'r')
 		subjectsInclude = fp.readlines()
-		subjectsInclude = map(lambda s: s.strip(), subjectsInclude)
+		subjectsInclude = [s.strip() for s in subjectsInclude]
 		fp.close()
 	
 	subjectsExclude = None
 	if subjectsExcludeFile != None:
-		print "using exclude file: " + subjectsExcludeFile
+		print(("using exclude file: " + subjectsExcludeFile))
 		if not os.path.isfile(subjectsExcludeFile):
 			criticalError("The subjects exclude file was given, but the file was not found")
 		fp = open(subjectsExcludeFile, 'r')
 		subjectsExclude = fp.readlines()
-		subjectsExclude = map(lambda s: s.strip(), subjectsExclude)
+		subjectsExclude = [s.strip() for s in subjectsExclude]
 		fp.close()
 	
 	if subjectsIncludeListArg != None:
@@ -98,7 +98,7 @@ def selectSubjectsFromOpts(inputDirectory, opts = None):
 
 	# if we are using an include AND exclude lists, remove all elements of the include list that are in the exclude list
 	if subjectsInclude != None and subjectsExclude != None:
-		print "Warning, using both include and exclude lists, removing excluded subjects from include list"
+		print("Warning, using both include and exclude lists, removing excluded subjects from include list")
 		subjectsInclude = [x for x in subjectsInclude if not x in subjectsExclude]
 
 	# get a list of nifti files in the input directory
@@ -136,7 +136,7 @@ def selectSubjectsFromOpts(inputDirectory, opts = None):
 	if singleSubject != None:
 		if singleSubject in inputNIFTIFiles:
 			actualInputFiles = [singleSubject]
-			print "processing single subject: " + singleSubject
+			print(("processing single subject: " + singleSubject))
 		else:
 			criticalError("Single subject was given as: " + singleSubject + ", but the NIFTI file was not found in input directory")
 	else:

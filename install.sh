@@ -10,9 +10,7 @@ fi
 printf "\n Updating system and Installing required packages ......\n\n\n  "
 
 
-sudo apt update
-sudo apt upgrade -y
-sudo apt install python python-dev python-pip python-numpy python-scipy python-nibabel python-opencv  python-matplotlib -y
+sudo apt install python3-dev python3-pip python3-numpy python3-scipy python3-nibabel python3-opencv python3-matplotlib -y
 sudo apt install libsuitesparse-dev -y
 
-sudo -H pip install -U scikits.sparse
+sudo -H pip3 install -U scikits.sparse

@@ -200,7 +200,7 @@ def getIdealThicknessProfile(numNodesOut, returnPeaks = False):
 	idealCCThicknessFile = os.path.join(head, 'data', 'ideal_cc_thickness.hdf5')
 
 	if not os.path.isfile(idealCCThicknessFile):
-		print "ideal CC thickness file not found"
+		print("ideal CC thickness file not found")
 		quit()
 	
 	FID = h5py.File(idealCCThicknessFile, 'r')
@@ -410,7 +410,7 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
 	#pylab.show()
 	#quit()	
 	if os.path.isfile(segManeditMATFile):
-		print "using man edit seg"
+		print("using man edit seg")
 		FID = h5py.File(segManeditMATFile, 'r')
 		finalSeg = numpy.array(FID['finalSegManEdit']) > 0
 		FID.close()	
@@ -506,9 +506,9 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
 		
 		D = numpy.abs(scales[0] - scales)
 		if numpy.any(D > 1e-5):
-			print "Scaling constants are not equal, this should not happen, using mean anyway"
+			print("Scaling constants are not equal, this should not happen, using mean anyway")
 		globalScale = numpy.mean(scales)
-		print "global scale: " + str(globalScale)
+		print(("global scale: " + str(globalScale)))
 		thicknessProfile = thicknessProfile / globalScale
 
 	FID.close()
@@ -917,21 +917,21 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
 	FID.create_dataset("witelsonNodeLabels", data = witelsonNodeLabels, compression = 'gzip')
 	
 	witelsonGroup = FID.create_group("witelsonStats")
-	for curKey in witelsonStats.iterkeys():
+	for curKey in list(witelsonStats.keys()):
 		witelsonGroup.create_dataset(curKey, data = witelsonStats[curKey], compression = 'gzip')
 	
 	FID.create_dataset("hoferFrahmLabels", data = hoferFrahmLabels, compression = 'gzip')
 	FID.create_dataset("hoferFrahmNodeLabels", data = hoferFrahmNodeLabels, compression = 'gzip')
 	
 	hoferFrahmGroup = FID.create_group("hoferFrahmStats")
-	for curKey in hoferFrahmStats.iterkeys():
+	for curKey in list(hoferFrahmStats.keys()):
 		hoferFrahmGroup.create_dataset(curKey, data = hoferFrahmStats[curKey], compression = 'gzip')
 	
 	FID.create_dataset("emsellLabels", data = emsellLabels, compression = 'gzip')
 	FID.create_dataset("emsellNodeLabels", data = emsellNodeLabels, compression = 'gzip')
 	
 	emsellGroup = FID.create_group("emsellStats")
-	for curKey in emsellStats.iterkeys():
+	for curKey in list(emsellStats.keys()):
 		emsellGroup.create_dataset(curKey, data = emsellStats[curKey], compression = 'gzip')
 	
 	FID.create_dataset("startV", data = startV, compression = 'gzip')

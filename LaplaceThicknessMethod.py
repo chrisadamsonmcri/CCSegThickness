@@ -1221,7 +1221,7 @@ def endpointsFind(BW, outputPNG = None):
 			OscCheckArray = numpy.array([-1, 1, -1, 1], dtype = numpy.int8)
 			# check for oscillation
 			if numpy.array_equal(lastFourMoves, OscCheckArray) or numpy.array_equal(lastFourMoves, -OscCheckArray):
-				print __file__ + "->" + stack()[0][3] + " (line " + str(stack()[0][2]) +  "): Oscillating"
+				print(__file__ + "->" + stack()[0][3] + " (line " + str(stack()[0][2]) +  "): Oscillating")
 				break;
 			#print "Last four moves: " + lastFourMoves
 	#rint arcLengthsLeft

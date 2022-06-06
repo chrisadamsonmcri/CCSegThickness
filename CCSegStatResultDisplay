@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 import os
 import sys
@@ -72,7 +72,7 @@ class CCSegStatResultsDisplayer:
 		
 		binormalVectors = binormalVectors / speed
 		
-		print binormalVectors
+		print(binormalVectors)
 
 
 		quit()		
@@ -161,7 +161,7 @@ class CCSegStatResultsDisplayer:
 		idealCCFile = os.path.join(head, 'data', 'ideal_cc.hdf5')
 
 		if not os.path.isfile(idealCCFile):
-			print "ideal CC file not found"
+			print("ideal CC file not found")
 			quit()
 		
 		FID = h5py.File(idealCCFile, 'r')
@@ -205,22 +205,22 @@ class CCSegStatResultsDisplayer:
 
 
 def usage():
-	print "Usage: " + sys.argv[0] + " [options] <stattest hdf5 file>"
-	print
-	print "\tDESCRIPTION"
-	print
-	print "\t\tDisplays statistical analysis results on callosal thickness profiles created by CCSegStatTest"
-	print
-	print "\tARGUMENTS"
-	print
-	print "\t\t<stattest hdf5 file>: the hdf5 file produced by CCSegStatTest, must contain the following variables"
-	print "\t\t\tGroupLabels"
-	print "\t\t\tGroupIDX"
-	print "\t\t\tobservedP"
-	print "\t\t\tobservedT"
-	print "\t\t\tpermP"
-	print "\t\t\tomnibusP"
-	print "\t\t\tFDRP"
+	print("Usage: " + sys.argv[0] + " [options] <stattest hdf5 file>")
+	print()
+	print("\tDESCRIPTION")
+	print()
+	print("\t\tDisplays statistical analysis results on callosal thickness profiles created by CCSegStatTest")
+	print()
+	print("\tARGUMENTS")
+	print()
+	print("\t\t<stattest hdf5 file>: the hdf5 file produced by CCSegStatTest, must contain the following variables")
+	print("\t\t\tGroupLabels")
+	print("\t\t\tGroupIDX")
+	print("\t\t\tobservedP")
+	print("\t\t\tobservedT")
+	print("\t\t\tpermP")
+	print("\t\t\tomnibusP")
+	print("\t\t\tFDRP")
 
 def main():
 	opts, args = getopt.getopt(sys.argv[1:], "h", [])
@@ -230,14 +230,14 @@ def main():
 	inputHDF5File = None
 
 	if len(args) != 1:
-		print "The number of arguments must be 1"
+		print("The number of arguments must be 1")
 		usage()
 		exit()
 
 	inputHDF5File = args[0]
 
 	if not os.path.isfile(inputHDF5File):
-		print "The input file does not exist"
+		print("The input file does not exist")
 		quit()
 
 	#for o, a in opts:
@@ -265,7 +265,7 @@ def main():
 	resultsDisplayer = CCSegStatResultsDisplayer()
 	resultsDisplayer.plotData(data = statOutput["permP"])
 
-	print sys.argv[0]
+	print(sys.argv[0])
 
 if __name__ == "__main__":
 	main()
