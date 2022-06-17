@@ -208,7 +208,7 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 	#print NII
 	#print inputBase
 	# find out if we have a 2D or a 3D image
-	NIIShape = NII.get_shape()
+	NIIShape = NII.shape
 	assert(len(NIIShape) == 2 or len(NIIShape) == 3),"The input NIFTI file is not 2D or 3D: " + inputBase
 	
 	if len(NIIShape) == 2:
@@ -278,7 +278,7 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 
 			NII = nibabel.load(toStdNII)
 			NIIPixdims = NII.get_header().get_zooms()[1:3]
-			NIIShape = NII.get_shape()
+			NIIShape = NII.shape
 			
 			NIIData = numpy.rot90(NII.get_data(), 1)
 			NIIBrainMaskData = numpy.rot90(NIIBrainMask.get_data(), 1)
