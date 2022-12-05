@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 # command line processing
 
@@ -25,46 +25,46 @@ import tempfile
 import nibabel
 
 def criticalError(errorString):
-	print "Error: " + str(errorString)
+	print(("Error: " + str(errorString)))
 	quit()
 
 def usage():
-	print "Usage: " + sys.argv[0] + " [options] <input directory> <output directory>"
-	print
-	print "\tDESCRIPTION"
-	print "\t\tLongitudinal preprocessing script. Registers all images to first timepoint for each subject then all images to the MNI152 template"
-	print "\tExample: for each subject <foo>, there will be the following files in <input directory>"
-	print "\t\t<foo>_tp1.nii.gz, <foo>_tp2.nii.gz, <foo>_tp3.nii.gz, ..."
-	print "(note the suffixes dont have to be in the _tpXX format, this is just an example)"
-	print "\t\tThere must be a line in the long-subject-timepoint-file file containing"
-	print "\t\t<foo>_tp1 <foo>_tp2 <foo>_tp3 ..."
-	print "\tIn the <output directory>, this program will produce:"
-	print "\t\t<foo>_tp1_to_std.mat: FLIRT matrix transforming <foo>_tp1 to the MNI152 template"
-	print "\t\tThen for each of the other timepoint files <foo>_tpX"
-	print "\t\t<foo>_tpX_to_<foo>_tp1.mat: FLIRT matrix transforming <foo>_tpX to the first timepoint <foo>_tp1"
-	print "\t\t<foo>_tpX_to_std.mat: FLIRT matrix transforming <foo>_tpX to the MNI152 template"
+	print(("Usage: " + sys.argv[0] + " [options] <input directory> <output directory>"))
+	print()
+	print("\tDESCRIPTION")
+	print("\t\tLongitudinal preprocessing script. Registers all images to first timepoint for each subject then all images to the MNI152 template")
+	print("\tExample: for each subject <foo>, there will be the following files in <input directory>")
+	print("\t\t<foo>_tp1.nii.gz, <foo>_tp2.nii.gz, <foo>_tp3.nii.gz, ...")
+	print("(note the suffixes dont have to be in the _tpXX format, this is just an example)")
+	print("\t\tThere must be a line in the long-subject-timepoint-file file containing")
+	print("\t\t<foo>_tp1 <foo>_tp2 <foo>_tp3 ...")
+	print("\tIn the <output directory>, this program will produce:")
+	print("\t\t<foo>_tp1_to_std.mat: FLIRT matrix transforming <foo>_tp1 to the MNI152 template")
+	print("\t\tThen for each of the other timepoint files <foo>_tpX")
+	print("\t\t<foo>_tpX_to_<foo>_tp1.mat: FLIRT matrix transforming <foo>_tpX to the first timepoint <foo>_tp1")
+	print("\t\t<foo>_tpX_to_std.mat: FLIRT matrix transforming <foo>_tpX to the MNI152 template")
 
-	print "\t\t"
+	print("\t\t")
 
-	print
-	print "\tMANDATORY OPTIONS"
-	print CCSegLong.longOptionText()
-	print "\tOTHER OPTIONS"
-	print "\t\t--save-reg-to-first: save an image that is the result of registering all images for a subject to the first timepoint"
-	print "\t\t\tAs per the example above, saves <foo>_tpX_to_<foo>_tp1.nii.gz"
-	print "\t\t--save-reg-to-std: save an image that is the result of registering all images for a subject to the MNI152 template"
-	print "\t\t\tAs per the example above, saves <foo>_tpX_to_std.nii.gz"
-	print "\t\t--parallel-mode=: which mechanism to use to run the registrations in parallel, supported values are:"
-	print "\t\t\tparallel (default if installed): Uses the GNU parallel program to use all host CPUs"
-	print "\t\t\tnone: No parallel, runs all registrations in serial"
-	print
-	print CCSegLong.longOptionFileFormat()
+	print()
+	print("\tMANDATORY OPTIONS")
+	print((CCSegLong.longOptionText()))
+	print("\tOTHER OPTIONS")
+	print("\t\t--save-reg-to-first: save an image that is the result of registering all images for a subject to the first timepoint")
+	print("\t\t\tAs per the example above, saves <foo>_tpX_to_<foo>_tp1.nii.gz")
+	print("\t\t--save-reg-to-std: save an image that is the result of registering all images for a subject to the MNI152 template")
+	print("\t\t\tAs per the example above, saves <foo>_tpX_to_std.nii.gz")
+	print("\t\t--parallel-mode=: which mechanism to use to run the registrations in parallel, supported values are:")
+	print("\t\t\tparallel (default if installed): Uses the GNU parallel program to use all host CPUs")
+	print("\t\t\tnone: No parallel, runs all registrations in serial")
+	print()
+	print((CCSegLong.longOptionFileFormat()))
 
 
 	#CCSegSubjectSelection.printHelpText()
 
 def criticalError(errorString):
-	print "Error: " + str(errorString)
+	print(("Error: " + str(errorString)))
 	quit()
 
 def doFLIRT(inputDirectory, outputDirectory, mainAndTimePoints, saveRegToStd, saveRegToFirst, parallelMode, useSQForm = True):
@@ -85,7 +85,7 @@ def doFLIRT(inputDirectory, outputDirectory, mainAndTimePoints, saveRegToStd, sa
 	QSUBBase = ['qsub', '-b', 'y', '-N', 'ADNI', '-V', '-cwd', '-q', 'freesurfer.q']
 	#fp = open('commands', 'w')
 
-	for curSubject in sorted(mainAndTimePoints.iterkeys()):
+	for curSubject in sorted(mainAndTimePoints.keys()):
 		refFile = os.path.join(inputDirectory, curSubject + '.nii.gz')
 
 		if mainAndTimePoints[curSubject] != None:
@@ -122,7 +122,7 @@ def doFLIRT(inputDirectory, outputDirectory, mainAndTimePoints, saveRegToStd, sa
 	refFile = CCSegUtils.MNI152FLIRTTemplate()
 # then register the first timepoint to MNI152
 
-	for curSubject in sorted(mainAndTimePoints.iterkeys()):
+	for curSubject in sorted(mainAndTimePoints.keys()):
 		inFile = os.path.join(inputDirectory, curSubject)
 		outPrefix = os.path.join(outputDirectory, curSubject + '_to_std')
 		
@@ -140,7 +140,7 @@ def doFLIRT(inputDirectory, outputDirectory, mainAndTimePoints, saveRegToStd, sa
 			if parallelMode == 'none':
 				subprocess.call(commandString)
 			if parallelMode == 'parallel':
-				print " ".join(commandString)
+				print((" ".join(commandString)))
 				parallelPipe.stdin.write(" ".join(commandString) + "\n")
 			if parallelMode == 'qsub':
 				curCommand = QSUBBase[:]
@@ -149,10 +149,10 @@ def doFLIRT(inputDirectory, outputDirectory, mainAndTimePoints, saveRegToStd, sa
 		#fp.write(" ".join(commandString) + "\n")
 #fp.close()
 	if parallelMode == 'parallel':
-		print "parallel, running registrations to first timepoints and template"
+		print("parallel, running registrations to first timepoints and template")
 		parallelPipe.communicate()
 		parallelPipe.stdin.close()
-		print "parallel, finished"
+		print("parallel, finished")
 		
 	if parallelMode == 'qsub':
 		quit()
@@ -183,7 +183,7 @@ def main():
 	parallelMode = 'parallel'
 
 	if len(args) != 2:
-		print "The number of arguments must be 2"
+		print("The number of arguments must be 2")
 		usage()
 		exit()
 	numpy.set_printoptions(precision = 3, formatter = {'all':lambda x: "%.3f" % x})
@@ -375,7 +375,7 @@ def main():
 		
 # concatenate the transforms and put the other files in MNI152 space 
 	refFile = CCSegUtils.MNI152FLIRTTemplate()
-	for curSubject in sorted(mainAndTimePoints.iterkeys()):
+	for curSubject in sorted(mainAndTimePoints.keys()):
 		firstMat = os.path.join(outputDirectory, curSubject + '_to_std.mat') 
 
 		if mainAndTimePoints[curSubject] != None:
@@ -404,10 +404,10 @@ def main():
 	#fp.close()
 	#if saveRegToStd == True:
 	if parallelMode == 'parallel':
-		print "parallel, applying transforms"
+		print("parallel, applying transforms")
 		parallelPipe.communicate()
 		parallelPipe.stdin.close()
-		print "parallel, finished"
+		print("parallel, finished")
 #def main():
 
 if __name__ == "__main__":

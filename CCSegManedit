@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 import os
 import sys
@@ -25,18 +25,18 @@ import CCSegPipeSeg
 import pylab
 
 def usage():
-	print "Usage: " + sys.argv[0] + " [options] <output directory>"
-	print
-	print "\tDESCRIPTION"
-	print
-	print "\t\tSegmentation manual editor for CC Segmentation and Thickness profile pipeline"
-	print
-	print "\tARGUMENTS"
-	print "\t\t<output directory>: the directory containing all the output from CCSegProcess, the user must have run CCSegProcess --do-seg"
-	print
-	print "\tOPTIONS"
-	print "\t\t--start-subject=<start subject>: Start on this subject"
-	print "\t\t-h: This message"
+	print("Usage: " + sys.argv[0] + " [options] <output directory>")
+	print()
+	print("\tDESCRIPTION")
+	print()
+	print("\t\tSegmentation manual editor for CC Segmentation and Thickness profile pipeline")
+	print()
+	print("\tARGUMENTS")
+	print("\t\t<output directory>: the directory containing all the output from CCSegProcess, the user must have run CCSegProcess --do-seg")
+	print()
+	print("\tOPTIONS")
+	print("\t\t--start-subject=<start subject>: Start on this subject")
+	print("\t\t-h: This message")
 
 class UIManagerExample:
 
@@ -796,7 +796,7 @@ def main():
 	# do the mandatory arguments first
 
 	if len(args) != 1:
-		print "The number of arguments must be 1"
+		print("The number of arguments must be 1")
 		usage()
 		exit()
 	numpy.set_printoptions(precision = 3, formatter = {'float':lambda x: "%.3f" % x})
@@ -820,9 +820,9 @@ def main():
 	else:
 		try:
 			startSubjectIDX = inputSegHDF5FilesPrefixes.index(startSubject) + 1
-			print "Start subject found at index: " + str(startSubjectIDX)
+			print("Start subject found at index: " + str(startSubjectIDX))
 		except ValueError:
-			print "Warning: start subject not found, starting at first subject"
+			print("Warning: start subject not found, starting at first subject")
 			startSubjectIDX = 0
 			pass
 	#inputSegHDF5Files = [x + "_seg.hdf5" for x in inputThicknessHDF5FilesPrefixes]
@@ -853,7 +853,7 @@ def main():
 	
 	#print CCSegs	
 	if len(CCSegs) == 0:
-		print "No segmentation hdf5 files found"
+		print("No segmentation hdf5 files found")
 		quit()
 
 	UIExample = UIManagerExample()

@@ -1,10 +1,8 @@
-#!/usr/bin/python
-
 import numpy
 
 # sets the threshold THRESH so that class1 <= THRESH < class2
 def otsu1(IMG):
-	hist, bin_edges = numpy.histogram(IMG, bins=range(257), range=None, normed=False, weights=None, density=True)
+	hist, bin_edges = numpy.histogram(IMG, bins=list(range(257)), range=None, normed=False, weights=None, density=True)
 	
 	OmegaZeros = numpy.cumsum(hist)
 	#OmegaK = numpy.array(OmegaZeros)
@@ -41,7 +39,7 @@ def otsu1(IMG):
 # fast reimplemented version
 def otsu2(IMG, returnWorkingValues = False):
 	
-	hist, bin_edges = numpy.histogram(IMG, bins=range(257), range=None, normed=False, weights=None, density=True)
+	hist, bin_edges = numpy.histogram(IMG, bins=list(range(257)), range=None, normed=False, weights=None, density=True)
 	CumSumHist = numpy.cumsum(hist)
 	
 	CumSumHistBack = numpy.cumsum(hist[::-1])
@@ -246,7 +244,7 @@ def otsu2(IMG, returnWorkingValues = False):
 # slow version
 def otsu2Loops(IMG, returnWorkingValues = False):
 	
-	hist, bin_edges = numpy.histogram(IMG, bins=range(257), range=None, normed=False, weights=None, density=True)
+	hist, bin_edges = numpy.histogram(IMG, bins=list(range(257)), range=None, normed=False, weights=None, density=True)
 	CumSumHist = numpy.cumsum(hist)
 	
 	ARange = numpy.arange(256)

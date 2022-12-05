@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 import tempfile
 
@@ -113,7 +113,7 @@ def bwFillHoles(BW):
 			break;
 		numDilations = numDilations + 1
 		del oldMarker	
-	print "bwFillHoles finished with " + str(numDilations) + " dilations"
+	print(("bwFillHoles finished with " + str(numDilations) + " dilations"))
 	marker = numpy.take(marker, numpy.arange(1, marker.shape[0] - 1), axis = 0)
 	marker = numpy.take(marker, numpy.arange(1, marker.shape[1] - 1), axis = 1)
 	
@@ -1049,7 +1049,7 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 	
 	# this is for cases where all automatic attempts fail and you just want to do a manual segmentation
 	if segNoAuto == True:
-		print "Not doing automatic segmentation"
+		print("Not doing automatic segmentation")
 		outputMAT = outputBase + "_seg.hdf5"
 
 		FID = h5py.File(outputMAT, 'w')
@@ -1437,13 +1437,13 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 
 	if numpy.size(validTransformIDX) == 0:
 		# problem, no valid registrations
-		print "No valid registration results"
-		print "Choosing the best one"
+		print("No valid registration results")
+		print("Choosing the best one")
 		validTransform.fill(True)
 		validTransformIDX = numpy.where(validTransform)[0]
 
 	if numpy.size(validTransformIDX) == 1:
-		print "Only one valid registration"
+		print("Only one valid registration")
 		LKSegFitsScores = None
 		bestLKIDX = validTransformIDX[0]
 	else:
@@ -1496,7 +1496,7 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 			bestLKIDX = validTransformIDX[numpy.argmax(LKSegFitsScores)]
 		#del LKSegFitsWeights
 		del LKSegFitsWinDirection
-	print "best based on mode: " + str(LKInitialOffsets[TCoordDistancesMinIDX]) + ", best LK: " + str(LKInitialOffsets[bestLKIDX])
+	print(("best based on mode: " + str(LKInitialOffsets[TCoordDistancesMinIDX]) + ", best LK: " + str(LKInitialOffsets[bestLKIDX])))
 	
 	bestLKIDX = TCoordDistancesMinIDX
 	#bestLKIDX = bestLKIDX
@@ -1556,7 +1556,7 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 				SC = 2
 				FID = open(os.path.join(LKPNGDir, 'lkweights.csv'), 'w')
 				FID.write('offset')
-				for curKey in LKSegFits.keys():
+				for curKey in list(LKSegFits.keys()):
 					FID.write(",%s" % curKey)
 				FID.write(",valid,score");
 				FID.write("\n")
@@ -1590,7 +1590,7 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 					
 					FID.write(str(LKInitialOffsets[z, 0]).zfill(3) + "_" + str(LKInitialOffsets[z, 1]).zfill(3))
 
-					for curKey in LKSegFits.keys():
+					for curKey in list(LKSegFits.keys()):
 						FID.write(",%f" % LKSegFits[curKey][z])
 					if z in validTransformIDX:
 						FID.write(',1')
@@ -1697,7 +1697,7 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 			#print curKey + str(LKOutput[curKey].shape)
 		else:
 			LKOutput[curKey] = None
-	print parasagittalSlices.shape	
+	print((parasagittalSlices.shape))	
 	if not parasagittalSlices is None:
 		parasagittalSlices = parasagittalSlices.take(LKOutput['cropRows'], axis = 0).take(LKOutput['cropCols'], axis = 1)
 		parasagittalFX = parasagittalFX.take(LKOutput['cropRows'], axis = 0).take(LKOutput['cropCols'], axis = 1)
@@ -1854,7 +1854,7 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 		for z in range(numCCSegLabels):
 			I = numpy.where(CCSegLabels == z + 1)
 			MeanTemplateProb = numpy.mean(LKOutput['croppedTemplateCCProbLKIMG'][I])
-			print MeanTemplateProb
+			print(MeanTemplateProb)
 			if MeanTemplateProb < 0.15:
 				CCSeg[I] = False
 	

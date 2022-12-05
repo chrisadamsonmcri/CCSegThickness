@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 import tempfile
 import os
@@ -208,7 +208,7 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 	#print NII
 	#print inputBase
 	# find out if we have a 2D or a 3D image
-	NIIShape = NII.get_shape()
+	NIIShape = NII.shape
 	assert(len(NIIShape) == 2 or len(NIIShape) == 3),"The input NIFTI file is not 2D or 3D: " + inputBase
 	
 	if len(NIIShape) == 2:
@@ -224,7 +224,7 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 		#FID.create_dataset("flirtTemplateFile", data=flirtTemplateFile)
 		#FID.create_dataset("flirtCropZerosRows", data=flirtCropZerosRows)
 		#FID.create_dataset("flirtCropZerosCols", data=flirtCropZerosCols)
-		print "2D input not supported yet"
+		print("2D input not supported yet")
 		quit()
 		# 2D image, so it is already the midsagittal plane
 	else:
@@ -257,7 +257,7 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 			# use the to std file if it is already there
 			toStdNII = CCSegUtils.findNIFTIFromPrefix(os.path.join(head, subjectID + "_to_std"))
 			if toStdNII != None:
-				print "using already standard file: " + toStdNII
+				print(("using already standard file: " + toStdNII))
 				deleteStdNII = False
 			else:
 				NIITempDir = tempfile.mkdtemp()
@@ -278,7 +278,7 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 
 			NII = nibabel.load(toStdNII)
 			NIIPixdims = NII.get_header().get_zooms()[1:3]
-			NIIShape = NII.get_shape()
+			NIIShape = NII.shape
 			
 			NIIData = numpy.rot90(NII.get_data(), 1)
 			NIIBrainMaskData = numpy.rot90(NIIBrainMask.get_data(), 1)
@@ -427,7 +427,7 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 #				shutil.rmtree(NIITempDir)
 #				quit()
 				OtsuSeg = Otsu.robustOtsu(axialNIIIMG, [0.02, 0.98], NumberClasses = 2)
-				print "Midsagittal extraction, symmetry method iterations"				
+				print("Midsagittal extraction, symmetry method iterations")				
 				IMG = axialNIIIMG * OtsuSeg
 				I = numpy.where(OtsuSeg)
 				
@@ -574,7 +574,7 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 #					#plt.plot([0, TIMG.shape[1]], [TIMG.shape[0] / 2, TIMG.shape[0] / 2], 'w-')
 #					print initialRotYCosts[bestInitialRotYIDX]
 #					plt.show()
-					print "iteration " + str(curIter) + " params: " + str(curRotY) + " " + str(curRotZ) + " " + str(curTransX)
+					print(("iteration " + str(curIter) + " params: " + str(curRotY) + " " + str(curRotZ) + " " + str(curTransX)))
 					
 					if initialRotYCosts[bestInitialRotYIDX] == lastCost:
 						lastCost = initialRotYCosts[bestInitialRotYIDX]
@@ -589,7 +589,7 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 						break
 					lastCost = initialRotYCosts[bestInitialRotYIDX]
 				
-				print "final params: " + str(curRotY) + " " + str(curRotZ) + " " + str(curTransX)
+				print(("final params: " + str(curRotY) + " " + str(curRotZ) + " " + str(curTransX)))
 				
 				#MGxx = numpy.arange(axialNIIIMG.shape[0]) * NIISaving.header.get_zooms()[0] - IMGCOG[0]
 				#MGyy = numpy.arange(axialNIIIMG.shape[1]) * NIISaving.header.get_zooms()[1] - IMGCOG[1]
@@ -740,7 +740,7 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 				if flirtOutputFile != None:
 					#CommandString = CommandString + " -out " + NIIFileForARTOutput 
 					CMD.extend(["-out", NIIFileForARTOutput])
-				print " ".join(CMD)
+				print((" ".join(CMD)))
 				subprocess.call(CMD)
 				
 				shutil.copyfile(NIIFileForARTOutput + ".gz", outputBase + "_native_cropped_to_template.nii.gz")

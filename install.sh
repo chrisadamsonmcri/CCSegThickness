@@ -11,4 +11,4 @@ printf "\n Updating system and Installing required packages ......\n\n\n  "
 
 sudo apt install python python-dev python-pip python-numpy python-scipy python-nibabel python-opencv  python-matplotlib libsuitesparse-dev cython3 -y
 
-sudo -H pip install -U scikits.sparse
+sudo -H pip3 install -U scikits.sparse

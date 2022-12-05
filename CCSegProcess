@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 # command line processing
 
@@ -19,48 +19,48 @@ import CCSegSubjectSelection
 import traceback
 
 def criticalError(errorString):
-    print "Error: " + str(errorString)
+    print("Error: " + str(errorString))
     quit()
 
 def usage():
-    print "Usage: " + sys.argv[0] + " [options] <input directory> <output directory>"
-    print
-    print "DESCRIPTION"
-    print
-    print "Front end script for CC Segmentation and Thickness profile pipeline, processing components"
-    print
-    print "Performs the following steps:"
-    print "\t1. Midsagittal plane extraction"
-    print "\t2. CC segmentation"
-    print "\t3. Thickness profile generation"
-    print "\t4 (optional). Projection of segmentation and parcellations back to native space"
-    print
-    print "The above steps may be executed with the following switches"
-    print
-    print "PROCESSING DIRECTIVES (do options)"
-    print "\t--do-midsag: Step 1"
-    print "\t--do-seg: Step 2"
-    print "\t--do-thickness: Step 3"
-    print "\t--do-segtonative: Step 4"
-    print "\t--do-all: Steps 1, 2, 3, and 4"
-    print "\t--do-thicknessmanedit: Step 3, but only process subjects that have manually edited segmentations"
-    print
-    print "OPTIONS"
-    print "Segmentation (--do-seg) options:"
-    print "\t--seg-no-lk: do not perform Lucas-Kanade tracking"
-    print "\t--seg-choose-first: choose the first initialisation point for the segmentation output"
-    print "\t--seg-no-auto: do not perform automatic segmentation, leave empty segmentation on midsagittal slice, use if all automatic options fail"
-    print
-    print "Thickness profile (--do-thickness) options:"
-    print "\t--num-thickness-nodes=(integer): the number of streamlines and thickness profiles to generate, 100 if not given"
-    print
-    print "Segmentation to native (--do-segtonative) options:"
-    print "\t--dilate-parasag: when performing the backprojection to native, dilate the segmentation and parcellations to the neighbouring parasagittal slices"
-    print "\t--dilate-parasag-slices=(integer): when performing the backprojection to native, dilate the segmentation a given number of slices, implies --dilate-parasag"
-    print
-    print "Misc options:"
-    print "\t--redo-done: each processing step will not overwrite existing output, this forces existing output to be overwritten"
-    print "\t--save-graphics: output graphics showing results of processing steps, look in subdirectories of output directory"
+    print("Usage: " + sys.argv[0] + " [options] <input directory> <output directory>")
+    print()
+    print("DESCRIPTION")
+    print()
+    print("Front end script for CC Segmentation and Thickness profile pipeline, processing components")
+    print()
+    print("Performs the following steps:")
+    print("\t1. Midsagittal plane extraction")
+    print("\t2. CC segmentation")
+    print("\t3. Thickness profile generation")
+    print("\t4 (optional). Projection of segmentation and parcellations back to native space")
+    print()
+    print("The above steps may be executed with the following switches")
+    print()
+    print("PROCESSING DIRECTIVES (do options)")
+    print("\t--do-midsag: Step 1")
+    print("\t--do-seg: Step 2")
+    print("\t--do-thickness: Step 3")
+    print("\t--do-segtonative: Step 4")
+    print("\t--do-all: Steps 1, 2, 3, and 4")
+    print("\t--do-thicknessmanedit: Step 3, but only process subjects that have manually edited segmentations")
+    print()
+    print("OPTIONS")
+    print("Segmentation (--do-seg) options:")
+    print("\t--seg-no-lk: do not perform Lucas-Kanade tracking")
+    print("\t--seg-choose-first: choose the first initialisation point for the segmentation output")
+    print("\t--seg-no-auto: do not perform automatic segmentation, leave empty segmentation on midsagittal slice, use if all automatic options fail")
+    print()
+    print("Thickness profile (--do-thickness) options:")
+    print("\t--num-thickness-nodes=(integer): the number of streamlines and thickness profiles to generate, 100 if not given")
+    print()
+    print("Segmentation to native (--do-segtonative) options:")
+    print("\t--dilate-parasag: when performing the backprojection to native, dilate the segmentation and parcellations to the neighbouring parasagittal slices")
+    print("\t--dilate-parasag-slices=(integer): when performing the backprojection to native, dilate the segmentation a given number of slices, implies --dilate-parasag")
+    print()
+    print("Misc options:")
+    print("\t--redo-done: each processing step will not overwrite existing output, this forces existing output to be overwritten")
+    print("\t--save-graphics: output graphics showing results of processing steps, look in subdirectories of output directory")
     CCSegSubjectSelection.printHelpText()
 
 def main():
@@ -109,7 +109,7 @@ def main():
     # do the mandatory arguments first
 
     if len(args) != 2:
-        print "The number of arguments must be 2"
+        print("The number of arguments must be 2")
         usage()
         exit()
     numpy.set_printoptions(precision = 3, formatter = {'all':lambda x: "%.3f" % x})
@@ -192,16 +192,16 @@ def main():
         criticalError("The input directory specified was not found")
     
     if doMidsag == False and doSeg == False and doSegToNative == False and doThickness == False and doThicknessManedit == False:
-        print "Error: No processing steps specified"
+        print("Error: No processing steps specified")
         usage()
         quit()
     
     if doMidsag == True and doSeg == False and doThickness == True:
-        print "Warning: --do-midsag and --do-thickness were specified but the middle step --do-seg was not, setting --do-seg"
+        print("Warning: --do-midsag and --do-thickness were specified but the middle step --do-seg was not, setting --do-seg")
         doSeg = True
     
     if dilateParaSagSlices < 0:
-        print "--dilate-parasag-slices must be a positive integer"
+        print("--dilate-parasag-slices must be a positive integer")
         usage()
         quit()
 
@@ -223,7 +223,7 @@ def main():
         if doMidsag:
             if redoDone or not os.path.isfile(outputBase + "_midsag.hdf5"):
                 #try:
-                    print curSubject + ": midsag"
+                    print(curSubject + ": midsag")
                     CCSegPipeMidSag.midsagExtract(os.path.join(inputDirectory, curSubject), outputBase, MSPMethod, doGraphics = doGraphics, skullStripped = skullStripped, useMNIBrainMask = useMNIBrainMask)
                 #except AssertionError as e:
                 #    print "MidSag Error: " + str(e) + ", subject " + outputBase
@@ -238,13 +238,13 @@ def main():
         if doSeg:
             #print outputBase + "_midsag.hdf5"
             if redoDone or not os.path.isfile(outputBase + "_seg.hdf5"):
-                print curSubject + ": seg"
+                print(curSubject + ": seg")
                 if os.path.isfile(outputBase + "_seg_manedit.hdf5"):
-                    print "Found manedit: " + outputBase + "_seg_manedit.hdf5" + ", but redoing segmentation, deleting"
+                    print("Found manedit: " + outputBase + "_seg_manedit.hdf5" + ", but redoing segmentation, deleting")
                     try:
                         os.remove(outputBase + "_seg_manedit.hdf5")
                     except Exception as e:
-                        print "Couldnt delete manedit file: " + outputBase + "_seg_manedit.hdf5" + ", subject " + outputBase
+                        print("Couldnt delete manedit file: " + outputBase + "_seg_manedit.hdf5" + ", subject " + outputBase)
                         if quitOnError:
                             quit()
                         else:
@@ -253,7 +253,7 @@ def main():
                     CCSegPipeSeg.segCC(outputBase, doGraphics = doGraphics, doLK = segLK, segNoAuto = segNoAuto, segChooseFirst = segChooseFirst, segGridInitPoints = segGridInitPoints)
     
                 except AssertionError as e:
-                    print "CCSeg Error: " + str(e) + ", subject " + outputBase
+                    print("CCSeg Error: " + str(e) + ", subject " + outputBase)
                     
                     L = os.listdir(os.path.join(outputDirectory, 'seg'))
                     CCSegUtils.mkdirSafe(os.path.join(outputDirectory, 'seg_bad'))
@@ -266,7 +266,7 @@ def main():
                     else:
                         continue
                 except Exception as e:
-                    print "CCSeg Error: " + str(e) + ", subject " + outputBase
+                    print("CCSeg Error: " + str(e) + ", subject " + outputBase)
                     L = os.listdir(os.path.join(outputDirectory, 'seg'))
                     CCSegUtils.mkdirSafe(os.path.join(outputDirectory, 'seg_bad'))
                     for curFile in sorted(L):
@@ -274,17 +274,17 @@ def main():
                             shutil.copy(os.path.join(outputDirectory, 'seg', curFile), os.path.join(outputDirectory, 'seg_bad'))
 
 
-                    print traceback.print_exc(file=sys.stdout)
+                    print(traceback.print_exc(file=sys.stdout))
                     continue
                     
         if doThickness:
             if redoDone or not os.path.isfile(outputBase + "_thickness.hdf5"):
-                print curSubject + ": thickness"
+                print(curSubject + ": thickness")
                 try:
                     #print outputBase + "_seg.hdf5"
                     CCSegPipeThickness.thicknessCC(outputBase, doGraphics = doGraphics, thicknessNoReg = thicknessNoReg)
                 except AssertionError as e:
-                    print "CCSeg thickness Error: " + str(e) + ", subject " + outputBase
+                    print("CCSeg thickness Error: " + str(e) + ", subject " + outputBase)
                     L = os.listdir(os.path.join(outputDirectory, 'seg'))
                     CCSegUtils.mkdirSafe(os.path.join(outputDirectory, 'seg_bad'))
                     for curFile in sorted(L):
@@ -295,7 +295,7 @@ def main():
                     else:
                         continue
                 except Exception as e:
-                    print "CCSeg Thickness Error: " + str(e) + ", subject " + outputBase
+                    print("CCSeg Thickness Error: " + str(e) + ", subject " + outputBase)
                     CCSegUtils.mkdirSafe(os.path.join(outputDirectory, 'seg_bad'))
                     CCSegUtils.mkdirSafe(os.path.join(outputDirectory, 'seg'))
                     L = os.listdir(os.path.join(outputDirectory, 'seg'))
@@ -303,7 +303,7 @@ def main():
                         if curFile.startswith(curSubject) and os.path.isfile(os.path.join(outputDirectory, 'seg', curFile)):
                             shutil.copy(os.path.join(outputDirectory, 'seg', curFile), os.path.join(outputDirectory, 'seg_bad'))
 
-                    print traceback.print_exc(file=sys.stdout)
+                    print(traceback.print_exc(file=sys.stdout))
                     if quitOnError:
                         quit()
                     else:
@@ -313,30 +313,30 @@ def main():
         if doThicknessManedit and os.path.isfile(outputBase + "_seg_manedit.hdf5"):
             #print outputBase + "_seg.hdf5"
             if redoDone or not os.path.isfile(outputBase + "_thickness.hdf5"):
-                print curSubject + ": thicknessmanedit"
+                print(curSubject + ": thicknessmanedit")
                 try:
                     CCSegPipeThickness.thicknessCC(outputBase, doGraphics = doGraphics, thicknessNoReg = thicknessNoReg)
                 except AssertionError as e:
-                    print "CCSeg Error: " + str(e) + ", subject " + outputBase
+                    print("CCSeg Error: " + str(e) + ", subject " + outputBase)
                     if quitOnError:
                         quit()
                     else:
                         continue
                 except Exception as e:
-                    print "CCSeg Thickness Error: " + str(e) + ", subject " + outputBase
+                    print("CCSeg Thickness Error: " + str(e) + ", subject " + outputBase)
                     if quitOnError:
                         quit()
                     else:
                         continue
     
         if doSegToNative and not doThicknessManedit:
-            print curSubject + ": segtonative"
+            print(curSubject + ": segtonative")
             #print "doing segtonative"
             if os.path.isfile(outputBase + "_seg.hdf5"):# and (redoDone or not os.path.isfile(outputBase + "_native.nii.gz")):
                 try:
                     CCSegPipeSegToNative.segCCToNative(outputBase, dilateParaSagSlices = dilateParaSagSlices)
                 except AssertionError as e:
-                    print "CCSegToNative Error: " + str(e) + ", subject " + outputBase
+                    print("CCSegToNative Error: " + str(e) + ", subject " + outputBase)
                     if quitOnError:
                         quit()
                     else:
@@ -346,11 +346,11 @@ def main():
         if doSegToNative and doThicknessManedit:
             #print "doing segtonative"
             if os.path.isfile(outputBase + "_seg.hdf5") and os.path.isfile(outputBase + "_seg_manedit.hdf5") and (redoDone or not os.path.isfile(outputBase + "_native.nii.gz")):
-                print curSubject + ": segtonative"
+                print(curSubject + ": segtonative")
                 try:
                     CCSegPipeSegToNative.segCCToNative(outputBase, dilateParaSagSlices = dilateParaSagSlices)
                 except AssertionError as e:
-                    print "CCSeg Error: " + str(e) + ", subject " + outputBase
+                    print("CCSeg Error: " + str(e) + ", subject " + outputBase)
                     if quitOnError:
                         quit()
                     else:
