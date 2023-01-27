@@ -17,6 +17,7 @@ import CCSegUtils
 import Otsu
 
 import skimage.morphology
+import skimage.segmentation
 import skimage.feature
 import skimage.color
 
@@ -80,7 +81,7 @@ def watershedTransformSeg(IMG, Seg, penaltyIMG = None):
 	#print watershedSegLabels
 	#watershedSegLabels = I[0]
 
-	watershedTransform = skimage.morphology.watershed(penaltyIMG, numpy.uint16(watershedMarkers), mask = watershedMask)
+	watershedTransform = skimage.segmentation.watershed(penaltyIMG, numpy.uint16(watershedMarkers), mask = watershedMask)
 		
 	#watershedAreas = regionProps(watershedTransform, ['area'])
 	#I = numpy.argmax(watershedAreas['area'])
