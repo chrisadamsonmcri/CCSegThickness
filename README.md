@@ -18,18 +18,20 @@ The pipeline performs the following sequence of steps:
 
 Tested in Ubuntu 16.04 LTS, 18.04 LTS.
 
-
 `git clone https://github.com/chrisadamsonmcri/CCSegThickness`
 
-`cd CCSegThickness`
+The following packages are dependencies and need to be installed via apt
 
-`chmod +x install.sh && sudo install .sh`
+`sudo apt install python3-dev python3-pip python3-numpy python3-scipy python3-nibabel python3-opencv python3-matplotlib libsuitesparse-dev`
 
-    or
+The following package needs to be installed in pip
 
-`sudo bash install.sh`
+`sudo -H pip3 install -U scikits.sparse`
 
+These installations can be done with the script
 
-cite article as:
+`install_dependencies.sh`
+
+If you use the software in a publication, please cite the following article:
 
 Adamson, C., Beare, R., Walterfang, M. et al. Neuroinform (2014) 12: 595. https://doi.org/10.1007/s12021-014-9236-3
