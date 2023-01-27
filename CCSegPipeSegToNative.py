@@ -124,7 +124,7 @@ def segCCToNativeOneFile(segIMG, outputBase, midSagMATFile, segMATFile, dilatePa
 
 	MNITemplate = CCSegUtils.MNI152FLIRTTemplate(skullStripped = False)
 	MNITemplateNII = nibabel.load(MNITemplate)
-	MNIAXCodes = nibabel.aff2axcodes(MNITemplateNII.get_affine())
+	MNIAXCodes = nibabel.aff2axcodes(MNITemplateNII.affine)
 	MNIOrnt = nibabel.orientations.axcodes2ornt(MNIAXCodes)
 	
 	MNIToNIITransformOrnt = nibabel.orientations.ornt_transform(MNIOrnt, NIIOrnt)

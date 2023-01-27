@@ -177,7 +177,7 @@ def niftiOrientations(SForm):
 # [newz, flipz] 
 # each row, the index is the new column
 def applyOrntToNIIAffine(NII, ornt_transform):
-	NIIAffine = NII.get_affine()
+	NIIAffine = NII.affine
 	
 	# use fsl's method for 
 	# make a transformation affine matrix
@@ -242,7 +242,7 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 		# we may not need this
 		
 		NIIPixdims = NII.header.get_zooms()[1:3]
-		NIIAffine = NII.get_affine()
+		NIIAffine = NII.affine
 		#print NII.shape
 
 		if MSPMethod == 'long':
@@ -310,7 +310,7 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 			
 			NIITempDir = tempfile.mkdtemp()
 			# nibabel reorientation 
-			NIIAXCodes = nibabel.aff2axcodes(NII.get_affine())
+			NIIAXCodes = nibabel.aff2axcodes(NII.affine)
 			NIIOrnt = nibabel.orientations.axcodes2ornt(NIIAXCodes)
 
 			#print NIIAXCodes
@@ -318,11 +318,11 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 				
 			MNITemplate = CCSegUtils.MNI152FLIRTTemplate(skullStripped = skullStripped)
 			MNITemplateNII = nibabel.load(MNITemplate)
-			MNIAXCodes = nibabel.aff2axcodes(MNITemplateNII.get_affine())
+			MNIAXCodes = nibabel.aff2axcodes(MNITemplateNII.affine)
 			MNIOrnt = nibabel.orientations.axcodes2ornt(MNIAXCodes)
 			#print MNIAXCodes
 			#print "Affine of template"
-			#print MNITemplateNII.get_affine()
+			#print MNITemplateNII.affine
 			# gets the transformation from start_ornt to end_ornt
 			NIIToMNITransformOrnt = nibabel.orientations.ornt_transform(NIIOrnt, MNIOrnt)
 			#print "Transform ornt"
@@ -335,7 +335,7 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 			#rint NII.shape
 			#rint D.shape
 			#rint "Affine of original image"
-			#rint NII.get_affine()
+			#rint NII.affine
 
 			axialNII = nibabel.Nifti1Image(axialNIIIMG, affine = axialNIIAffine)
 			nibabel.save(axialNII, outputBase + "_native.nii.gz")
@@ -390,7 +390,7 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 			axialNIIIMG = numpy.int16(axialNIIIMG)
 			#axialNIIIMG = numpy.rot90(axialNIIIMG, -1)
 
-			NIISaving = nibabel.Nifti1Image(axialNIIIMG, axialNII.get_affine(), axialNII.header)
+			NIISaving = nibabel.Nifti1Image(axialNIIIMG, axialNII.affine, axialNII.header)
 			axialCroppedNIIShape = NIISaving.shape
 			#print "axialNIIShape"
 			#print axialNIIShape
@@ -598,7 +598,7 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 				TIMG = CCSegPipeMidSagSymmetric.transformIMG(IMG, IMGxx, IMGyy, IMGzz, curRotY, curRotZ, curTransX) 
 				#CCSegPipeMidSagSymmetric.showMidSag(TIMG)
 				#plt.show()
-				NIISaving = nibabel.Nifti1Image(TIMG, axialNII.get_affine(), axialNII.header)
+				NIISaving = nibabel.Nifti1Image(TIMG, axialNII.affine, axialNII.header)
 				nibabel.save(NIISaving, outputBase + "_native_midsag_sym.nii.gz")
 				flirtCost = 'mutualinfo'
 				flirtInterp = 'trilinear'
