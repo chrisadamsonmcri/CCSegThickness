@@ -4,7 +4,7 @@ import pylab
 import os
 
 import scipy
-import scipy.misc
+import imageio
 
 import errno
 
@@ -13,7 +13,12 @@ import numexpr
 
 import cv2
 
-cv2.findContours
+def normalizeImageForSaving(IMG):
+    outIMG = numpy.double(IMG)
+    outIMG = (outIMG - numpy.min(outIMG)) / numpy.ptp(outIMG)
+    return numpy.uint8(outIMG * 255)
+
+
 def findContours(IMG, mode, method):
     T = cv2.findContours(IMG, mode, method)
     if len(T) == 2:
@@ -85,6 +90,7 @@ def largestComponent(CCSeg):
 		newCCSeg = numpy.array(CCSeg)
 	return newCCSeg
 
+
 def mostCentralComponent(CCSeg):
 	CCSegLabels, numCCSegLabels = scipy.ndimage.measurements.label(CCSeg, structure = numpy.ones([3, 3]))
 	if numCCSegLabels > 1:
@@ -100,7 +106,8 @@ def mostCentralComponent(CCSeg):
 	else:
 		newCCSeg = numpy.array(CCSeg)
 	return newCCSeg
-		
+
+
 def ismember(a, b):
 	tf = numpy.in1d(a,b) # for newer versions of numpy
 	#f = numpy.array([i in b for i in a])
@@ -121,6 +128,7 @@ def findNIFTIFromPrefix(filePrefix):
 		if os.path.isfile(filePrefix + '.' + curExtension):
 			return filePrefix + '.' + curExtension
 	return None
+
 
 def imglob(fileName):
 
@@ -143,6 +151,7 @@ def imglob(fileName):
 				return filePrefix
 		
 		return None
+
 
 def gaussianFWHM2D(SIGMA):
 
@@ -191,6 +200,7 @@ def gaussianFWHM2D(SIGMA):
 #F = reshape(F, length(yy), length(xx));
 #F = exp(F) .* Maximum;
 
+
 def parcellationStats(labelImage, pixelArea, arcLengths, arcLengthLabels):
 	
 	assert(numpy.size(arcLengthLabels) == numpy.size(arcLengths)),"arcLengths and labels must be the same size"
@@ -215,9 +225,11 @@ def parcellationStats(labelImage, pixelArea, arcLengths, arcLengthLabels):
 		STATS['area'][z - 1] = numpy.count_nonzero(labelImage == z) * pixelArea
 	return STATS
 
+
 def plotStreamlines(C, lineProps = None):
 	for z in range(len(C)):
 		plotContour(C[z], lineProps = lineProps, closed = False)
+
 
 def plotContour(C, lineProps = None, closed = True):
 	
@@ -233,10 +245,12 @@ def plotContour(C, lineProps = None, closed = True):
 	else:
 		pylab.plot(AX, AY)
 
+
 def normPDF(X, MU, SIGMA):
 	XC = X - MU
 
 	return numpy.exp(-XC * XC / SIGMA / SIGMA / 2.0) / numpy.sqrt(2.0 * numpy.pi) / SIGMA
+
 
 def empty2DList(SZ):
 	#assert(isinstance(SZ, tuple)),"SZ must be a tuple"
@@ -246,6 +260,7 @@ def empty2DList(SZ):
 	for z in range(SZ[0]):
 		I.append([None,] * SZ[1])
 	return I
+
 
 def removeWhiteRowsColsPNG(IMGFileName, padding = (10, 10), blackImage = False):
 	assert(os.path.isfile(IMGFileName)),"PNG file does not exist"
@@ -288,7 +303,8 @@ def removeWhiteRowsColsPNG(IMGFileName, padding = (10, 10), blackImage = False):
 	if blackImage == True:
 		T = 1 - T
 
-	scipy.misc.imsave(IMGFileName, T)
+	imageio.imwrite(IMGFileName, normalizeImageForSaving(T))
+
 
 def cropAutoWhitePNG(IMGFileName, padding = (10, 10)):
 	assert(os.path.isfile(IMGFileName)),"PNG file does not exist"
@@ -319,7 +335,7 @@ def cropAutoWhitePNG(IMGFileName, padding = (10, 10)):
 	numpy.concatenate((leftRightPadding, croppedIMG, leftRightPadding), axis = 1),
 	numpy.concatenate((cornerPadding, topBottomPadding, cornerPadding), axis = 1)), axis = 0)
 
-	scipy.misc.imsave(IMGFileName, T)
+	imageio.imwrite(IMGFileName, normalizeImageForSaving(T))
 
 	#pylab.clf()
 
@@ -329,8 +345,10 @@ def cropAutoWhitePNG(IMGFileName, padding = (10, 10)):
 	
 	#pass	
 
+
 def imshow(IMG, extent = None, ticks = False):
 	showIMG(IMG, extent = extent, ticks = ticks)
+
 
 def showIMG(IMG, extent = None, ticks = False):
 	pylab.imshow(IMG, origin = 'lower', extent = extent)
@@ -349,12 +367,15 @@ def showIMG(IMG, extent = None, ticks = False):
 		pylab.gca().get_yaxis().set_ticks([])
 	pylab.gca().invert_yaxis()
 
+
 def imshow(IMG, extent = None, ticks = False):
 	showIMG(IMG, extent = extent, ticks = ticks)
+
 
 def pylabShow():
 	pylab.gcf().set_size_inches((20, 10), forward = True)
 	pylab.show()
+
 
 def MNI152FLIRTSymNeckCropTemplate(skullStripped = False):
 	scriptPath = os.path.realpath(__file__)
@@ -371,6 +392,7 @@ def MNI152FLIRTSymNeckCropTemplate(skullStripped = False):
 # this is done by detecting three asterisks
 # if there is no asterisks, just return the file name without modification
 
+
 def MNI152FLIRTTemplate(skullStripped = False):
 	scriptPath = os.path.realpath(__file__)
 	(head, tail) = os.path.split(scriptPath)
@@ -382,6 +404,7 @@ def MNI152FLIRTTemplate(skullStripped = False):
 
 	return os.path.join(head, 'data', T)
 #import CCSegUtilsInterpCython
+
 
 #@profile
 def interp3q(xx, yy, zz, V, xi, yi, zi, interpmethod = 'linear', extrapval = numpy.nan):
@@ -780,6 +803,7 @@ def mkdirSafe(D):
 			pass
 		else:
 			raise Exception
+
 
 def parasagittalSlicesAndGradients(TIMG, axialNIIPixdims, numSlices = 3):
 
