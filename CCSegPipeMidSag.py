@@ -241,7 +241,7 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 		# use FSLORIENT to get the RADIOLOGICAL/NEUROLOGICAL orientation of the image
 		# we may not need this
 		
-		NIIPixdims = NII.get_header().get_zooms()[1:3]
+		NIIPixdims = NII.header.get_zooms()[1:3]
 		NIIAffine = NII.get_affine()
 		#print NII.shape
 
@@ -277,7 +277,7 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 			NIIBrainMask = nibabel.load(flirtTemplateFileBrainMask)
 
 			NII = nibabel.load(toStdNII)
-			NIIPixdims = NII.get_header().get_zooms()[1:3]
+			NIIPixdims = NII.header.get_zooms()[1:3]
 			NIIShape = NII.shape
 			
 			NIIData = numpy.rot90(NII.get_data(), 1)
@@ -343,7 +343,7 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 			axialNIIShape = axialNII.shape
 
 			#axialNIIIMG = numpy.rot90(axialNIIIMG, 1)
-			axialNIIPixdims = axialNII.get_header().get_zooms()
+			axialNIIPixdims = axialNII.header.get_zooms()
 			#print NIIPixdims
 			#print NewNII.header.get_zooms()
 			#quit()
@@ -390,7 +390,7 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 			axialNIIIMG = numpy.int16(axialNIIIMG)
 			#axialNIIIMG = numpy.rot90(axialNIIIMG, -1)
 
-			NIISaving = nibabel.Nifti1Image(axialNIIIMG, axialNII.get_affine(), axialNII.get_header())
+			NIISaving = nibabel.Nifti1Image(axialNIIIMG, axialNII.get_affine(), axialNII.header)
 			axialCroppedNIIShape = NIISaving.shape
 			#print "axialNIIShape"
 			#print axialNIIShape
@@ -598,7 +598,7 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 				TIMG = CCSegPipeMidSagSymmetric.transformIMG(IMG, IMGxx, IMGyy, IMGzz, curRotY, curRotZ, curTransX) 
 				#CCSegPipeMidSagSymmetric.showMidSag(TIMG)
 				#plt.show()
-				NIISaving = nibabel.Nifti1Image(TIMG, axialNII.get_affine(), axialNII.get_header())
+				NIISaving = nibabel.Nifti1Image(TIMG, axialNII.get_affine(), axialNII.header)
 				nibabel.save(NIISaving, outputBase + "_native_midsag_sym.nii.gz")
 				flirtCost = 'mutualinfo'
 				flirtInterp = 'trilinear'
@@ -833,7 +833,7 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 		FID.create_dataset("flirtCropZerosCols", data=flirtCropZerosCols)
 
 		FID.close()
-		#print NII.get_header().get_zooms()
+		#print NII.header.get_zooms()
 		#print NIIPixdims
 		#ylab.imshow(midSagAVW)
 		#pylab.set_cmap(pylab.cm.gray)

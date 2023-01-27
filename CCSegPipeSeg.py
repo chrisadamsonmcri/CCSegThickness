@@ -947,7 +947,7 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 	templateAVW = numpy.rot90(numpy.squeeze(templateNII.get_data()), 1)
 	
 	del atlasDir
-	templatePixdims = templateNII.get_header().get_zooms()[1:]
+	templatePixdims = templateNII.header.get_zooms()[1:]
 	#print "midSagAVW.shape = " + str(midSagAVW.shape)
 
 	# resample to the space of the template
