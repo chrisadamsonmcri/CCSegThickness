@@ -182,9 +182,9 @@ import FLIRT
 def resampleProfile(inputProfile, sourceLeftPeak, templateLeftPeak, sourceRightPeak, templateRightPeak):
     
     reparamX = numpy.zeros((inputProfile.size))
-    reparamX[:int(sourceLeftPeak) + 1] = numpy.linspace(0, templateLeftPeak, sourceLeftPeak + 1)
-    reparamX[int(sourceLeftPeak):int(sourceRightPeak) + 1] = numpy.linspace(templateLeftPeak, templateRightPeak, sourceRightPeak - sourceLeftPeak + 1)
-    reparamX[int(sourceRightPeak):] = numpy.linspace(templateRightPeak, inputProfile.size - 1, inputProfile.size - sourceRightPeak)
+    reparamX[:int(sourceLeftPeak) + 1] = numpy.linspace(0, templateLeftPeak, int(sourceLeftPeak) + 1)
+    reparamX[int(sourceLeftPeak):int(sourceRightPeak) + 1] = numpy.linspace(templateLeftPeak, templateRightPeak, int(sourceRightPeak - sourceLeftPeak) + 1)
+    reparamX[int(sourceRightPeak):] = numpy.linspace(templateRightPeak, inputProfile.size - 1, inputProfile.size - int(sourceRightPeak))
     
     inputProfileNoNaNs = numpy.array(inputProfile)
     inputProfileNoNaNs[numpy.logical_not(numpy.isfinite(inputProfile))] = 0
