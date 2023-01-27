@@ -32,6 +32,10 @@ These installations can be done with the script
 
 `install_dependencies.sh`
 
+Finally, make the streamline cython file
+
+`make_cython.sh`
+
 If you use the software in a publication, please cite the following article:
 
 Adamson, C., Beare, R., Walterfang, M. et al. Neuroinform (2014) 12: 595. https://doi.org/10.1007/s12021-014-9236-3
