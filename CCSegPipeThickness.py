@@ -257,7 +257,7 @@ def registerProfileCovariance(inputProfile):
             costFunction[curLeftIDX, curRightIDX] = numpy.sum(T)
     
     I = numpy.argmax(costFunction)
-    ID = numpy.unravel_index(indices = I, dims = costFunction.shape)
+    ID = numpy.unravel_index(indices=I, shape=costFunction.shape)
     
     R = numpy.zeros_like(realInputProfiles)
     for z in range(realInputProfiles.shape[1]):
