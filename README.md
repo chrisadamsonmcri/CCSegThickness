@@ -34,6 +34,7 @@ These installations can be done with the script
 
 Finally, make the streamline cython file
 
+`cd CCSegThickness`
 `make_cython.sh`
 
 If you use the software in a publication, please cite the following article:
