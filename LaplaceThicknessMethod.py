@@ -96,7 +96,7 @@ def contourResampleArcLength(X, n):
 	outContour = numpy.zeros((X.shape[0], int(n)))
 	
 	for z in range(X.shape[0]):
-		outContour[z] = numpy.interp(numpy.linspace(0, 1, n), cumArcLength, X[z])
+		outContour[int(z)] = numpy.interp(numpy.linspace(0, 1, int(n)), cumArcLength, X[int(z)])
 	return outContour
 
 # returns the arc length of the contour in X, dimensions are the rows
