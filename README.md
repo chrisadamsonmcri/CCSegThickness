@@ -22,7 +22,7 @@ Tested in Ubuntu 16.04 LTS, 18.04 LTS.
 
 The following packages are dependencies and need to be installed via apt
 
-`sudo apt install python3-dev python3-pip python3-numpy python3-scipy python3-nibabel python3-opencv python3-matplotlib libsuitesparse-dev cython3`
+`sudo apt install python3-dev python3-pip python3-numpy python3-scipy python3-nibabel python3-opencv python3-imageio python3-matplotlib libsuitesparse-dev cython3`
 
 The following package needs to be installed in pip
 
