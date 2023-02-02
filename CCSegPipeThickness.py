@@ -525,68 +525,46 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
     #else:
     #    registeredThicknessProfile = registerProfilePeaks(thicknessProfile)
 
-    plt.clf()
+    if doGraphics:
+        plt.clf()
+            
+        plt.subplot(2, 1, 1)
+        for z in range(len(streamlines)):
+            if validStreamlines[z] == True:
+                lineProps = {'color': 'b', 'linewidth': 2}
+            else:
+                lineProps = {'color': 'm', 'linewidth': 2}
+            CCSegUtils.plotContour(streamlines[z], closed = False, lineProps = lineProps)
+            
+            if numpy.mod(z, 5) == 0:
+                #plt.text(streamlines[z][0, 0], streamlines[z][1, 0], str(z))startV[0, z], startV[1, z]
+                plt.text(startV[0, z], startV[1, z], str(z), horizontalalignment='center', verticalalignment='center', backgroundcolor='w')
+            #CCSegUtils.plotContour(streamlinesOuter[z], closed = False)
+            #CCSegUtils.plotContour(streamlinesInner[z], closed = False)
+        CCSegUtils.plotContour(streamlines[4], closed = False, lineProps = {'color': 'y', 'linewidth': 5})
+        CCSegUtils.plotContour(streamlines[94], closed = False, lineProps = {'color': 'k', 'linewidth': 5})
+        lineProps = {'color': 'g', 'linewidth': 2}
+        plt.plot(scaledContours['inner'][0], scaledContours['inner'][1], **lineProps)
+        lineProps = {'color': 'r', 'linewidth': 2}
+        plt.plot(scaledContours['outer'][0], scaledContours['outer'][1], **lineProps)
+        lineProps = {'color': 'b', 'linewidth': 2}
+        plt.plot(bendingAngleV[0], bendingAngleV[1], **lineProps)
         
-    plt.subplot(2, 1, 1)
-    for z in range(len(streamlines)):
-        if validStreamlines[z] == True:
-            lineProps = {'color': 'b', 'linewidth': 2}
-        else:
-            lineProps = {'color': 'm', 'linewidth': 2}
-        CCSegUtils.plotContour(streamlines[z], closed = False, lineProps = lineProps)
+        plt.gca().invert_yaxis()
+        plt.gca().get_xaxis().set_ticks([])
+        plt.gca().get_yaxis().set_ticks([])
+        plt.title('Streamlines')
+        idealThicknessProfile, templatePeaks = getIdealThicknessProfile(100, returnPeaks = True)
         
-        if numpy.mod(z, 5) == 0:
-            #plt.text(streamlines[z][0, 0], streamlines[z][1, 0], str(z))startV[0, z], startV[1, z]
-            plt.text(startV[0, z], startV[1, z], str(z), horizontalalignment='center', verticalalignment='center', backgroundcolor='w')
-        #CCSegUtils.plotContour(streamlinesOuter[z], closed = False)
-        #CCSegUtils.plotContour(streamlinesInner[z], closed = False)
-    CCSegUtils.plotContour(streamlines[4], closed = False, lineProps = {'color': 'y', 'linewidth': 5})
-    CCSegUtils.plotContour(streamlines[94], closed = False, lineProps = {'color': 'k', 'linewidth': 5})
-    lineProps = {'color': 'g', 'linewidth': 2}
-    plt.plot(scaledContours['inner'][0], scaledContours['inner'][1], **lineProps)
-    lineProps = {'color': 'r', 'linewidth': 2}
-    plt.plot(scaledContours['outer'][0], scaledContours['outer'][1], **lineProps)
-    lineProps = {'color': 'b', 'linewidth': 2}
-    plt.plot(bendingAngleV[0], bendingAngleV[1], **lineProps)
-    
-    plt.gca().invert_yaxis()
-    plt.gca().get_xaxis().set_ticks([])
-    plt.gca().get_yaxis().set_ticks([])
-    plt.title('Streamlines')
-    idealThicknessProfile, templatePeaks = getIdealThicknessProfile(100, returnPeaks = True)
-    
-    plt.subplot(2, 1, 2)
-    thicknessProfilePlot, = plt.plot(thicknessProfile)
-    registeredPeaksThicknessProfilePlot, = plt.plot(registeredThicknessProfilePeaks)
-    registeredCovThicknessProfilePlot, = plt.plot(registeredThicknessProfileCov)
-    idealThicknessProfilePlot, = plt.plot(idealThicknessProfile / 25.0)
-    plt.legend([thicknessProfilePlot, registeredPeaksThicknessProfilePlot, registeredCovThicknessProfilePlot, idealThicknessProfilePlot], ['Original thickness profile', 'Registered thickness profile peaks', 'Registered thickness profile cov', 'Ideal'], loc = 9)
-    plt.title('Thickness profile')
-    plt.xlabel('Node')
-    plt.ylabel('Thickness (mm)')
-
-    #plt.subplot(1, 2, 2); CCSegUtils.showIMG(FY, extent = [xx[0], xx[-1], yy[0], yy[-1]], ticks = True);
-    #for z in range(numpy.size(sxi)):
-    #    CCSegUtils.plotContour(streamlinesOuter[z], closed = False)
-    #    CCSegUtils.plotContour(streamlinesInner[z], closed = False)
-    #plt.plot(scaledxi[0], scaledyi[0])
-    #plt.plot(scaledxo[0], scaledyo[0])
-    
-    #print scaledxi
-    #print scaledyi
-#    CCSegUtils.showIMG(FX)
-    
-    #print outputPNG
-    plt.gcf().set_size_inches((20, 10), forward = True)
-    plt.savefig(outputPNG)
-    CCSegUtils.cropAutoWhitePNG(outputPNG)
-    
-    #plt.gcf().set_size_inches((20, 10), forward = True)
-    #plt.show()
-    #quit()
-    
-    # perform Witelson and "Hofer and Frahm" parcellations on the CCs, output parcellations of the streamlines
-    #../witelson_hoferfrahm_parcellation_schemes.png
+        plt.subplot(2, 1, 2)
+        thicknessProfilePlot, = plt.plot(thicknessProfile)
+        registeredPeaksThicknessProfilePlot, = plt.plot(registeredThicknessProfilePeaks)
+        registeredCovThicknessProfilePlot, = plt.plot(registeredThicknessProfileCov)
+        idealThicknessProfilePlot, = plt.plot(idealThicknessProfile / 25.0)
+        plt.legend([thicknessProfilePlot, registeredPeaksThicknessProfilePlot, registeredCovThicknessProfilePlot, idealThicknessProfilePlot], ['Original thickness profile', 'Registered thickness profile peaks', 'Registered thickness profile cov', 'Ideal'], loc = 9)
+        plt.title('Thickness profile')
+        plt.xlabel('Node')
+        plt.ylabel('Thickness (mm)')
 
         #plt.subplot(1, 2, 2); CCSegUtils.showIMG(FY, extent = [xx[0], xx[-1], yy[0], yy[-1]], ticks = True);
         #for z in range(numpy.size(sxi)):
@@ -597,13 +575,36 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
         
         #print scaledxi
         #print scaledyi
-#    CCSegUtils.showIMG(FX)
+    #    CCSegUtils.showIMG(FX)
         
-    #print outputPNG
-    plt.gcf().set_size_inches((20, 10), forward = True)
-    plt.savefig(outputPNG)
-    CCSegUtils.cropAutoWhitePNG(outputPNG)
-    
+        #print outputPNG
+        plt.gcf().set_size_inches((20, 10), forward = True)
+        plt.savefig(outputPNG)
+        CCSegUtils.cropAutoWhitePNG(outputPNG)
+        
+        #plt.gcf().set_size_inches((20, 10), forward = True)
+        #plt.show()
+        #quit()
+        
+        # perform Witelson and "Hofer and Frahm" parcellations on the CCs, output parcellations of the streamlines
+        #../witelson_hoferfrahm_parcellation_schemes.png
+
+            #plt.subplot(1, 2, 2); CCSegUtils.showIMG(FY, extent = [xx[0], xx[-1], yy[0], yy[-1]], ticks = True);
+            #for z in range(numpy.size(sxi)):
+            #    CCSegUtils.plotContour(streamlinesOuter[z], closed = False)
+            #    CCSegUtils.plotContour(streamlinesInner[z], closed = False)
+            #plt.plot(scaledxi[0], scaledyi[0])
+            #plt.plot(scaledxo[0], scaledyo[0])
+            
+            #print scaledxi
+            #print scaledyi
+    #    CCSegUtils.showIMG(FX)
+            
+        #print outputPNG
+        plt.gcf().set_size_inches((20, 10), forward = True)
+        plt.savefig(outputPNG)
+        CCSegUtils.cropAutoWhitePNG(outputPNG)
+        
     #plt.gcf().set_size_inches((20, 10), forward = True)
     #plt.show()
     #quit()

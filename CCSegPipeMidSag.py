@@ -687,7 +687,7 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 				CommandString = 'ARTHOME=' + os.path.join(head, 'ART') + " " + os.path.join(head, 'ART', 'acpcdetect') + ' -i ' + NIIFileForART + ' -o ' + NIIFileForARTOutput
 				os.system(CommandString)
 
-				inF = file(NIIFileForARTOutput, 'rb')
+				inF = open(NIIFileForARTOutput, 'rb')
 				s = inF.read()
 				inF.close()
 
@@ -822,7 +822,7 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 		FID.create_dataset("NIIPixdims", data=NIIPixdims, compression = 'gzip')
 		FID.create_dataset("midSagAVW", data=midSagAVW, compression = 'gzip')
 		FID.create_dataset("MSPMethod", data=MSPMethod)
-		FID.create_dataset("originalOrientationString", data=origOrientationString)
+		# FID.create_dataset("originalOrientationString", data=origOrientationString)
 		FID.create_dataset("originalNativeFile", data=(outputBase + "_native.nii.gz"))
 		FID.create_dataset("skullCrop", data=skullCrop)
 		FID.create_dataset("originalNativeCroppedFile", data=(outputBase + "_native_cropped.nii.gz"))
