@@ -5,8 +5,6 @@ import CCSegUtils
 
 import CCSegUtils
 import matplotlib.pyplot as plt
-import pylab
-
 
 def rotMatrixX(theta):
 	return numpy.matrix([
@@ -209,17 +207,17 @@ def getMidSagSlice(TIMG):
 def showMidSag(TIMG, midSagAVW = None):
 	SR = 2
 	SC = 2
-	pylab.subplot(SR, SC, 1)
+	plt.subplot(SR, SC, 1)
 	CCSegUtils.imshow(TIMG[:, :, TIMG.shape[2] // 2])
 	plt.plot([0, TIMG.shape[1]], [TIMG.shape[0] / 2, TIMG.shape[0] / 2], 'w-')
-	pylab.subplot(SR, SC, 2)
+	plt.subplot(SR, SC, 2)
 	T = numpy.rot90(TIMG[TIMG.shape[0] // 2], 1)
 	CCSegUtils.imshow(T)
-	pylab.subplot(SR, SC, 3)
+	plt.subplot(SR, SC, 3)
 	T = numpy.rot90(TIMG[:, TIMG.shape[1] // 2], 1)
 	CCSegUtils.imshow(T)
 	plt.plot([T.shape[1] / 2, T.shape[1] / 2], [0, TIMG.shape[0]], 'w-')
-	pylab.subplot(SR, SC, 4)
+	plt.subplot(SR, SC, 4)
 	if midSagAVW is None:
 		CCSegUtils.imshow(getMidSagSlice(TIMG))
 	else:

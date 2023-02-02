@@ -1,5 +1,5 @@
 import numpy
-import pylab
+import matplotlib.pyplot as plt
 import scipy.sparse
 
 import CCSegUtils
@@ -206,14 +206,14 @@ def weightedAffineInvCompWarpCost(targetIMG, templateIMG, templateWeight, curPar
 #	[ImageWarpedToTemplate, TX, TY] = lk_warp_image_affine(targetIMG, size(templateIMG), CurParameters);
 	targetIMGToTemplate, TX, TY = warpImageAffine(targetIMG, templateIMG.shape, curParameters)
 	if displayStuff == True:
-		pylab.subplot(4, 3, 5);	CCSegUtils.showIMG(targetIMGToTemplate); pylab.title('template coordinates warped to image');
-		pylab.subplot2grid((4, 3), (1, 2), rowspan = 2, colspan = 1); pylab.cla(); CCSegUtils.showIMG(targetIMG);
+		plt.subplot(4, 3, 5);	CCSegUtils.showIMG(targetIMGToTemplate); plt.title('template coordinates warped to image');
+		plt.subplot2grid((4, 3), (1, 2), rowspan = 2, colspan = 1); plt.cla(); CCSegUtils.showIMG(targetIMG);
 			
-		pylab.plot(TX[:, 0], TY[:, 0], 'b-')
-		pylab.plot(TX[0, :], TY[0, :], 'b-')
-		pylab.plot(TX[:, -1], TY[:, -1], 'b-')
-		pylab.plot(TX[-1, :], TY[-1, :], 'b-')
-		pylab.title('Coordinates on target')
+		plt.plot(TX[:, 0], TY[:, 0], 'b-')
+		plt.plot(TX[0, :], TY[0, :], 'b-')
+		plt.plot(TX[:, -1], TY[:, -1], 'b-')
+		plt.plot(TX[-1, :], TY[-1, :], 'b-')
+		plt.title('Coordinates on target')
 	#print "oiajfdoijadsf"
 
 	errorIMG = targetIMGToTemplate - templateIMG
@@ -333,17 +333,17 @@ def weightedAffineInvComp(targetIMG, templateIMG, templateWeight, initialParamet
 	displayStuff = False
 
 	if displayStuff == True:
-		pylab.clf()
-		pylab.subplot(4, 3, 1); CCSegUtils.showIMG(targetIMG); pylab.title("Image");
-		pylab.subplot(4, 3, 2); CCSegUtils.showIMG(templateIMG); pylab.title("Template");
+		plt.clf()
+		plt.subplot(4, 3, 1); CCSegUtils.showIMG(targetIMG); plt.title("Image");
+		plt.subplot(4, 3, 2); CCSegUtils.showIMG(templateIMG); plt.title("Template");
 
 	FY, FX = numpy.gradient(templateIMG)
 
 	templateJacobian = jacobianAffine(templateIMG.shape)
 
 	if displayStuff == True:
-		pylab.subplot(4, 3, 3); CCSegUtils.showIMG(numpy.concatenate((FX, FY), axis = 1)); pylab.title('Template gradients');
-		pylab.subplot(4, 3, 4); jacobianAffineDisplay(templateJacobian, templateIMG.shape); pylab.title('Template Jacobian');
+		plt.subplot(4, 3, 3); CCSegUtils.showIMG(numpy.concatenate((FX, FY), axis = 1)); plt.title('Template gradients');
+		plt.subplot(4, 3, 4); jacobianAffineDisplay(templateJacobian, templateIMG.shape); plt.title('Template Jacobian');
 	
 #	% compute steepest descent images
 	#[SDImages] = lk_sd_images_affine(FX, FY, Jacobian);
@@ -361,8 +361,8 @@ def weightedAffineInvComp(targetIMG, templateIMG, templateWeight, initialParamet
 	#rint templateWeightMatrix
 
 	if displayStuff == True:
-		pylab.subplot(4, 3, 8); steepestDescentImagesAffineDisplay(SDImages, templateIMG.shape); pylab.title('Steepest descent images');
-		pylab.subplot(4, 3, 10); CCSegUtils.showIMG(Hessian); pylab.title('Hessian');
+		plt.subplot(4, 3, 8); steepestDescentImagesAffineDisplay(SDImages, templateIMG.shape); plt.title('Steepest descent images');
+		plt.subplot(4, 3, 10); CCSegUtils.showIMG(Hessian); plt.title('Hessian');
 
 	curParameters = initialParameters
 	(targetIMGToTemplate, TX, TY, errorIMG, LKCost) = weightedAffineInvCompWarpCost(targetIMG, templateIMG, templateWeight, curParameters, displayStuff, targetIMGMask = targetIMGMask)
@@ -377,15 +377,15 @@ def weightedAffineInvComp(targetIMG, templateIMG, templateWeight, initialParamet
 	for curIter in range(numIterations):
 
 		if(displayStuff == True):
-			pylab.subplot(4, 3, 7);
-			CCSegUtils.showIMG(errorIMG); pylab.title('Error Image');
+			plt.subplot(4, 3, 7);
+			CCSegUtils.showIMG(errorIMG); plt.title('Error Image');
 		
 		SDUpdate = scipy.linalg.solve(Hessian, numpy.matrix(SDImages).T * numpy.matrix(numpy.atleast_2d(numpy.ravel(errorIMG))).T)
 		
 		if(displayStuff == True):
-			pylab.subplot(4, 3, 11);
-			pylab.cla()
-			pylab.bar(numpy.arange(0, numpy.size(SDUpdate)), SDUpdate); pylab.title('SD Updates');
+			plt.subplot(4, 3, 11);
+			plt.cla()
+			plt.bar(numpy.arange(0, numpy.size(SDUpdate)), SDUpdate); plt.title('SD Updates');
 
 #		compose the new warp
 #		make the transformation matrix used to transform the coordinates
@@ -423,10 +423,10 @@ def weightedAffineInvComp(targetIMG, templateIMG, templateWeight, initialParamet
 		#print curParameters
 
 		if(displayStuff == True):
-			pylab.subplot(4, 3, 12)
-			pylab.cla()
-			pylab.bar(numpy.arange(0, numpy.size(curParameters)), curParameters); pylab.title('Parameters');
-			F = pylab.gcf()
+			plt.subplot(4, 3, 12)
+			plt.cla()
+			plt.bar(numpy.arange(0, numpy.size(curParameters)), curParameters); plt.title('Parameters');
+			F = plt.gcf()
 			F.set_size_inches((20, 10), forward = True)
 		
 		(targetIMGToTemplate, TX, TY, errorIMG, LKCost) = weightedAffineInvCompWarpCost(targetIMG, templateIMG, templateWeight, curParameters, displayStuff, targetIMGMask = targetIMGMask)
@@ -434,8 +434,8 @@ def weightedAffineInvComp(targetIMG, templateIMG, templateWeight, initialParamet
 			#print "InfCost"
 			return (curParameters, LKCost)
 		if displayStuff == True:
-			pylab.draw()
-			pylab.show(block = False)
+			plt.draw()
+			plt.show(block = False)
 		#quit()
 
 		#composedMatrix = curParametersMatrix
@@ -465,7 +465,7 @@ def weightedAffineInvComp(targetIMG, templateIMG, templateWeight, initialParamet
 #		[~, ~, ~, ErrorIMG, CostValue] = lk_weighted_run_affine_inv_comp_warpcost(targetIMG, templateIMG, TemplateW, CurParameters, displayStuff);
 #	end
 #
-	#pylab.show()
+	#plt.show()
 	return (curParameters, LKCost)
 #
 #	

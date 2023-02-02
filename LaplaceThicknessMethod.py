@@ -4,7 +4,7 @@ import numpy.linalg
 import os
 import errno
 
-import pylab
+import matplotlib.pyplot as plt
 import scipy.ndimage
 import scipy.sparse.linalg
 
@@ -174,15 +174,15 @@ def numericGradient2D(IMG, xSpacing = 1.0, ySpacing = 1.0, mask = None):
 		# the eastValues that are NOT in the mask should be taken from the current indices
 		eastValues[(maskIDX[0][notEastMask], maskIDX[1][notEastMask])] = IMG[(maskIDX[0][notEastMask], maskIDX[1][notEastMask])]
 		
-#		pylab.subplot(2, 3, 1); CCSegUtils.showIMG(northValues)
-#		pylab.subplot(2, 3, 2); CCSegUtils.showIMG(southValues)
-#		pylab.subplot(2, 3, 3); CCSegUtils.showIMG((southValues - northValues) / northSouthSpacing)
-#		pylab.subplot(2, 3, 4); CCSegUtils.showIMG(westValues)
-#		pylab.subplot(2, 3, 5); CCSegUtils.showIMG(eastValues)
-#		pylab.subplot(2, 3, 6); CCSegUtils.showIMG((eastValues - westValues) / eastWestSpacing)
+#		plt.subplot(2, 3, 1); CCSegUtils.showIMG(northValues)
+#		plt.subplot(2, 3, 2); CCSegUtils.showIMG(southValues)
+#		plt.subplot(2, 3, 3); CCSegUtils.showIMG((southValues - northValues) / northSouthSpacing)
+#		plt.subplot(2, 3, 4); CCSegUtils.showIMG(westValues)
+#		plt.subplot(2, 3, 5); CCSegUtils.showIMG(eastValues)
+#		plt.subplot(2, 3, 6); CCSegUtils.showIMG((eastValues - westValues) / eastWestSpacing)
 #
-#		pylab.gcf().set_size_inches((20, 10), forward = True)
-#		pylab.show()
+#		plt.gcf().set_size_inches((20, 10), forward = True)
+#		plt.show()
 #		quit()
 		return ((eastValues - westValues) / eastWestSpacing, (southValues - northValues) / northSouthSpacing)
 
@@ -289,8 +289,8 @@ def laplaceEquation2DContours(xi, yi, xo, yo, xScale, yScale, delta, numStreamli
 	#if not onlyNeedStartV:
 	#	CCSegUtils.showIMG(maskClosed)
 	#	CSegUtils.plotContour(closedContour)
-	#	pylab.gcf().set_size_inches((20, 10), forward = True)
-	#	pylab.show()
+	#	plt.gcf().set_size_inches((20, 10), forward = True)
+	#	plt.show()
 	#	quit()
 	
 	#maskClosed = scipy.ndimage.morphology.binary_fill_holes(numpy.logical_or(maskInnerBoundary, maskOuterBoundary), structure = numpy.array([[0, 1, 0], [1, 1, 1], [0, 1, 0]], dtype = numpy.bool))
@@ -299,25 +299,25 @@ def laplaceEquation2DContours(xi, yi, xo, yo, xScale, yScale, delta, numStreamli
 	maskFree = numpy.logical_and(maskClosed, numpy.logical_not(numpy.logical_or(maskInnerBoundary, maskOuterBoundary)))
 #	if not onlyNeedStartV:
 #
-#		pylab.subplot(2, 2, 1); CCSegUtils.showIMG(maskInnerBoundary, extent = [xx[0], xx[-1], yy[0], yy[-1]])#pylab.imshow(maskInnerBoundary, extent = [xx[0], xx[-1], yy[0], yy[-1]], origin = 'lower') #CCSegUtils.showIMG(maskInnerBoundary)
+#		plt.subplot(2, 2, 1); CCSegUtils.showIMG(maskInnerBoundary, extent = [xx[0], xx[-1], yy[0], yy[-1]])#plt.imshow(maskInnerBoundary, extent = [xx[0], xx[-1], yy[0], yy[-1]], origin = 'lower') #CCSegUtils.showIMG(maskInnerBoundary)
 #		lineProps = {'color': 'r', 'linewidth': 2}
 #		#CCSegUtils.plotContour(numpy.concatenate((XI, YI), axis = 0), lineProps = lineProps, closed = False);
 #		CCSegUtils.plotContour(numpy.concatenate((scaledxi, scaledyi), axis = 0), lineProps = lineProps, closed = False);
 #		lineProps = {'color': 'g', 'linewidth': 2}
 #		CCSegUtils.plotContour(numpy.concatenate((scaledxo, scaledyo), axis = 0), lineProps = lineProps, closed = False);
-#		pylab.subplot(2, 2, 2); CCSegUtils.showIMG(maskOuterBoundary, extent = [xx[0], xx[-1], yy[0], yy[-1]])
+#		plt.subplot(2, 2, 2); CCSegUtils.showIMG(maskOuterBoundary, extent = [xx[0], xx[-1], yy[0], yy[-1]])
 #		lineProps = {'color': 'b', 'linewidth': 2}
 #		CCSegUtils.plotContour(numpy.concatenate((XO, YO), axis = 0), lineProps = lineProps, closed = False);
-#		pylab.subplot(2, 2, 3);	CCSegUtils.showIMG(numpy.logical_or(maskInnerBoundary, maskOuterBoundary), extent = [xx[0], xx[-1], yy[0], yy[-1]])
-#		pylab.subplot(2, 2, 4);	CCSegUtils.showIMG(maskClosed, extent = [xx[0], xx[-1], yy[0], yy[-1]])
+#		plt.subplot(2, 2, 3);	CCSegUtils.showIMG(numpy.logical_or(maskInnerBoundary, maskOuterBoundary), extent = [xx[0], xx[-1], yy[0], yy[-1]])
+#		plt.subplot(2, 2, 4);	CCSegUtils.showIMG(maskClosed, extent = [xx[0], xx[-1], yy[0], yy[-1]])
 #
-#		pylab.gcf().set_size_inches((20, 10), forward = True)
-#		pylab.show()
+#		plt.gcf().set_size_inches((20, 10), forward = True)
+#		plt.show()
 #		quit()
-#	pylab.subplot(2, 2, 3); CCSegUtils.showIMG(numpy.logical_or(maskInnerBoundary, maskOuterBoundary), extent = [xx[0], xx[-1], yy[0], yy[-1]])
+#	plt.subplot(2, 2, 3); CCSegUtils.showIMG(numpy.logical_or(maskInnerBoundary, maskOuterBoundary), extent = [xx[0], xx[-1], yy[0], yy[-1]])
 #	
-#	pylab.subplot(2, 2, 3); CCSegUtils.showIMG(maskClosed, extent = [xx[0], xx[-1], yy[0], yy[-1]])
-#	pylab.subplot(2, 2, 4); CCSegUtils.showIMG(maskFree, extent = [xx[0], xx[-1], yy[0], yy[-1]])
+#	plt.subplot(2, 2, 3); CCSegUtils.showIMG(maskClosed, extent = [xx[0], xx[-1], yy[0], yy[-1]])
+#	plt.subplot(2, 2, 4); CCSegUtils.showIMG(maskFree, extent = [xx[0], xx[-1], yy[0], yy[-1]])
 #	
 	del XI; del YI; del XO; del YO;
 	
@@ -339,11 +339,11 @@ def laplaceEquation2DContours(xi, yi, xo, yo, xScale, yScale, delta, numStreamli
 	maskFree = numpy.rot90(maskFree, -n)
 	del n
 
-	#pylab.subplot(1, 2, 1); CCSegUtils.showIMG(maskFree)
-	#pylab.subplot(1, 2, 2); CCSegUtils.showIMG(variableIDXIMG)
+	#plt.subplot(1, 2, 1); CCSegUtils.showIMG(maskFree)
+	#plt.subplot(1, 2, 2); CCSegUtils.showIMG(variableIDXIMG)
 	
-	#pylab.gcf().set_size_inches((20, 10), forward = True)
-	#pylab.show()
+	#plt.gcf().set_size_inches((20, 10), forward = True)
+	#plt.show()
 
 	#quit()
 	
@@ -593,9 +593,9 @@ def laplaceEquation2DContours(xi, yi, xo, yo, xScale, yScale, delta, numStreamli
 	#print solvedImage[numpy.where(maskFree)]
 	#if not onlyNeedStartV:
 	#	CCSegUtils.showIMG(solvedImage, extent = [xx[0], xx[-1], yy[0], yy[-1]])
-	#	pylab.colorbar()
-	#	pylab.gcf().set_size_inches((20, 10), forward = True)
-	#	pylab.show()
+	#	plt.colorbar()
+	#	plt.gcf().set_size_inches((20, 10), forward = True)
+	#	plt.show()
 	#	quit()
 
 	# the gradients get normalised but this is to take into account possible different x to y sizes
@@ -609,8 +609,8 @@ def laplaceEquation2DContours(xi, yi, xo, yo, xScale, yScale, delta, numStreamli
 	FY = FY / gradMAG
 	del gradMAG
 	
-	#pylab.subplot(1, 2, 1); CCSegUtils.showIMG(FX, extent = [xx[0], xx[-1], yy[0], yy[-1]])
-	#pylab.subplot(1, 2, 2); CCSegUtils.showIMG(FY, extent = [xx[0], xx[-1], yy[0], yy[-1]])
+	#plt.subplot(1, 2, 1); CCSegUtils.showIMG(FX, extent = [xx[0], xx[-1], yy[0], yy[-1]])
+	#plt.subplot(1, 2, 2); CCSegUtils.showIMG(FY, extent = [xx[0], xx[-1], yy[0], yy[-1]])
 
 	#if numStreamlines > 0:
 	C = skimage.measure.find_contours(solvedImage, 0.5)
@@ -646,10 +646,10 @@ def laplaceEquation2DContours(xi, yi, xo, yo, xScale, yScale, delta, numStreamli
 	#	print len(outC)
 	#	for z in range(len(outC)):
 	#		print outC[z].shape
-	#	pylab.plot(outC[z][0], outC[z][1])
+	#	plt.plot(outC[z][0], outC[z][1])
 		#CCSegUtils.showIMG(solvedImage)
-	#	pylab.gcf().set_size_inches((20, 10), forward = True)
-	#	pylab.show()
+	#	plt.gcf().set_size_inches((20, 10), forward = True)
+	#	plt.show()
 	
 	
 	#assert(len(outC) == 1),"More than one midpoint isocontour"
@@ -685,14 +685,14 @@ def laplaceEquation2DContours(xi, yi, xo, yo, xScale, yScale, delta, numStreamli
 	T[I] = 0;
 	FY = FY + S + T;
 
-#	pylab.subplot(2, 2, 1); CCSegUtils.showIMG(oldFX, extent = [xx[0], xx[-1], yy[0], yy[-1]])
+#	plt.subplot(2, 2, 1); CCSegUtils.showIMG(oldFX, extent = [xx[0], xx[-1], yy[0], yy[-1]])
 #	lineProps = {'color': 'r', 'linewidth': 2}
 #	CCSegUtils.plotContour(numpy.concatenate((XI, YI), axis = 0), lineProps = lineProps, closed = False);
 #	lineProps = {'color': 'b', 'linewidth': 2}
 #	CCSegUtils.plotContour(numpy.concatenate((XO, YO), axis = 0), lineProps = lineProps, closed = False);
 #	lineProps = {'color': 'g', 'linewidth': 2}
 #	CCSegUtils.plotContour(startV, lineProps = lineProps, closed = False);
-#	pylab.subplot(2, 2, 2); CCSegUtils.showIMG(oldFY, extent = [xx[0], xx[-1], yy[0], yy[-1]])
+#	plt.subplot(2, 2, 2); CCSegUtils.showIMG(oldFY, extent = [xx[0], xx[-1], yy[0], yy[-1]])
 #	lineProps = {'color': 'r', 'linewidth': 2}
 #	CCSegUtils.plotContour(numpy.concatenate((XI, YI), axis = 0), lineProps = lineProps, closed = False);
 #	lineProps = {'color': 'b', 'linewidth': 2}
@@ -701,14 +701,14 @@ def laplaceEquation2DContours(xi, yi, xo, yo, xScale, yScale, delta, numStreamli
 #	CCSegUtils.plotContour(startV, lineProps = lineProps, closed = False);
 #
 #	
-	#pylab.subplot(2, 2, 3); CCSegUtils.showIMG(FX, extent = [xx[0], xx[-1], yy[0], yy[-1]])
+	#plt.subplot(2, 2, 3); CCSegUtils.showIMG(FX, extent = [xx[0], xx[-1], yy[0], yy[-1]])
 #	lineProps = {'color': 'r', 'linewidth': 2}
 #	CCSegUtils.plotContour(numpy.concatenate((XI, YI), axis = 0), lineProps = lineProps, closed = False);
 #	lineProps = {'color': 'b', 'linewidth': 2}
 #	CCSegUtils.plotContour(numpy.concatenate((XO, YO), axis = 0), lineProps = lineProps, closed = False);
 #	lineProps = {'color': 'g', 'linewidth': 2}
 #	CCSegUtils.plotContour(startV, lineProps = lineProps, closed = False);
-#	pylab.subplot(2, 2, 4); CCSegUtils.showIMG(FY, extent = [xx[0], xx[-1], yy[0], yy[-1]])
+#	plt.subplot(2, 2, 4); CCSegUtils.showIMG(FY, extent = [xx[0], xx[-1], yy[0], yy[-1]])
 #	lineProps = {'color': 'r', 'linewidth': 2}
 #	CCSegUtils.plotContour(numpy.concatenate((XI, YI), axis = 0), lineProps = lineProps, closed = False);
 #	lineProps = {'color': 'b', 'linewidth': 2}
@@ -728,12 +728,12 @@ def laplaceEquation2DContours(xi, yi, xo, yo, xScale, yScale, delta, numStreamli
 	
 	import Streamline2DCython
 	
-	#pylab.subplot(2, 2, 1); CCSegUtils.showIMG(oldFX)
-	#pylab.subplot(2, 2, 2); CCSegUtils.showIMG(oldFY)
-	#pylab.subplot(2, 2, 3); CCSegUtils.showIMG(FX); pylab.plot(sxi, syi, 'g-');
-	#pylab.subplot(2, 2, 4); CCSegUtils.showIMG(FY); pylab.plot(sxi, syi, 'g-');
-	#pylab.gcf().set_size_inches((20, 10), forward = True)
-	#pylab.show()
+	#plt.subplot(2, 2, 1); CCSegUtils.showIMG(oldFX)
+	#plt.subplot(2, 2, 2); CCSegUtils.showIMG(oldFY)
+	#plt.subplot(2, 2, 3); CCSegUtils.showIMG(FX); plt.plot(sxi, syi, 'g-');
+	#plt.subplot(2, 2, 4); CCSegUtils.showIMG(FY); plt.plot(sxi, syi, 'g-');
+	#plt.gcf().set_size_inches((20, 10), forward = True)
+	#plt.show()
 
 	#print xx.shape
 	#print yy.shape
@@ -791,23 +791,23 @@ def laplaceEquation2DContours(xi, yi, xo, yo, xScale, yScale, delta, numStreamli
 		#CCSegUtils.plotContour(streamlinesOuter[z], closed = False)
 		#CCSegUtils.plotContour(streamlinesInner[z], closed = False)
 	#lineProps = {'color': 'g', 'linewidth': 2}
-	#pylab.plot(scaledxi[0], scaledyi[0], **lineProps)
+	#plt.plot(scaledxi[0], scaledyi[0], **lineProps)
 	#lineProps = {'color': 'r', 'linewidth': 2}
-	#pylab.plot(scaledxo[0], scaledyo[0], **lineProps)
+	#plt.plot(scaledxo[0], scaledyo[0], **lineProps)
 #
-#	pylab.subplot(1, 2, 2); CCSegUtils.showIMG(FY, extent = [xx[0], xx[-1], yy[0], yy[-1]], ticks = True);
+#	plt.subplot(1, 2, 2); CCSegUtils.showIMG(FY, extent = [xx[0], xx[-1], yy[0], yy[-1]], ticks = True);
 #	for z in range(numpy.size(sxi)):
 #		CCSegUtils.plotContour(streamlinesOuter[z], closed = False)
 #		CCSegUtils.plotContour(streamlinesInner[z], closed = False)
-#	pylab.plot(scaledxi[0], scaledyi[0])
-#	pylab.plot(scaledxo[0], scaledyo[0])
+#	plt.plot(scaledxi[0], scaledyi[0])
+#	plt.plot(scaledxo[0], scaledyo[0])
 	
 	#print scaledxi
 	#print scaledyi
 #	CCSegUtils.showIMG(FX)
-	#pylab.gca().invert_yaxis()
-	#pylab.gcf().set_size_inches((20, 10), forward = True)
-	#pylab.show()
+	#plt.gca().invert_yaxis()
+	#plt.gcf().set_size_inches((20, 10), forward = True)
+	#plt.show()
 	
 	scaledContours = dict()
 	scaledContours['inner'] = numpy.concatenate((scaledxi, scaledyi), axis = 0)
@@ -816,8 +816,8 @@ def laplaceEquation2DContours(xi, yi, xo, yo, xScale, yScale, delta, numStreamli
 	return (xx, yy, scaledContours, streamlines, validStreamlines, solvedImage)
 	#quit()
 
-	#pylab.gcf().set_size_inches((20, 10), forward = True)
-	#pylab.show()
+	#plt.gcf().set_size_inches((20, 10), forward = True)
+	#plt.show()
 	
 
 	#quit()
@@ -828,7 +828,7 @@ def laplaceEquation2DContours(xi, yi, xo, yo, xScale, yScale, delta, numStreamli
 	#print I
 	#maskRGB = numpy.double(numpy.concatenate((numpy.atleast_3d(maskFree), numpy.atleast_3d(maskInnerBoundary), numpy.atleast_3d(maskOuterBoundary)), axis = 2))
 #
-	#pylab.subplot(2, 2, 1); CCSegUtils.showIMG(maskRGB, extent = [xx[0], xx[-1], yy[0], yy[-1]])
+	#plt.subplot(2, 2, 1); CCSegUtils.showIMG(maskRGB, extent = [xx[0], xx[-1], yy[0], yy[-1]])
 #
 	#T = numpy.array(maskRGB)
 	#B = numpy.zeros_like(maskFree)
@@ -838,15 +838,15 @@ def laplaceEquation2DContours(xi, yi, xo, yo, xScale, yScale, delta, numStreamli
 	#B = B[numpy.where(maskFree)]
 
 	#T[maskFreeIDXForRGB] = numpy.tile(B, (3))
-	#pylab.subplot(2, 2, 2); CCSegUtils.showIMG(T, extent = [xx[0], xx[-1], yy[0], yy[-1]]); pylab.title('Other neighbours')
+	#plt.subplot(2, 2, 2); CCSegUtils.showIMG(T, extent = [xx[0], xx[-1], yy[0], yy[-1]]); plt.title('Other neighbours')
 #	
 #	T = numpy.array(maskRGB)
 #	T[maskFreeIDXForRGB] = numpy.tile(innerBoundaryIDX, (3))
-#	pylab.subplot(2, 2, 3); CCSegUtils.showIMG(T, extent = [xx[0], xx[-1], yy[0], yy[-1]]); pylab.title('Inner boundary')
+#	plt.subplot(2, 2, 3); CCSegUtils.showIMG(T, extent = [xx[0], xx[-1], yy[0], yy[-1]]); plt.title('Inner boundary')
 #	
 #	T = numpy.array(maskRGB)
 #	T[maskFreeIDXForRGB] = numpy.tile(outerBoundaryIDX, (3))
-#	pylab.subplot(2, 2, 4); CCSegUtils.showIMG(T, extent = [xx[0], xx[-1], yy[0], yy[-1]]); pylab.title('Inner boundary')
+#	plt.subplot(2, 2, 4); CCSegUtils.showIMG(T, extent = [xx[0], xx[-1], yy[0], yy[-1]]); plt.title('Inner boundary')
 #
 	
 		
@@ -869,9 +869,9 @@ def laplaceEquation2DContours(xi, yi, xo, yo, xScale, yScale, delta, numStreamli
 	#print XI.shape
 	#print YI
 	#del contourIResampled; del contourOResampled;
-	#pylab.plot(BWContour[0, leftStart + curLeftOffset], BWContour[1, leftStart + curLeftOffset], 'b*');
+	#plt.plot(BWContour[0, leftStart + curLeftOffset], BWContour[1, leftStart + curLeftOffset], 'b*');
 	#print curContours['xi']
-	#pylab.gca().invert_yaxis()
+	#plt.gca().invert_yaxis()
 	
 	#quit()
 
@@ -896,14 +896,14 @@ def endpointsFindObjectiveFunction(BWContour, leftOffset, rightOffset, rightStar
 	#	CCSegUtils.plotContour(numpy.concatenate((curContours['xi'], curContours['yi']), axis = 0), lineProps = lineProps, closed = False);
 	#	lineProps = {'color': 'b', 'linewidth': 2}
 	#	CCSegUtils.plotContour(numpy.concatenate((curContours['xo'], curContours['yo']), axis = 0), lineProps = lineProps, closed = False);
-		#pylab.plot(BWContour[0, leftStart + curLeftOffset], BWContour[1, leftStart + curLeftOffset], 'b*');
+		#plt.plot(BWContour[0, leftStart + curLeftOffset], BWContour[1, leftStart + curLeftOffset], 'b*');
 		#print curContours['xi']
-		#pylab.gcf().set_size_inches((20, 10), forward = True)
-	#	pylab.title(str(rightOffset))
-	#	pylab.show()
+		#plt.gcf().set_size_inches((20, 10), forward = True)
+	#	plt.title(str(rightOffset))
+	#	plt.show()
 		#quit()
 	
-	#pylab.subplot(1, 2, 2); CCSegUtils.showIMG(maskClosed);
+	#plt.subplot(1, 2, 2); CCSegUtils.showIMG(maskClosed);
 	
 	startV = laplaceEquation2DContours(curContours['xi'], curContours['yi'], curContours['xo'][::-1], curContours['yo'][::-1], 1.0, 1.0, 1.0, 0, onlyNeedStartV = True)
 	
@@ -984,11 +984,11 @@ def contourClockwise(BW, BWContour):
 	
 	#print clockwiseArray
 	#CCSegUtils.showIMG(BW)
-	#pylab.plot(BWContour[0], BWContour[1], 'r-')
+	#plt.plot(BWContour[0], BWContour[1], 'r-')
 	
-	#I = numpy.where(clockwiseArray == -1); pylab.quiver(BWContour[0, I], BWContour[1, I], T[0, I], T[1, I], color = 'r', angles = 'xy')
-	#I = numpy.where(clockwiseArray == 1); pylab.quiver(BWContour[0, I], BWContour[1, I], T[0, I], T[1, I], color = 'g', angles = 'xy')
-	#pylab.show()
+	#I = numpy.where(clockwiseArray == -1); plt.quiver(BWContour[0, I], BWContour[1, I], T[0, I], T[1, I], color = 'r', angles = 'xy')
+	#I = numpy.where(clockwiseArray == 1); plt.quiver(BWContour[0, I], BWContour[1, I], T[0, I], T[1, I], color = 'g', angles = 'xy')
+	#plt.show()
 	#quit()
 	clockwiseVotes = numpy.size(numpy.where(clockwiseArray == 1))
 	anticlockwiseVotes = numpy.size(numpy.where(clockwiseArray == -1))
@@ -1026,14 +1026,14 @@ def endpointsFind(BW, outputPNG = None):
 	#print BWLeftExtrema
 	#print BWRightExtrema
 
-	#pylab.subplot(1, 2, 1); CCSegUtils.showIMG(BWLeft); pylab.plot(BWLeftExtrema[:, 0], BWLeftExtrema[:, 1], 'b*');
+	#plt.subplot(1, 2, 1); CCSegUtils.showIMG(BWLeft); plt.plot(BWLeftExtrema[:, 0], BWLeftExtrema[:, 1], 'b*');
 	#% the desirable extrema on the left half is bottom-right (5)
 	#print leftStart
 	#print leftStart.shape
-	#pylab.plot(leftStart[0], leftStart[1], markersize=10, color='r', marker = '*')
-	#pylab.subplot(1, 2, 2); CCSegUtils.showIMG(BWRight); pylab.plot(BWRightExtrema[:, 0], BWRightExtrema[:, 1], 'b*'); 
+	#plt.plot(leftStart[0], leftStart[1], markersize=10, color='r', marker = '*')
+	#plt.subplot(1, 2, 2); CCSegUtils.showIMG(BWRight); plt.plot(BWRightExtrema[:, 0], BWRightExtrema[:, 1], 'b*'); 
 	#print rightStart
-	#pylab.plot(rightStart[0], rightStart[1], markersize=10, color='r', marker = '*')
+	#plt.plot(rightStart[0], rightStart[1], markersize=10, color='r', marker = '*')
 	#% the desirable extrema on the right half is bottom-left (6)
 	
 	del BWLeftExtrema; del BWRightExtrema;
@@ -1150,12 +1150,12 @@ def endpointsFind(BW, outputPNG = None):
 		#rint "Left Iteration: " + str(curLeftOffsetIDX) + ", " + str(curLeftOffset)
 
 		if arcLengthsLeft[curLeftOffsetIDX] == 0.0:
-			#pylab.subplot(1, 2, 1); CCSegUtils.showIMG(BW); CCSegUtils.plotContour(BWContour); pylab.plot(BWContour[0, leftStart + curLeftOffset], BWContour[1, leftStart + curLeftOffset], 'b*');
+			#plt.subplot(1, 2, 1); CCSegUtils.showIMG(BW); CCSegUtils.plotContour(BWContour); plt.plot(BWContour[0, leftStart + curLeftOffset], BWContour[1, leftStart + curLeftOffset], 'b*');
 
 			arcLengthsLeft[curLeftOffsetIDX] = endpointsFindObjectiveFunction(BWContour, curLeftOffset, curRightOffset, rightStartIDX)
-		#CCSegUtils.plotContour(arcLengthsLeftStartV[curLeftOffsetIDX], closed = False); pylab.title(str(arcLengthsLeft[curLeftOffsetIDX]));
-		#pylab.gcf().set_size_inches((20, 10), forward = True)
-		#pylab.show()
+		#CCSegUtils.plotContour(arcLengthsLeftStartV[curLeftOffsetIDX], closed = False); plt.title(str(arcLengthsLeft[curLeftOffsetIDX]));
+		#plt.gcf().set_size_inches((20, 10), forward = True)
+		#plt.show()
 
 		curObjectiveValue = arcLengthsLeft[curLeftOffsetIDX]
 		
@@ -1286,25 +1286,25 @@ def endpointsFind(BW, outputPNG = None):
 		BBoxJ = numpy.arange(numpy.min(I[1]) - 1, numpy.max(I[1]) + 2)
 
 		T = numpy.take(numpy.take(T, BBoxI, axis = 0), BBoxJ, axis = 1)
-		pylab.clf()
+		plt.clf()
 
-		pylab.subplot2grid((2, 2), (0, 0), rowspan = 1, colspan = 2)
+		plt.subplot2grid((2, 2), (0, 0), rowspan = 1, colspan = 2)
 		CCSegUtils.showIMG(T, ticks = True)
 		lineProps = {'color': 'r', 'linewidth': 2}
 		
 		starProps = {'markersize': 20}
-		pylab.plot(leftStart[0] - BBoxJ[0], leftStart[1] - BBoxI[0], 'm*', **starProps)
-		pylab.plot(rightStart[0] - BBoxJ[0], rightStart[1] - BBoxI[0], 'm*', **starProps)
+		plt.plot(leftStart[0] - BBoxJ[0], leftStart[1] - BBoxI[0], 'm*', **starProps)
+		plt.plot(rightStart[0] - BBoxJ[0], rightStart[1] - BBoxI[0], 'm*', **starProps)
 
-		pylab.plot(leftShiftedBWContour[0, 0] - BBoxJ[0], leftShiftedBWContour[1, 0] - BBoxI[0], 'g*', **starProps)
+		plt.plot(leftShiftedBWContour[0, 0] - BBoxJ[0], leftShiftedBWContour[1, 0] - BBoxI[0], 'g*', **starProps)
 		T = rightStartIDX - curLeftOffset + curRightOffset
-		pylab.plot(leftShiftedBWContour[0, T] - BBoxJ[0], leftShiftedBWContour[1, T] - BBoxI[0], 'g*', **starProps)
+		plt.plot(leftShiftedBWContour[0, T] - BBoxJ[0], leftShiftedBWContour[1, T] - BBoxI[0], 'g*', **starProps)
 		
 		#print BWContour.shape
 		I = numpy.arange(0, BWContour.shape[1], 5)
 		#print I
 		for z in range(numpy.size(I)):
-			pylab.text(BWContour[0][I[z]] - BBoxJ[0], BWContour[1][I[z]] - BBoxI[0], str(I[z]), color = 'm')
+			plt.text(BWContour[0][I[z]] - BBoxJ[0], BWContour[1][I[z]] - BBoxI[0], str(I[z]), color = 'm')
 
 		#S = numpy.roll(BWContour, 1, axis = 1)
 		
@@ -1318,26 +1318,26 @@ def endpointsFind(BW, outputPNG = None):
 		#print G
 		#print BWContour
 		#print T
-		#pylab.quiver(BWContour[0] - BBoxJ[0], BWContour[1] - BBoxI[0], -T[0], T[1], color = 'b')
+		#plt.quiver(BWContour[0] - BBoxJ[0], BWContour[1] - BBoxI[0], -T[0], T[1], color = 'b')
 		#print T[:, C]
 		
-		pylab.quiver(BWContour[0] - BBoxJ[0], BWContour[1] - BBoxI[0], T[0], T[1], color = 'b', angles='xy')
+		plt.quiver(BWContour[0] - BBoxJ[0], BWContour[1] - BBoxI[0], T[0], T[1], color = 'b', angles='xy')
 		
-		pylab.plot(BWContour[0, 0] - BBoxJ[0], BWContour[1, 0] - BBoxI[0], 'r*', **starProps)
-		#pylab.plot(BWContour[0] - BBoxJ[0], BWContour[1] - BBoxI[0], 'r-')
+		plt.plot(BWContour[0, 0] - BBoxJ[0], BWContour[1, 0] - BBoxI[0], 'r*', **starProps)
+		#plt.plot(BWContour[0] - BBoxJ[0], BWContour[1] - BBoxI[0], 'r-')
 
-		pylab.subplot(2, 2, 3); pylab.plot(allLeftOffsets, arcLengthsLeft, '-', linewidth = 2); pylab.plot(curLeftOffset, arcLengthsLeft[curLeftOffsetIDX], 'm*'); pylab.title(str(curLeftOffset))
+		plt.subplot(2, 2, 3); plt.plot(allLeftOffsets, arcLengthsLeft, '-', linewidth = 2); plt.plot(curLeftOffset, arcLengthsLeft[curLeftOffsetIDX], 'm*'); plt.title(str(curLeftOffset))
 		
-		pylab.subplot(2, 2, 4); pylab.plot(allRightOffsets, arcLengthsRight, '-', linewidth = 2); pylab.plot(curRightOffset, arcLengthsRight[curRightOffsetIDX], 'm*'); pylab.title(str(curRightOffset))
+		plt.subplot(2, 2, 4); plt.plot(allRightOffsets, arcLengthsRight, '-', linewidth = 2); plt.plot(curRightOffset, arcLengthsRight[curRightOffsetIDX], 'm*'); plt.title(str(curRightOffset))
 #	CCSegUtils.plotContour(numpy.concatenate((numpy.atleast_2d(finalContours['xi']), numpy.atleast_2d(finalContours['yi'])), axis = 0), lineProps = lineProps, closed = False);
 #	lineProps = {'color': 'b', 'linewidth': 2}
 #	CCSegUtils.plotContour(numpy.concatenate((numpy.atleast_2d(finalContours['xo']), numpy.atleast_2d(finalContours['yo'])), axis = 0), lineProps = lineProps, closed = False);
-#	pylab.plot(BWContour[0, 0], BWContour[1, 0], 'g*', markersize = 10)
-#	pylab.plot(BWContour[0, rightStartIDX], BWContour[1, rightStartIDX], 'm*', markersize = 10)
-		pylab.gcf().set_size_inches((20, 15), forward = True)
+#	plt.plot(BWContour[0, 0], BWContour[1, 0], 'g*', markersize = 10)
+#	plt.plot(BWContour[0, rightStartIDX], BWContour[1, rightStartIDX], 'm*', markersize = 10)
+		plt.gcf().set_size_inches((20, 15), forward = True)
 		#ylab.show()
 		#quit()
-		pylab.savefig(outputPNG)
+		plt.savefig(outputPNG)
 #
 	#print finalContours
 	#quit()
@@ -1352,7 +1352,7 @@ def endpointsFind(BW, outputPNG = None):
 	#CCSegUtils.showIMG(BW)
 	#CCSegUtils.plotContour(BWContour)
 	
-	#pylab.gcf().set_size_inches((20, 10), forward = True)
-	#pylab.show()
+	#plt.gcf().set_size_inches((20, 10), forward = True)
+	#plt.show()
 	
 	# calculate extrema for each half

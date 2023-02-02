@@ -22,7 +22,7 @@ import scipy.ndimage
 
 import CCSegPipeSeg
 
-import pylab
+import matplotlib.pyplot as plt
 
 def usage():
 	print("Usage: " + sys.argv[0] + " [options] <output directory>")
@@ -148,17 +148,17 @@ class UIManagerExample:
 			watershedSeg, watershedMarkers, watershedTransform, edgeMAG = CCSegPipeSeg.watershedTransformSeg(self.CCSegs[self.curSubjectID]['IMG'], self.CCSegs[self.curSubjectID]['finalSegManEdit'])
 #			print numpy.count_nonzero(self.CCSegs[self.curSubjectID]['finalSegManEdit'])
 #			print numpy.mean(self.CCSegs[self.curSubjectID]['IMG'])
-#			pylab.clf()
-#			pylab.subplot(2, 2, 1)
+#			plt.clf()
+#			plt.subplot(2, 2, 1)
 #			CCSegUtils.showIMG(watershedMarkers)
-#			pylab.subplot(2, 2, 2)
+#			plt.subplot(2, 2, 2)
 #			CCSegUtils.showIMG(watershedTransform)
-#			pylab.subplot(2, 2, 3)
+#			plt.subplot(2, 2, 3)
 #			CCSegUtils.showIMG(edgeMAG)
-#			pylab.subplot(2, 2, 4)
+#			plt.subplot(2, 2, 4)
 #			CCSegUtils.showIMG(watershedSeg)
-#			pylab.gcf().set_size_inches((20, 10), forward = True)
-#			pylab.show()
+#			plt.gcf().set_size_inches((20, 10), forward = True)
+#			plt.show()
 			
 			self.CCSegs[self.curSubjectID]['finalSegManEdit'] = numpy.array(watershedSeg)
 			pass

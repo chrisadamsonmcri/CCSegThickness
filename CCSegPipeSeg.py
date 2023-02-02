@@ -9,7 +9,7 @@ import cv2
 import math
 import numpy
 import nibabel
-import pylab
+import matplotlib.pyplot as plt
 import h5py
 import shutil
 
@@ -63,16 +63,16 @@ def watershedTransformSeg(IMG, Seg, penaltyIMG = None):
 	watershedMarkers = scipy.ndimage.measurements.label(numpy.uint16(watershedMarkers), structure = numpy.ones([3, 3]))[0]
 #	
 #	print watershedMarkers[segEroded]
-#	pylab.clf()
-#	pylab.subplot(2, 2, 1)
+#	plt.clf()
+#	plt.subplot(2, 2, 1)
 #	CCSegUtils.showIMG(watershedMarkers)
-#	pylab.subplot(2, 2, 2)
+#	plt.subplot(2, 2, 2)
 #	CCSegUtils.showIMG(outerMarker)
-#	pylab.subplot(2, 2, 3)
+#	plt.subplot(2, 2, 3)
 #	CCSegUtils.showIMG(segEroded)
 #
-#	pylab.gcf().set_size_inches((20, 10), forward = True)
-#	pylab.show()
+#	plt.gcf().set_size_inches((20, 10), forward = True)
+#	plt.show()
 #
 	watershedSegLabels = numpy.unique(watershedMarkers[segEroded])
 	#print I
@@ -117,8 +117,8 @@ def bwFillHoles(BW):
 	marker = numpy.take(marker, numpy.arange(1, marker.shape[0] - 1), axis = 0)
 	marker = numpy.take(marker, numpy.arange(1, marker.shape[1] - 1), axis = 1)
 	
-	#pylab.subplot(1, 2, 1); CCSegUtils.showIMG(marker);
-	#pylab.subplot(1, 2, 2); CCSegUtils.showIMG(BW);
+	#plt.subplot(1, 2, 1); CCSegUtils.showIMG(marker);
+	#plt.subplot(1, 2, 2); CCSegUtils.showIMG(BW);
 
 	return numpy.logical_not(marker)
 	#return numpy.logical_or(BW, numpy.logical_not(marker))
@@ -192,9 +192,9 @@ def imMatchHist(inputIMG, targetIMG):
 	inputIMGBins = inputIMGBins[I]
 	inputIMGHistCDF = inputIMGHistCDF[I]
 	
-	#pylab.subplot(1, 2, 1)
-	#pylab.plot(inputIMGBins, inputIMGHistCDF, 'b-', targetIMGBins, targetIMGHistCDF, 'g-')
-	#pylab.show()
+	#plt.subplot(1, 2, 1)
+	#plt.plot(inputIMGBins, inputIMGHistCDF, 'b-', targetIMGBins, targetIMGHistCDF, 'g-')
+	#plt.show()
 
 	# find the point on the CDF of the input image of each of the input pixels
 	CDFOfInputIMG = numpy.interp(numpy.ravel(inputIMG), inputIMGBins, inputIMGHistCDF)
@@ -204,8 +204,8 @@ def imMatchHist(inputIMG, targetIMG):
 	matchedIMG = numpy.reshape(matchedIMG, inputIMG.shape)
 	return matchedIMG
 	
-	#pylab.plot(targetIMGBins[:-1] + numpy.diff(targetIMGBins) / 2, targetIMGHist)
-	#pylab.show()
+	#plt.plot(targetIMGBins[:-1] + numpy.diff(targetIMGBins) / 2, targetIMGHist)
+	#plt.show()
 
 	#print targetIMGHist.shape
 	#print targetIMGBins.shape
@@ -246,17 +246,17 @@ def imMatchHist(inputIMG, targetIMG):
 #	TemplateProbLKIMGCropped, FornixProbLKIMGCropped, ...
 #	OriginalOtsuMask, OtsuMask, ...
 #	TemplateOverlap, OtsuSEG] = do_lk_and_otsu(ResampledAVW, MatchedFilter, MatchedFilterProb, MatchedFilterFornixProb, ResampledGroundAVW, real_total_offset, DoLK)
-#pylab.show()
+#plt.show()
 
-	#pylab.imshow(RW, origin = 'lower')
+	#plt.imshow(RW, origin = 'lower')
 	#print numpy.array([ normXCorrCenterI, normXCorrCenterJ])
-	#pylab.imshow(resampledAVW, origin = 'lower')
-	#pylab.plot(normXCorrCenterJ, normXCorrCenterI, marker='o', markerfacecolor='blue', markersize=12)
-	#pylab.plot(I[1], I[0], marker='o', markerfacecolor='red', markersize=3, linestyle='none')
-	#pylab.plot([centreXCorrMaxJ, centreXCorrMaxJ + croppedTemplateAVW.shape[1]], [centreXCorrMaxI, centreXCorrMaxI])
-	#pylab.plot([centreXCorrMaxJ, centreXCorrMaxJ + croppedTemplateAVW.shape[1]], [centreXCorrMaxI + croppedTemplateAVW.shape[0], centreXCorrMaxI + croppedTemplateAVW.shape[0]])
-	#pylab.plot([centreXCorrMaxJ, centreXCorrMaxJ], [centreXCorrMaxI, centreXCorrMaxI + croppedTemplateAVW.shape[0]])
-	#pylab.plot([centreXCorrMaxJ + croppedTemplateAVW.shape[1], centreXCorrMaxJ + croppedTemplateAVW.shape[1]], [centreXCorrMaxI, centreXCorrMaxI + croppedTemplateAVW.shape[0]])
+	#plt.imshow(resampledAVW, origin = 'lower')
+	#plt.plot(normXCorrCenterJ, normXCorrCenterI, marker='o', markerfacecolor='blue', markersize=12)
+	#plt.plot(I[1], I[0], marker='o', markerfacecolor='red', markersize=3, linestyle='none')
+	#plt.plot([centreXCorrMaxJ, centreXCorrMaxJ + croppedTemplateAVW.shape[1]], [centreXCorrMaxI, centreXCorrMaxI])
+	#plt.plot([centreXCorrMaxJ, centreXCorrMaxJ + croppedTemplateAVW.shape[1]], [centreXCorrMaxI + croppedTemplateAVW.shape[0], centreXCorrMaxI + croppedTemplateAVW.shape[0]])
+	#plt.plot([centreXCorrMaxJ, centreXCorrMaxJ], [centreXCorrMaxI, centreXCorrMaxI + croppedTemplateAVW.shape[0]])
+	#plt.plot([centreXCorrMaxJ + croppedTemplateAVW.shape[1], centreXCorrMaxJ + croppedTemplateAVW.shape[1]], [centreXCorrMaxI, centreXCorrMaxI + croppedTemplateAVW.shape[0]])
 
 def segCCLKandOtsu(IMG, templateIMG, templateCCProbIMG, templateFornixProbIMG, groundIMG, initialTranslation, DoLK = True, targetIMGMask = None):
 	#print "Initial translation: " + str(initialTranslation)
@@ -275,9 +275,9 @@ def segCCLKandOtsu(IMG, templateIMG, templateCCProbIMG, templateFornixProbIMG, g
 	#croppedIMGHist, croppedIMGBins = numpy.histogram(numpy.ravel(croppedIMG), bins = 100, density = True)
 	#croppedIMGBins = croppedIMGBins[:-1] + numpy.diff(croppedIMGBins)
 	
-	#pylab.plot(croppedIMGBins, croppedIMGHist)
-	#pylab.plot(remappedTemplateIMGBins, remappedTemplateIMGHist)
-	#pylab.show()
+	#plt.plot(croppedIMGBins, croppedIMGHist)
+	#plt.plot(remappedTemplateIMGBins, remappedTemplateIMGHist)
+	#plt.show()
 
 	if DoLK == True:
 		numLKIterations = 100
@@ -291,22 +291,22 @@ def segCCLKandOtsu(IMG, templateIMG, templateCCProbIMG, templateFornixProbIMG, g
 	# find the coordinates of the template after the warp onto the target image
 
 	TX, TY, interpX, interpY = LKTracker.coordsOfAffineWarpedTemplate(LKParameters, IMG, templateIMG)
-	#pylab.subplot(2, 2, 1);	CCSegUtils.showIMG(TX);
-	#pylab.subplot(2, 2, 2);	CCSegUtils.showIMG(TY);
-	#pylab.subplot(2, 2, 3);	CCSegUtils.showIMG(InterpX);
-	#pylab.subplot(2, 2, 4);	CCSegUtils.showIMG(InterpY);
-	#pylab.show()
+	#plt.subplot(2, 2, 1);	CCSegUtils.showIMG(TX);
+	#plt.subplot(2, 2, 2);	CCSegUtils.showIMG(TY);
+	#plt.subplot(2, 2, 3);	CCSegUtils.showIMG(InterpX);
+	#plt.subplot(2, 2, 4);	CCSegUtils.showIMG(InterpY);
+	#plt.show()
 	#quit()
 
 	# resample the template in the image space
 	templateLKIMG = CCSegUtils.interp2q(numpy.arange(1, templateIMG.shape[1] + 1), numpy.arange(1, templateIMG.shape[0] + 1), templateIMG, interpX, interpY, extrapval = numpy.nan)
 	templateCCProbLKIMG = CCSegUtils.interp2q(numpy.arange(1, templateIMG.shape[1] + 1), numpy.arange(1, templateIMG.shape[0] + 1), templateCCProbIMG, interpX, interpY, extrapval = 0)
 	templateFornixProbLKIMG = CCSegUtils.interp2q(numpy.arange(1, templateIMG.shape[1] + 1), numpy.arange(1, templateIMG.shape[0] + 1), templateFornixProbIMG, interpX, interpY, extrapval = 0)
-	#pylab.subplot(2, 2, 1); CCSegUtils.showIMG(templateLKIMG);
-	#pylab.subplot(2, 2, 2); CCSegUtils.showIMG(templateCCProbLKIMG);
-	#pylab.subplot(2, 2, 3); CCSegUtils.showIMG(templateFornixProbLKIMG);
-	#pylab.subplot(2, 2, 4); CCSegUtils.showIMG(numpy.isnan(templateLKIMG));
-	#pylab.show()
+	#plt.subplot(2, 2, 1); CCSegUtils.showIMG(templateLKIMG);
+	#plt.subplot(2, 2, 2); CCSegUtils.showIMG(templateCCProbLKIMG);
+	#plt.subplot(2, 2, 3); CCSegUtils.showIMG(templateFornixProbLKIMG);
+	#plt.subplot(2, 2, 4); CCSegUtils.showIMG(numpy.isnan(templateLKIMG));
+	#plt.show()
 	#quit()
 	
 	# find the valid bounding box of the template in the image space
@@ -337,10 +337,10 @@ def segCCLKandOtsu(IMG, templateIMG, templateCCProbIMG, templateFornixProbIMG, g
 	otsuSegWM = (otsuSeg == 3)
 	origOtsuSegWM = numpy.array(otsuSegWM)
 	
-	#pylab.subplot(1, 2, 1); CCSegUtils.showIMG(origOtsuSegWM);
-	#pylab.subplot(1, 2, 2); CCSegUtils.showIMG(croppedIMG);
+	#plt.subplot(1, 2, 1); CCSegUtils.showIMG(origOtsuSegWM);
+	#plt.subplot(1, 2, 2); CCSegUtils.showIMG(croppedIMG);
 	
-	#pylab.show()
+	#plt.show()
 	#quit()
 	
 	del otsuSeg
@@ -356,9 +356,9 @@ def segCCLKandOtsu(IMG, templateIMG, templateCCProbIMG, templateFornixProbIMG, g
 	otsuSegWMRegionProps = CCSegUtils.regionProps(otsuSegWMLabels, ['Area', 'Mask'])
 	
 
-	#pylab.subplot(1, 2, 1); CCSegUtils.showIMG(otsuSegWMLabels);
+	#plt.subplot(1, 2, 1); CCSegUtils.showIMG(otsuSegWMLabels);
 	
-	#pylab.show()
+	#plt.show()
 	#quit()
 	
 
@@ -382,15 +382,15 @@ def segCCLKandOtsu(IMG, templateIMG, templateCCProbIMG, templateFornixProbIMG, g
 #			#print otsuSegWMRegionProps['area']
 #			SR = 1
 #			SC = 3
-#			pylab.subplot(SR, SC, 1)
+#			plt.subplot(SR, SC, 1)
 #			CCSegUtils.showIMG(otsuSegWMRegionProps['mask'][z])
-#			pylab.subplot(SR, SC, 2)
+#			plt.subplot(SR, SC, 2)
 #			CCSegUtils.showIMG(templateFornixMask)
-#			pylab.subplot(SR, SC, 3)
+#			plt.subplot(SR, SC, 3)
 #			CCSegUtils.showIMG(croppedTemplateCCProbLKIMG)
 #
-#			pylab.gcf().set_size_inches((20, 10), forward = True)
-#			pylab.show()
+#			plt.gcf().set_size_inches((20, 10), forward = True)
+#			plt.show()
 #			quit()
 #
 		if numpy.any(M):
@@ -423,26 +423,26 @@ def segCCLKandOtsu(IMG, templateIMG, templateCCProbIMG, templateFornixProbIMG, g
 
 #			SR = 2
 #			SC = 2
-#			pylab.subplot(SR, SC, 1)
+#			plt.subplot(SR, SC, 1)
 #			CCSegUtils.showIMG(otsuSegWMLabels == largeTemplateOverlapIDX[J] + 1)
 #			
-#			pylab.subplot(SR, SC, 2)
+#			plt.subplot(SR, SC, 2)
 #			CCSegUtils.showIMG(croppedTemplateCCProbLKIMG)
 #			
 #			for z in range(numpy.size(largeTemplateOverlapIDX)):
 #				otsuSegCC = numpy.logical_or(otsuSegCC, otsuSegWMLabels == largeTemplateOverlapIDX[z] + 1)
 #			
-#			pylab.subplot(SR, SC, 3)
+#			plt.subplot(SR, SC, 3)
 #			CCSegUtils.showIMG(otsuSegCC)
 #			
-#			pylab.subplot(SR, SC, 4)
+#			plt.subplot(SR, SC, 4)
 #			
 #			I = numpy.argmax(otsuSegWMRegionProps['area'])
 #
 #			CCSegUtils.showIMG(otsuSegWMLabels == I + 1)
 #
-			#pylab.gcf().set_size_inches((20, 10), forward = True)
-			#pylab.show()
+			#plt.gcf().set_size_inches((20, 10), forward = True)
+			#plt.show()
 			#quit()
 		else:
 			#print I
@@ -453,12 +453,12 @@ def segCCLKandOtsu(IMG, templateIMG, templateCCProbIMG, templateFornixProbIMG, g
 
 	return (TX, TY, interpX, interpY, croppedIMG, croppedTemplateLKIMG, croppedTemplateCCProbLKIMG,	croppedTemplateFornixProbLKIMG, croppedGroundIMG, otsuSegCC, cropRows, cropCols, LKCost)
 
-	#pylab.subplot(2, 2, 1); CCSegUtils.showIMG(croppedTemplateLKIMG);
-	#pylab.subplot(2, 2, 2); CCSegUtils.showIMG(croppedTemplateCCProbLKIMG);
-	#pylab.subplot(2, 2, 3); CCSegUtils.showIMG(croppedTemplateFornixProbLKIMG);
-	#pylab.subplot(2, 2, 4); CCSegUtils.showIMG(otsuSegCC);
+	#plt.subplot(2, 2, 1); CCSegUtils.showIMG(croppedTemplateLKIMG);
+	#plt.subplot(2, 2, 2); CCSegUtils.showIMG(croppedTemplateCCProbLKIMG);
+	#plt.subplot(2, 2, 3); CCSegUtils.showIMG(croppedTemplateFornixProbLKIMG);
+	#plt.subplot(2, 2, 4); CCSegUtils.showIMG(otsuSegCC);
 	
-	#pylab.show()
+	#plt.show()
 	#quit()
 	
 #	I = find(TemplateOverlap > 0.01);
@@ -513,8 +513,8 @@ def nearestAnglesDistances(templateSegMask, estSegMask):
 	#print smoothedTemplateSegContour.shape
 
 	#CCSegUtils.showIMG(templateSegMask); CCSegUtils.plotContour(smoothedTemplateSegContour);
-	#pylab.gcf().set_size_inches((20, 10), forward = True)
-	#pylab.show()
+	#plt.gcf().set_size_inches((20, 10), forward = True)
+	#plt.show()
 	#quit()
 	estSegContoursFirst, hierarchy = CCSegUtils.findContours(numpy.uint8(estSegMask), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 	del hierarchy
@@ -537,8 +537,8 @@ def nearestAnglesDistances(templateSegMask, estSegMask):
 			tangentEstSegContours.append(scipy.ndimage.filters.convolve(numpy.double(smoothedEstSegContours[-1]), tangentFilter, mode = 'wrap'))
 		#print smoothedEstSegContours[z].shape
 		#CCSegUtils.plotContour(smoothedEstSegContours[z])
-	#pylab.gcf().set_size_inches((20, 10), forward = True)
-	#pylab.show()
+	#plt.gcf().set_size_inches((20, 10), forward = True)
+	#plt.show()
 	#quit()
 	
 	allSmoothedEstSegContours = numpy.concatenate(smoothedEstSegContours, axis = 1)
@@ -556,9 +556,9 @@ def nearestAnglesDistances(templateSegMask, estSegMask):
 
 		#CCSegUtils.showIMG(estSegMask)
 		#CCSegUtils.plotContour(allSmoothedEstSegContours)
-		#pylab.plot(allSmoothedEstSegContours[0, IDXToDelete], allSmoothedEstSegContours[1, IDXToDelete], 'g*')
-		#pylab.gcf().set_size_inches((20, 10), forward = True)
-		#pylab.show()
+		#plt.plot(allSmoothedEstSegContours[0, IDXToDelete], allSmoothedEstSegContours[1, IDXToDelete], 'g*')
+		#plt.gcf().set_size_inches((20, 10), forward = True)
+		#plt.show()
 		#quit()
 
 		allSmoothedEstSegContours = numpy.delete(allSmoothedEstSegContours, I, axis = 1)
@@ -599,8 +599,8 @@ def nearestAnglesDistances(templateSegMask, estSegMask):
 	#dotProduct = numpy.maximum(dotProduct, -1)
 	
 	#CCSegUtils.showIMG(D)
-	#pylab.gcf().set_size_inches((20, 10), forward = True)
-	#pylab.show()
+	#plt.gcf().set_size_inches((20, 10), forward = True)
+	#plt.show()
 	#allSegMasks = numpy.zeros(estSegMask.shape)
 
 	#allSegMasks[numpy.where(numpy.logical_and(numpy.logical_not(templateSegMask), estSegMask))] = 1
@@ -655,11 +655,11 @@ def bwJoinMSTBoundaries(BW):
 				del I
 				del D
 			#	CCSegUtils.showIMG(BW)
-			#	pylab.plot(numpy.take(contours[contourI], [0], axis = 1), numpy.take(contours[contourI], [1], axis = 1), 'r')
-			#	pylab.plot(numpy.take(contours[contourJ], [0], axis = 1), numpy.take(contours[contourJ], [1], axis = 1), 'b')
-			#	pylab.plot(contours[contourI][H[1], 0], contours[contourI][H[1], 1], 'm*') 
-			#	pylab.plot(contours[contourJ][H[0], 0], contours[contourJ][H[0], 1], 'm*') 
-			#	pylab.show()
+			#	plt.plot(numpy.take(contours[contourI], [0], axis = 1), numpy.take(contours[contourI], [1], axis = 1), 'r')
+			#	plt.plot(numpy.take(contours[contourJ], [0], axis = 1), numpy.take(contours[contourJ], [1], axis = 1), 'b')
+			#	plt.plot(contours[contourI][H[1], 0], contours[contourI][H[1], 1], 'm*') 
+			#	plt.plot(contours[contourJ][H[0], 0], contours[contourJ][H[0], 1], 'm*') 
+			#	plt.show()
 
 
 				#print D[H[1], H[0]]
@@ -675,11 +675,11 @@ def bwJoinMSTBoundaries(BW):
 		#contourI = 0
 		#contourJ = 1
 
-		#pylab.plot(numpy.take(contours[contourI], [0], axis = 1), numpy.take(contours[contourI], [1], axis = 1), 'r')
-		#pylab.plot(numpy.take(contours[contourJ], [0], axis = 1), numpy.take(contours[contourJ], [1], axis = 1), 'b')
+		#plt.plot(numpy.take(contours[contourI], [0], axis = 1), numpy.take(contours[contourI], [1], axis = 1), 'r')
+		#plt.plot(numpy.take(contours[contourJ], [0], axis = 1), numpy.take(contours[contourJ], [1], axis = 1), 'b')
 
-	#	pylab.plot(AX, AY, 'm-')
-	#	pylab.show()
+	#	plt.plot(AX, AY, 'm-')
+	#	plt.show()
 		
 		if len(contours) == 2:
 			edges = numpy.atleast_2d(numpy.array([0, 1], dtype=numpy.uint32))
@@ -743,7 +743,7 @@ def bwJoinMSTBoundaries(BW):
 #			JoiningSegments = imdilate(T, double(F > HalfMaximum));
 #
 		#CCSegUtils.showIMG(joiningSegments)
-		#pylab.show()
+		#plt.show()
 		return joiningSegments		
 
 		#quit()
@@ -842,8 +842,8 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 	
 	#bwFillHoles(A)
 	#CCSegUtils.showIMG(A);
-	#pylab.gcf().set_size_inches((20, 10), forward = True)
-	#pylab.show()
+	#plt.gcf().set_size_inches((20, 10), forward = True)
+	#plt.show()
 	#quit()
 	# testing interp2
 
@@ -921,7 +921,7 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 	#rint "NIIPixdims = " + str(NIIPixdims)
 	#CCSegUtils.showIMG(midSagAVW)
 
-	#pylab.show()
+	#plt.show()
 	#quit()
 	
 	if not groundTruthFile == None:
@@ -1101,10 +1101,10 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 	resampledAVWColBoundingBox = [numpy.min(resampledAVWNonZeroI[1]), numpy.max(resampledAVWNonZeroI[1])]
 	#print resampledAVWRowBoundingBox
 	#print resampledAVWColBoundingBox
-	#pylab.clf()
-	#pylab.imshow(resampledAVW)
-	#pylab.plot(numpy.mean(resampledAVWColBoundingBox), numpy.mean(resampledAVWRowBoundingBox), 'r*')
-	#pylab.show()
+	#plt.clf()
+	#plt.imshow(resampledAVW)
+	#plt.plot(numpy.mean(resampledAVWColBoundingBox), numpy.mean(resampledAVWRowBoundingBox), 'r*')
+	#plt.show()
 	#print NIIPixdims
 	#quit()
 
@@ -1126,15 +1126,15 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 	LKInitialOffsets = numpy.take(LKInitialOffsets, I, axis = 0)
 	#print str(LKInitialOffsets.shape[0]) + " offsets to compute"
 	if doGraphics:
-		pylab.clf()
+		plt.clf()
 		CCSegUtils.showIMG(resampledAVW)
 		allCentresMeshGrid = numpy.meshgrid(centresJ, centresI)
 		#print allCentresMeshGrid
-		pylab.plot(allCentresMeshGrid[0], allCentresMeshGrid[1], 'b*')
-		pylab.plot(expectedCentreX, expectedCentreY, 'r*')
-		pylab.gcf().set_size_inches((20, 10), forward = True)
+		plt.plot(allCentresMeshGrid[0], allCentresMeshGrid[1], 'b*')
+		plt.plot(expectedCentreX, expectedCentreY, 'r*')
+		plt.gcf().set_size_inches((20, 10), forward = True)
 		outputPNG = os.path.join(PNGDirectory, subjectID + "_lkinitgrid.png")
-		pylab.savefig(outputPNG)
+		plt.savefig(outputPNG)
 		CCSegUtils.cropAutoWhitePNG(outputPNG)
 
 #	else:
@@ -1168,20 +1168,20 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 #				SR = 1
 #				SC = 3
 #				
-#				pylab.subplot(SR, SC, 1)
+#				plt.subplot(SR, SC, 1)
 #				CCSegUtils.showIMG(WMSegSmoothed)
-#				pylab.subplot(SR, SC, 2)
+#				plt.subplot(SR, SC, 2)
 #				CCSegUtils.showIMG(numpy.single(croppedCCProbAVW))
-#				pylab.subplot(SR, SC, 3)
+#				plt.subplot(SR, SC, 3)
 #				CCSegUtils.showIMG(normXCorrAVW)
 #				
-#				pylab.gcf().set_size_inches((20, 10), forward = True)
+#				plt.gcf().set_size_inches((20, 10), forward = True)
 #				outputPNG = os.path.join(PNGDirectory, subjectID + "_xcorr.png")
-#				pylab.savefig(outputPNG)
+#				plt.savefig(outputPNG)
 #				CCSegUtils.cropAutoWhitePNG(outputPNG)
 #
-#			#pylab.plot(F)
-#			#pylab.show()
+#			#plt.plot(F)
+#			#plt.show()
 #			del WMSegSmoothed;
 #			
 #			# make coordinate matrices for normXCorrAVW so that the origin is the pixel that centres the filter over the image
@@ -1234,8 +1234,8 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 #			#print LKInitialOffsets
 #
 #			#CCSegUtils.showIMG(normXCorrAVW)
-#			#pylab.plot(LKInitialOffsets[:, 0], LKInitialOffsets[:, 1], 'b*')
-#			#pylab.show()
+#			#plt.plot(LKInitialOffsets[:, 0], LKInitialOffsets[:, 1], 'b*')
+#			#plt.show()
 #			del minI;
 		
 	segCCLKandOtsuOutput = dict()
@@ -1287,7 +1287,7 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 		LKCCSeg.append(None)
 	#targetIMGMask = scipy.ndimage.morphology.binary_dilation(resampledAVWBrainMask, structure = radialStrel(9))
 	#CCSegUtils.showIMG(resampledAVWPadded)
-	#pylab.show()
+	#plt.show()
 	#quit()
 	parallelVersion = False
 	if parallelVersion == True:
@@ -1375,8 +1375,8 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 	TCoordHistTopR = scipy.ndimage.filters.gaussian_filter(numpy.double(TCoordHistTopR), 1.0)
 	TCoordHistBotL = scipy.ndimage.filters.gaussian_filter(numpy.double(TCoordHistBotL), 1.0)
 	TCoordHistBotR = scipy.ndimage.filters.gaussian_filter(numpy.double(TCoordHistBotR), 1.0)
-	#pylab.imshow(TCoordHistTopL)
-	#pylab.show()
+	#plt.imshow(TCoordHistTopL)
+	#plt.show()
 	#quit()
 	# find the most common location
 	TCoordHistTopLMax = numpy.argmax(TCoordHistTopL)
@@ -1511,40 +1511,40 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 			SC = 1
 
 #			LKInitialOffsetCentres = (LKInitialOffsets[:, 1] + croppedTemplateAVW.shape[0] / 2, LKInitialOffsets[:, 0] + croppedTemplateAVW.shape[1] / 2)
-#			pylab.clf()
+#			plt.clf()
 #			K = LKSegFits.keys()
 #			for z in range(len(K)):
 #				T = numpy.zeros_like(resampledAVW)
 #				T[LKInitialOffsetCentres] = LKSegFits[K[z]]
-#				pylab.subplot(SR, SC, z + 1)
+#				plt.subplot(SR, SC, z + 1)
 #				CCSegUtils.imshow(T)
-#				pylab.title(K[z])
-#			pylab.subplot(SR, SC, 9)
+#				plt.title(K[z])
+#			plt.subplot(SR, SC, 9)
 #			for z in range(LKInitialOffsets.shape[0]):
-			pylab.clf()
-			pylab.subplot(2, 1, 1)
+			plt.clf()
+			plt.subplot(2, 1, 1)
 			InitialColor = 'g'
 			LKColor = 'r'
 
 			CCSegUtils.showIMG(resampledAVW)
 			
-			pylab.plot([segCCLKandOtsuOutput['TX'][bestLKIDX][0, 0], segCCLKandOtsuOutput['TX'][bestLKIDX][-1, 0]], [segCCLKandOtsuOutput['TY'][bestLKIDX][0, 0], segCCLKandOtsuOutput['TY'][bestLKIDX][-1, 0]], color = LKColor)
-			pylab.plot([segCCLKandOtsuOutput['TX'][bestLKIDX][0, -1], segCCLKandOtsuOutput['TX'][bestLKIDX][-1, -1]], [segCCLKandOtsuOutput['TY'][bestLKIDX][0, -1], segCCLKandOtsuOutput['TY'][bestLKIDX][-1, -1]], color = LKColor)
-			pylab.plot([segCCLKandOtsuOutput['TX'][bestLKIDX][0, 0], segCCLKandOtsuOutput['TX'][bestLKIDX][0, -1]], [segCCLKandOtsuOutput['TY'][bestLKIDX][0, 0], segCCLKandOtsuOutput['TY'][bestLKIDX][0, -1]], color = LKColor)
-			pylab.plot([segCCLKandOtsuOutput['TX'][bestLKIDX][-1, 0], segCCLKandOtsuOutput['TX'][bestLKIDX][-1, -1]], [segCCLKandOtsuOutput['TY'][bestLKIDX][-1, 0], segCCLKandOtsuOutput['TY'][bestLKIDX][-1, -1]], color = LKColor)
+			plt.plot([segCCLKandOtsuOutput['TX'][bestLKIDX][0, 0], segCCLKandOtsuOutput['TX'][bestLKIDX][-1, 0]], [segCCLKandOtsuOutput['TY'][bestLKIDX][0, 0], segCCLKandOtsuOutput['TY'][bestLKIDX][-1, 0]], color = LKColor)
+			plt.plot([segCCLKandOtsuOutput['TX'][bestLKIDX][0, -1], segCCLKandOtsuOutput['TX'][bestLKIDX][-1, -1]], [segCCLKandOtsuOutput['TY'][bestLKIDX][0, -1], segCCLKandOtsuOutput['TY'][bestLKIDX][-1, -1]], color = LKColor)
+			plt.plot([segCCLKandOtsuOutput['TX'][bestLKIDX][0, 0], segCCLKandOtsuOutput['TX'][bestLKIDX][0, -1]], [segCCLKandOtsuOutput['TY'][bestLKIDX][0, 0], segCCLKandOtsuOutput['TY'][bestLKIDX][0, -1]], color = LKColor)
+			plt.plot([segCCLKandOtsuOutput['TX'][bestLKIDX][-1, 0], segCCLKandOtsuOutput['TX'][bestLKIDX][-1, -1]], [segCCLKandOtsuOutput['TY'][bestLKIDX][-1, 0], segCCLKandOtsuOutput['TY'][bestLKIDX][-1, -1]], color = LKColor)
 			
-			pylab.plot([LKInitialOffsets[bestLKIDX, 0], LKInitialOffsets[bestLKIDX, 0] + croppedTemplateAVW.shape[1]], [LKInitialOffsets[bestLKIDX, 1], LKInitialOffsets[bestLKIDX, 1]], color = InitialColor)
-			pylab.plot([LKInitialOffsets[bestLKIDX, 0], LKInitialOffsets[bestLKIDX, 0] + croppedTemplateAVW.shape[1]], [LKInitialOffsets[bestLKIDX, 1] + croppedTemplateAVW.shape[0], LKInitialOffsets[bestLKIDX, 1] + croppedTemplateAVW.shape[0]], color = InitialColor)
-			pylab.plot([LKInitialOffsets[bestLKIDX, 0], LKInitialOffsets[bestLKIDX, 0]], [LKInitialOffsets[bestLKIDX, 1], LKInitialOffsets[bestLKIDX, 1] + croppedTemplateAVW.shape[0]], color = InitialColor)
-			pylab.plot([LKInitialOffsets[bestLKIDX, 0] + croppedTemplateAVW.shape[1], LKInitialOffsets[bestLKIDX, 0] + croppedTemplateAVW.shape[1]], [LKInitialOffsets[bestLKIDX, 1], LKInitialOffsets[bestLKIDX, 1] + croppedTemplateAVW.shape[0]], color = InitialColor)
-			pylab.plot(resampledAVW.shape[1] / 2, resampledAVW.shape[0] / 2, 'b*')
-			pylab.subplot(2, 1, 2)
+			plt.plot([LKInitialOffsets[bestLKIDX, 0], LKInitialOffsets[bestLKIDX, 0] + croppedTemplateAVW.shape[1]], [LKInitialOffsets[bestLKIDX, 1], LKInitialOffsets[bestLKIDX, 1]], color = InitialColor)
+			plt.plot([LKInitialOffsets[bestLKIDX, 0], LKInitialOffsets[bestLKIDX, 0] + croppedTemplateAVW.shape[1]], [LKInitialOffsets[bestLKIDX, 1] + croppedTemplateAVW.shape[0], LKInitialOffsets[bestLKIDX, 1] + croppedTemplateAVW.shape[0]], color = InitialColor)
+			plt.plot([LKInitialOffsets[bestLKIDX, 0], LKInitialOffsets[bestLKIDX, 0]], [LKInitialOffsets[bestLKIDX, 1], LKInitialOffsets[bestLKIDX, 1] + croppedTemplateAVW.shape[0]], color = InitialColor)
+			plt.plot([LKInitialOffsets[bestLKIDX, 0] + croppedTemplateAVW.shape[1], LKInitialOffsets[bestLKIDX, 0] + croppedTemplateAVW.shape[1]], [LKInitialOffsets[bestLKIDX, 1], LKInitialOffsets[bestLKIDX, 1] + croppedTemplateAVW.shape[0]], color = InitialColor)
+			plt.plot(resampledAVW.shape[1] / 2, resampledAVW.shape[0] / 2, 'b*')
+			plt.subplot(2, 1, 2)
 			CCSegUtils.showIMG(LKCCSeg[bestLKIDX])
 
-			pylab.gcf().set_size_inches((10, 5), forward = True)
+			plt.gcf().set_size_inches((10, 5), forward = True)
 
 			outputPNG = os.path.join(PNGDirectory, subjectID + "_lkbest_" + str(LKInitialOffsets[bestLKIDX, 0]).zfill(3) + "_" + str(LKInitialOffsets[bestLKIDX, 1]).zfill(3) + ".png")
-			pylab.savefig(outputPNG)
+			plt.savefig(outputPNG)
 			CCSegUtils.cropAutoWhitePNG(outputPNG)
 
 			LKPNGDir = os.path.join(PNGDirectory, subjectID + "_lkinit")
@@ -1561,8 +1561,8 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 				FID.write(",valid,score");
 				FID.write("\n")
 				for z in range(LKInitialOffsets.shape[0]):
-					pylab.clf()
-					pylab.subplot(SR, SC, 1)
+					plt.clf()
+					plt.subplot(SR, SC, 1)
 					InitialColor = 'g'
 					LKColor = 'r'
 					if z == bestLKIDX:
@@ -1571,21 +1571,21 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 						LKColor = 'm'
 					CCSegUtils.showIMG(resampledAVW)
 					
-					pylab.plot([segCCLKandOtsuOutput['TX'][z][0, 0], segCCLKandOtsuOutput['TX'][z][-1, 0]], [segCCLKandOtsuOutput['TY'][z][0, 0], segCCLKandOtsuOutput['TY'][z][-1, 0]], color = LKColor)
-					pylab.plot([segCCLKandOtsuOutput['TX'][z][0, -1], segCCLKandOtsuOutput['TX'][z][-1, -1]], [segCCLKandOtsuOutput['TY'][z][0, -1], segCCLKandOtsuOutput['TY'][z][-1, -1]], color = LKColor)
-					pylab.plot([segCCLKandOtsuOutput['TX'][z][0, 0], segCCLKandOtsuOutput['TX'][z][0, -1]], [segCCLKandOtsuOutput['TY'][z][0, 0], segCCLKandOtsuOutput['TY'][z][0, -1]], color = LKColor)
-					pylab.plot([segCCLKandOtsuOutput['TX'][z][-1, 0], segCCLKandOtsuOutput['TX'][z][-1, -1]], [segCCLKandOtsuOutput['TY'][z][-1, 0], segCCLKandOtsuOutput['TY'][z][-1, -1]], color = LKColor)
+					plt.plot([segCCLKandOtsuOutput['TX'][z][0, 0], segCCLKandOtsuOutput['TX'][z][-1, 0]], [segCCLKandOtsuOutput['TY'][z][0, 0], segCCLKandOtsuOutput['TY'][z][-1, 0]], color = LKColor)
+					plt.plot([segCCLKandOtsuOutput['TX'][z][0, -1], segCCLKandOtsuOutput['TX'][z][-1, -1]], [segCCLKandOtsuOutput['TY'][z][0, -1], segCCLKandOtsuOutput['TY'][z][-1, -1]], color = LKColor)
+					plt.plot([segCCLKandOtsuOutput['TX'][z][0, 0], segCCLKandOtsuOutput['TX'][z][0, -1]], [segCCLKandOtsuOutput['TY'][z][0, 0], segCCLKandOtsuOutput['TY'][z][0, -1]], color = LKColor)
+					plt.plot([segCCLKandOtsuOutput['TX'][z][-1, 0], segCCLKandOtsuOutput['TX'][z][-1, -1]], [segCCLKandOtsuOutput['TY'][z][-1, 0], segCCLKandOtsuOutput['TY'][z][-1, -1]], color = LKColor)
 					
-					pylab.plot([LKInitialOffsets[z, 0], LKInitialOffsets[z, 0] + croppedTemplateAVW.shape[1]], [LKInitialOffsets[z, 1], LKInitialOffsets[z, 1]], color = InitialColor)
-					pylab.plot([LKInitialOffsets[z, 0], LKInitialOffsets[z, 0] + croppedTemplateAVW.shape[1]], [LKInitialOffsets[z, 1] + croppedTemplateAVW.shape[0], LKInitialOffsets[z, 1] + croppedTemplateAVW.shape[0]], color = InitialColor)
-					pylab.plot([LKInitialOffsets[z, 0], LKInitialOffsets[z, 0]], [LKInitialOffsets[z, 1], LKInitialOffsets[z, 1] + croppedTemplateAVW.shape[0]], color = InitialColor)
-					pylab.plot([LKInitialOffsets[z, 0] + croppedTemplateAVW.shape[1], LKInitialOffsets[z, 0] + croppedTemplateAVW.shape[1]], [LKInitialOffsets[z, 1], LKInitialOffsets[z, 1] + croppedTemplateAVW.shape[0]], color = InitialColor)
-					pylab.plot(resampledAVW.shape[1] / 2, resampledAVW.shape[0] / 2, 'b*')
-					pylab.subplot(SR, SC, 2)
+					plt.plot([LKInitialOffsets[z, 0], LKInitialOffsets[z, 0] + croppedTemplateAVW.shape[1]], [LKInitialOffsets[z, 1], LKInitialOffsets[z, 1]], color = InitialColor)
+					plt.plot([LKInitialOffsets[z, 0], LKInitialOffsets[z, 0] + croppedTemplateAVW.shape[1]], [LKInitialOffsets[z, 1] + croppedTemplateAVW.shape[0], LKInitialOffsets[z, 1] + croppedTemplateAVW.shape[0]], color = InitialColor)
+					plt.plot([LKInitialOffsets[z, 0], LKInitialOffsets[z, 0]], [LKInitialOffsets[z, 1], LKInitialOffsets[z, 1] + croppedTemplateAVW.shape[0]], color = InitialColor)
+					plt.plot([LKInitialOffsets[z, 0] + croppedTemplateAVW.shape[1], LKInitialOffsets[z, 0] + croppedTemplateAVW.shape[1]], [LKInitialOffsets[z, 1], LKInitialOffsets[z, 1] + croppedTemplateAVW.shape[0]], color = InitialColor)
+					plt.plot(resampledAVW.shape[1] / 2, resampledAVW.shape[0] / 2, 'b*')
+					plt.subplot(SR, SC, 2)
 					CCSegUtils.showIMG(LKCCSeg[z])
-					pylab.subplot(SR, SC, 3)
+					plt.subplot(SR, SC, 3)
 					CCSegUtils.showIMG(segCCLKandOtsuOutput['croppedTemplateCCProbLKIMG'][z])
-					#pylab.subplot(SR, SC, 4)
+					#plt.subplot(SR, SC, 4)
 					#CCSegUtils.showIMG(LKEdgeSegIMG[z])
 					
 					FID.write(str(LKInitialOffsets[z, 0]).zfill(3) + "_" + str(LKInitialOffsets[z, 1]).zfill(3))
@@ -1598,10 +1598,10 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 						FID.write(',0')
 					#FID.write(",%d" % LKSegFitsScores[z])
 					FID.write("\n")
-					pylab.gcf().set_size_inches((10, 5), forward = True)
+					plt.gcf().set_size_inches((10, 5), forward = True)
 
 					outputPNG = os.path.join(LKPNGDir, subjectID + "_" + str(LKInitialOffsets[z, 0]).zfill(3) + "_" + str(LKInitialOffsets[z, 1]).zfill(3) + ".png")
-					pylab.savefig(outputPNG)
+					plt.savefig(outputPNG)
 					CCSegUtils.cropAutoWhitePNG(outputPNG)
 				FID.close()
 		else:
@@ -1612,7 +1612,7 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 			AX = CCSegUtils.empty2DList((SR, SC))
 			#print LKInitialOffsets.shape[0]
 			for z in range(LKInitialOffsets.shape[0]):
-				AX[0][z] = pylab.subplot(SR, SC, z + 1)
+				AX[0][z] = plt.subplot(SR, SC, z + 1)
 				#CCSegUtils.showIMG(segCCLKandOtsuOutput['croppedIMG'][z])
 				CCSegUtils.showIMG(resampledAVW)
 				#CCSegUtils.showIMG(resampledAVWBrainMask)
@@ -1620,17 +1620,17 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 				InitialColor = 'g'
 				LKColor = 'r'
 					
-				pylab.plot([segCCLKandOtsuOutput['TX'][z][0, 0], segCCLKandOtsuOutput['TX'][z][-1, 0]], [segCCLKandOtsuOutput['TY'][z][0, 0], segCCLKandOtsuOutput['TY'][z][-1, 0]], color = LKColor)
-				pylab.plot([segCCLKandOtsuOutput['TX'][z][0, -1], segCCLKandOtsuOutput['TX'][z][-1, -1]], [segCCLKandOtsuOutput['TY'][z][0, -1], segCCLKandOtsuOutput['TY'][z][-1, -1]], color = LKColor)
-				pylab.plot([segCCLKandOtsuOutput['TX'][z][0, 0], segCCLKandOtsuOutput['TX'][z][0, -1]], [segCCLKandOtsuOutput['TY'][z][0, 0], segCCLKandOtsuOutput['TY'][z][0, -1]], color = LKColor)
-				pylab.plot([segCCLKandOtsuOutput['TX'][z][-1, 0], segCCLKandOtsuOutput['TX'][z][-1, -1]], [segCCLKandOtsuOutput['TY'][z][-1, 0], segCCLKandOtsuOutput['TY'][z][-1, -1]], color = LKColor)
+				plt.plot([segCCLKandOtsuOutput['TX'][z][0, 0], segCCLKandOtsuOutput['TX'][z][-1, 0]], [segCCLKandOtsuOutput['TY'][z][0, 0], segCCLKandOtsuOutput['TY'][z][-1, 0]], color = LKColor)
+				plt.plot([segCCLKandOtsuOutput['TX'][z][0, -1], segCCLKandOtsuOutput['TX'][z][-1, -1]], [segCCLKandOtsuOutput['TY'][z][0, -1], segCCLKandOtsuOutput['TY'][z][-1, -1]], color = LKColor)
+				plt.plot([segCCLKandOtsuOutput['TX'][z][0, 0], segCCLKandOtsuOutput['TX'][z][0, -1]], [segCCLKandOtsuOutput['TY'][z][0, 0], segCCLKandOtsuOutput['TY'][z][0, -1]], color = LKColor)
+				plt.plot([segCCLKandOtsuOutput['TX'][z][-1, 0], segCCLKandOtsuOutput['TX'][z][-1, -1]], [segCCLKandOtsuOutput['TY'][z][-1, 0], segCCLKandOtsuOutput['TY'][z][-1, -1]], color = LKColor)
 				
-				pylab.plot([LKInitialOffsets[z, 0], LKInitialOffsets[z, 0] + croppedTemplateAVW.shape[1]], [LKInitialOffsets[z, 1], LKInitialOffsets[z, 1]], color = InitialColor)
-				pylab.plot([LKInitialOffsets[z, 0], LKInitialOffsets[z, 0] + croppedTemplateAVW.shape[1]], [LKInitialOffsets[z, 1] + croppedTemplateAVW.shape[0], LKInitialOffsets[z, 1] + croppedTemplateAVW.shape[0]], color = InitialColor)
-				pylab.plot([LKInitialOffsets[z, 0], LKInitialOffsets[z, 0]], [LKInitialOffsets[z, 1], LKInitialOffsets[z, 1] + croppedTemplateAVW.shape[0]], color = InitialColor)
-				pylab.plot([LKInitialOffsets[z, 0] + croppedTemplateAVW.shape[1], LKInitialOffsets[z, 0] + croppedTemplateAVW.shape[1]], [LKInitialOffsets[z, 1], LKInitialOffsets[z, 1] + croppedTemplateAVW.shape[0]], color = InitialColor)
+				plt.plot([LKInitialOffsets[z, 0], LKInitialOffsets[z, 0] + croppedTemplateAVW.shape[1]], [LKInitialOffsets[z, 1], LKInitialOffsets[z, 1]], color = InitialColor)
+				plt.plot([LKInitialOffsets[z, 0], LKInitialOffsets[z, 0] + croppedTemplateAVW.shape[1]], [LKInitialOffsets[z, 1] + croppedTemplateAVW.shape[0], LKInitialOffsets[z, 1] + croppedTemplateAVW.shape[0]], color = InitialColor)
+				plt.plot([LKInitialOffsets[z, 0], LKInitialOffsets[z, 0]], [LKInitialOffsets[z, 1], LKInitialOffsets[z, 1] + croppedTemplateAVW.shape[0]], color = InitialColor)
+				plt.plot([LKInitialOffsets[z, 0] + croppedTemplateAVW.shape[1], LKInitialOffsets[z, 0] + croppedTemplateAVW.shape[1]], [LKInitialOffsets[z, 1], LKInitialOffsets[z, 1] + croppedTemplateAVW.shape[0]], color = InitialColor)
 			
-				AX[1][z] = pylab.subplot(SR, SC, z + 1 + SC)
+				AX[1][z] = plt.subplot(SR, SC, z + 1 + SC)
 				#CCSegUtils.showIMG(segCCLKandOtsuOutput['otsuSegCC'][z])
 				CCSegUtils.showIMG(LKCCSeg[z])
 
@@ -1659,19 +1659,19 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 				else:
 					textColour = '0.25'
 
-				pylab.text(0, -0.01, "\n".join(AXText), horizontalalignment='left', verticalalignment='top', transform=AX[1][curCol].transAxes, fontproperties = FontProps, color = textColour) # the transAxes is the same as 'Units', 'normalized'
+				plt.text(0, -0.01, "\n".join(AXText), horizontalalignment='left', verticalalignment='top', transform=AX[1][curCol].transAxes, fontproperties = FontProps, color = textColour) # the transAxes is the same as 'Units', 'normalized'
 				del FontProps;
 				del textColour;
 				del AXText;
 			del upNudge
 			
-			pylab.gcf().set_size_inches((20, 10), forward = True)
+			plt.gcf().set_size_inches((20, 10), forward = True)
 
 			outputPNG = os.path.join(PNGDirectory, subjectID + "_lk.png")
-			pylab.savefig(outputPNG)
+			plt.savefig(outputPNG)
 			CCSegUtils.cropAutoWhitePNG(outputPNG)
 
-			#pylab.show()
+			#plt.show()
 			del AX;
 			del SR;
 			del SC;
@@ -1707,37 +1707,37 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 	parasagittalGradMAG = numpy.sqrt(parasagittalFX * parasagittalFX + parasagittalFY * parasagittalFY + parasagittalFZ * parasagittalFZ)
 	parasagittalGradMAGMean = numpy.mean(parasagittalGradMAG, axis = 2)
 	parasagittalGradMAGMean = parasagittalGradMAGMean / numpy.max(parasagittalGradMAGMean)
-	#pylab.clf()	
+	#plt.clf()	
 	#CCSegUtils.showIMG(parasagittalGradMAGMean)
-	#pylab.show()
+	#plt.show()
 
 #	C = 1
 #	SR = 2
 #	SC = 2
-#	pylab.clf()	
-#	pylab.subplot(SR, SC, 1)
+#	plt.clf()	
+#	plt.subplot(SR, SC, 1)
 #	CCSegUtils.showIMG(parasagittalSlices[:, :, C])
-#	pylab.subplot(SR, SC, 2)
+#	plt.subplot(SR, SC, 2)
 #	CCSegUtils.showIMG(parasagittalFX[:, :, C])
-#	pylab.subplot(SR, SC, 3)
+#	plt.subplot(SR, SC, 3)
 #	CCSegUtils.showIMG(parasagittalFY[:, :, C])
-#	pylab.subplot(SR, SC, 4)
+#	plt.subplot(SR, SC, 4)
 #	CCSegUtils.showIMG(parasagittalFZ[:, :, C])
-#	pylab.show()
+#	plt.show()
 #	
 #	C = 3
 #	SR = 2
 #	SC = 2
-#	pylab.clf()	
-#	pylab.subplot(SR, SC, 1)
+#	plt.clf()	
+#	plt.subplot(SR, SC, 1)
 #	CCSegUtils.showIMG(parasagittalSlices[:, :, C])
-#	pylab.subplot(SR, SC, 2)
+#	plt.subplot(SR, SC, 2)
 #	CCSegUtils.showIMG(parasagittalFX[:, :, C])
-#	pylab.subplot(SR, SC, 3)
+#	plt.subplot(SR, SC, 3)
 #	CCSegUtils.showIMG(parasagittalFY[:, :, C])
-#	pylab.subplot(SR, SC, 4)
+#	plt.subplot(SR, SC, 4)
 #	CCSegUtils.showIMG(parasagittalFZ[:, :, C])
-#	pylab.show()
+#	plt.show()
 #
 #
 #	quit()
@@ -1776,10 +1776,10 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 	ax = scipy.ndimage.convolve(aSmooth, gaussianFilterDeriv, mode='nearest')
 	ay = scipy.ndimage.convolve(aSmooth, gaussianFilterDeriv.T, mode='nearest')
 	
-	#pylab.subplot(2, 2, 1); pylab.plot(gaussianFilter.squeeze())
-	#pylab.subplot(2, 2, 2); pylab.plot(gaussianFilterDeriv.squeeze())
-	#pylab.subplot(2, 2, 3); CCSegUtils.showIMG(ax)
-	#pylab.subplot(2, 2, 4); CCSegUtils.showIMG(ay)
+	#plt.subplot(2, 2, 1); plt.plot(gaussianFilter.squeeze())
+	#plt.subplot(2, 2, 2); plt.plot(gaussianFilterDeriv.squeeze())
+	#plt.subplot(2, 2, 3); CCSegUtils.showIMG(ax)
+	#plt.subplot(2, 2, 4); CCSegUtils.showIMG(ay)
 
 	CCSegGaussianProbGradMAG = numpy.sqrt(ax * ax + ay * ay)
 	
@@ -1804,43 +1804,43 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 	if doGraphics:
 		SR = 2
 		SC = 2
-		pylab.clf()
-		pylab.subplot(SR, SC, 1); CCSegUtils.showIMG(penaltyA); pylab.title('penaltyA')
-		pylab.subplot(SR, SC, 2); CCSegUtils.showIMG(penaltyB); pylab.title('penaltyB')
-		pylab.subplot(SR, SC, 3); CCSegUtils.showIMG(penaltyC); pylab.title('penaltyC')
-		pylab.subplot(SR, SC, 4); CCSegUtils.showIMG(penaltyIMG); pylab.title('penaltyIMG')
+		plt.clf()
+		plt.subplot(SR, SC, 1); CCSegUtils.showIMG(penaltyA); plt.title('penaltyA')
+		plt.subplot(SR, SC, 2); CCSegUtils.showIMG(penaltyB); plt.title('penaltyB')
+		plt.subplot(SR, SC, 3); CCSegUtils.showIMG(penaltyC); plt.title('penaltyC')
+		plt.subplot(SR, SC, 4); CCSegUtils.showIMG(penaltyIMG); plt.title('penaltyIMG')
 
-		pylab.gcf().set_size_inches((20, 10), forward = True)
+		plt.gcf().set_size_inches((20, 10), forward = True)
 		outputPNG = os.path.join(PNGDirectory, subjectID + "_penalty.png")
-		pylab.savefig(outputPNG)
+		plt.savefig(outputPNG)
 		CCSegUtils.cropAutoWhitePNG(outputPNG)
 
 	
 	CCSeg = bwSelectWithMask(penaltyIMG < 0.8, CCSeg)
-	#pylab.clf()
-	#pylab.subplot(SR, SC, 1)
+	#plt.clf()
+	#plt.subplot(SR, SC, 1)
 	#CCSegUtils.showIMG(CCSeg);
-	#pylab.title('After select')
-	#pylab.show()
-	#pylab.gcf().set_size_inches((20, 10), forward = True)
+	#plt.title('After select')
+	#plt.show()
+	#plt.gcf().set_size_inches((20, 10), forward = True)
 	#quit()
 
 	CCSeg = bwAreaOpen(CCSeg, 50)
-	#pylab.subplot(SR, SC, 2)
+	#plt.subplot(SR, SC, 2)
 	#CCSegLabels, numCCSegLabels = scipy.ndimage.measurements.label(CCSeg, structure = numpy.ones([3, 3]))
 	#CCSegRegionProps = regionProps(CCSegLabels, ['Area'])
 	#M = numpy.argmax(CCSegRegionProps['area'])
 	#CCSeg = (CCSegLabels == (M + 1))
 	#del M; del CCSegRegionProps; del CCSegLabels; del numCCSegLabels;
 	
-	#pylab.clf()
+	#plt.clf()
 	#CCSegUtils.showIMG(CCSeg)
-	#pylab.title('After bwareaopen')
-	#pylab.gcf().set_size_inches((20, 10), forward = True)
-	#pylab.show()
+	#plt.title('After bwareaopen')
+	#plt.gcf().set_size_inches((20, 10), forward = True)
+	#plt.show()
 	#quit()
 
-	#pylab.show()
+	#plt.show()
 	#quit()
 	assert(numpy.any(CCSeg)),"CCSeg is empty after retaining 200 pixel regions"
 
@@ -1861,18 +1861,18 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 		if doGraphics:#%$ and not numpy.array_equal(CCSeg, CCSegBeforeRegionDel):
 			SR = 1
 			SC = 2
-			pylab.clf()
-			#pylab.subplot(SR, SC, 1); CCSegUtils.showIMG(CCSegBeforeRegionDel); pylab.title('penaltyA')
-			pylab.subplot(SR, SC, 2); CCSegUtils.showIMG(CCSeg); pylab.title('Updated')
-			pylab.subplot(SR, SC, 1); CCSegUtils.showIMG(LKOutput['croppedTemplateCCProbLKIMG']); pylab.title('Before delete')
+			plt.clf()
+			#plt.subplot(SR, SC, 1); CCSegUtils.showIMG(CCSegBeforeRegionDel); plt.title('penaltyA')
+			plt.subplot(SR, SC, 2); CCSegUtils.showIMG(CCSeg); plt.title('Updated')
+			plt.subplot(SR, SC, 1); CCSegUtils.showIMG(LKOutput['croppedTemplateCCProbLKIMG']); plt.title('Before delete')
 			segContours, hierarchy = CCSegUtils.findContours(numpy.uint8(CCSegBeforeRegionDel), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 			lineProps = {'color': 'r', 'linewidth': 2}
 			for z in range(len(segContours)):
 				CCSegUtils.plotContour(numpy.squeeze(segContours[z]).T, lineProps = lineProps)
 
-			pylab.gcf().set_size_inches((20, 10), forward = True)
+			plt.gcf().set_size_inches((20, 10), forward = True)
 			outputPNG = os.path.join(PNGDirectory, subjectID + "_connect_regiondel.png")
-			pylab.savefig(outputPNG)
+			plt.savefig(outputPNG)
 			CCSegUtils.cropAutoWhitePNG(outputPNG)
 	
 	#CCSeg = largestComponent(CCSeg)
@@ -1944,12 +1944,12 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 			SR = 1
 			SC = 2
 			
-			pylab.clf()
-			pylab.subplot(SR, SC, 1); CCSegUtils.showIMG(CCSegBeforeANGLEDel); pylab.title('Before')
-			pylab.subplot(SR, SC, 2); CCSegUtils.showIMG(CCSeg); pylab.title('After')
-			pylab.gcf().set_size_inches((20, 10), forward = True)
+			plt.clf()
+			plt.subplot(SR, SC, 1); CCSegUtils.showIMG(CCSegBeforeANGLEDel); plt.title('Before')
+			plt.subplot(SR, SC, 2); CCSegUtils.showIMG(CCSeg); plt.title('After')
+			plt.gcf().set_size_inches((20, 10), forward = True)
 			outputPNG = os.path.join(PNGDirectory, subjectID + "_anglemag_delete.png")
-			pylab.savefig(outputPNG)
+			plt.savefig(outputPNG)
 			CCSegUtils.cropAutoWhitePNG(outputPNG)
 
 
@@ -1957,18 +1957,18 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 	#
 	if numCCSegLabels > 1:
 
-		#pylab.clf()
-		#pylab.subplot(2, 2, 1)
+		#plt.clf()
+		#plt.subplot(2, 2, 1)
 		#CCSegUtils.showIMG(LKOutput['croppedTemplateCCProbLKIMG'])
-		#pylab.title('CC Prob')
-		#pylab.subplot(2, 2, 2)
+		#plt.title('CC Prob')
+		#plt.subplot(2, 2, 2)
 		#CCSegUtils.showIMG(CCSeg)
-		#pylab.title('CC Seg')
-		#pylab.subplot(2, 2, 3)
+		#plt.title('CC Seg')
+		#plt.subplot(2, 2, 3)
 		#CCSegUtils.showIMG(CCSegLabels)
 		
-		#pylab.gcf().set_size_inches((20, 10), forward = True)
-		#pylab.show()
+		#plt.gcf().set_size_inches((20, 10), forward = True)
+		#plt.show()
 		#quit()
 
 		CCJoiningSegments = bwJoinMSTBoundaries(CCSeg)
@@ -1977,9 +1977,9 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 	
 	CCSegLabels, numCCSegLabels = scipy.ndimage.measurements.label(CCSeg, structure = numpy.ones([3, 3]))
 	#CCSegUtils.showIMG(CCSeg)
-	#pylab.title('After bwareaopen')
-	#pylab.gcf().set_size_inches((20, 10), forward = True)
-	#pylab.show()
+	#plt.title('After bwareaopen')
+	#plt.gcf().set_size_inches((20, 10), forward = True)
+	#plt.show()
 	#quit()
 
 	if numCCSegLabels > 1:
@@ -2106,17 +2106,17 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 	if doGraphics == True:
 		SR = 2
 		SC = 2
-		pylab.clf()
-		pylab.subplot(SR, SC, 1)
+		plt.clf()
+		plt.subplot(SR, SC, 1)
 		CCSegUtils.showIMG(LKOutput['croppedIMG'])
 		I = numpy.where(outliersWeak)
-		pylab.plot(I[1], I[0], 'r*')
+		plt.plot(I[1], I[0], 'r*')
 		I = numpy.where(outliersStrong)
-		pylab.plot(I[1], I[0], 'b*')
-		pylab.gcf().set_size_inches((20, 10), forward = True)
+		plt.plot(I[1], I[0], 'b*')
+		plt.gcf().set_size_inches((20, 10), forward = True)
 		
 		outputPNG = os.path.join(PNGDirectory, subjectID + "_vein.png")
-		pylab.savefig(outputPNG)
+		plt.savefig(outputPNG)
 		CCSegUtils.cropAutoWhitePNG(outputPNG)
 		CCSegUtils.removeWhiteRowsColsPNG(outputPNG)
 
@@ -2174,18 +2174,18 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 	if doGraphics == True:
 		SR = 2
 		SC = 2
-		pylab.clf()
-		pylab.subplot(SR, SC, 1)
+		plt.clf()
+		plt.subplot(SR, SC, 1)
 		CCSegUtils.showIMG(edgeMAG)
-		pylab.title('Edge mag')
-		pylab.subplot(SR, SC, 2)
+		plt.title('Edge mag')
+		plt.subplot(SR, SC, 2)
 		CCSegUtils.showIMG(skimage.color.label2rgb(watershedMarkers))
-		pylab.title('Watershed markers')
-		pylab.subplot(SR, SC, 3)
+		plt.title('Watershed markers')
+		plt.subplot(SR, SC, 3)
 		CCSegUtils.showIMG(skimage.color.label2rgb(watershedTransform))
-		pylab.title('Watershed transform')
+		plt.title('Watershed transform')
 		
-		pylab.subplot(SR, SC, 4)
+		plt.subplot(SR, SC, 4)
 		CCSegUtils.showIMG(LKOutput['croppedIMG'])
 		
 		watershedSegContours, hierarchy = CCSegUtils.findContours(numpy.uint8(watershedSeg), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
@@ -2198,16 +2198,16 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 		for z in range(len(watershedSegContours)):
 			CCSegUtils.plotContour(numpy.squeeze(watershedSegContours[z]).T, lineProps = lineProps)
 
-		pylab.title('Seg')
+		plt.title('Seg')
 
-		pylab.gcf().set_size_inches((20, 10), forward = True)
+		plt.gcf().set_size_inches((20, 10), forward = True)
 		
 		watershedPNGDirectory = os.path.join(PNGDirectory, "watershed")
 		
 		CCSegUtils.mkdirSafe(watershedPNGDirectory)
 	
 		outputPNG = os.path.join(watershedPNGDirectory, subjectID + "_watershed.png")
-		pylab.savefig(outputPNG)
+		plt.savefig(outputPNG)
 		CCSegUtils.cropAutoWhitePNG(outputPNG)
 		CCSegUtils.removeWhiteRowsColsPNG(outputPNG)
 
@@ -2217,42 +2217,42 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 
 		
 	#TJoiningSegments = bwJoinMSTBoundaries(T)
-	#pylab.subplot(1, 2, 1); CCSegUtils.showIMG(finalSeg)
-	#pylab.subplot(1, 2, 2); CCSegUtils.showIMG(finalSegNoArtefacts)
+	#plt.subplot(1, 2, 1); CCSegUtils.showIMG(finalSeg)
+	#plt.subplot(1, 2, 2); CCSegUtils.showIMG(finalSegNoArtefacts)
 	
-	#pylab.gcf().set_size_inches((20, 10), forward = True)
-	#pylab.show()
+	#plt.gcf().set_size_inches((20, 10), forward = True)
+	#plt.show()
 
 	if doGraphics:
 		SR = 2
 		SC = 2
-		pylab.clf()
-		pylab.subplot(SR, SC, 1)
+		plt.clf()
+		plt.subplot(SR, SC, 1)
 		CCSegUtils.showIMG(LKOutput['croppedIMG'])
 		
 		finalSegContours, hierarchy = CCSegUtils.findContours(numpy.uint8(finalSeg), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 		lineProps = {'color': 'b', 'linewidth': 2}
 		for z in range(len(finalSegContours)):
 			CCSegUtils.plotContour(numpy.squeeze(finalSegContours[z]).T, lineProps = lineProps)
-		pylab.title('Final seg')
+		plt.title('Final seg')
 		
-		pylab.subplot(SR, SC, 2)
+		plt.subplot(SR, SC, 2)
 		CCSegUtils.showIMG(LKOutput['croppedIMG'])
 		finalSegNoArtefactsContours, hierarchy = CCSegUtils.findContours(numpy.uint8(finalSegNoArtefacts), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 		lineProps = {'color': 'r', 'linewidth': 2}
 		for z in range(len(finalSegNoArtefactsContours)):
 			CCSegUtils.plotContour(numpy.squeeze(finalSegNoArtefactsContours[z]).T, lineProps = lineProps)
 		
-		pylab.title('Final seg + vein removal')
-		pylab.subplot(SR, SC, 3)
+		plt.title('Final seg + vein removal')
+		plt.subplot(SR, SC, 3)
 		CCSegUtils.showIMG(LKOutput['croppedIMG'])
 		
 		watershedSegContours, hierarchy = CCSegUtils.findContours(numpy.uint8(watershedSeg), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 		lineProps = {'color': 'r', 'linewidth': 2}
 		for z in range(len(watershedSegContours)):
 			CCSegUtils.plotContour(numpy.squeeze(watershedSegContours[z]).T, lineProps = lineProps)
-		pylab.title('Final seg + vein removal + watershed')
-		pylab.subplot(SR, SC, 4)
+		plt.title('Final seg + vein removal + watershed')
+		plt.subplot(SR, SC, 4)
 		CCSegUtils.showIMG(penaltyIMG)
 		
 		lineProps = {'color': 'r', 'linewidth': 2}
@@ -2274,10 +2274,10 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 			CCSegUtils.plotContour(numpy.squeeze(watershedSegContours[z]).T, lineProps = lineProps)
 
 
-		pylab.title('Final seg + vein removal + watershed')
-		pylab.gcf().set_size_inches((20, 10), forward = True)
+		plt.title('Final seg + vein removal + watershed')
+		plt.gcf().set_size_inches((20, 10), forward = True)
 		outputPNG = os.path.join(PNGDirectory, subjectID + "_seg.png")
-		pylab.savefig(outputPNG)
+		plt.savefig(outputPNG)
 		CCSegUtils.cropAutoWhitePNG(outputPNG)
 		CCSegUtils.removeWhiteRowsColsPNG(outputPNG)
 
@@ -2312,19 +2312,19 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 	FID.create_dataset("resampleyy", data = resampleyy)
 
 	FID.close()
-#	pylab.clf()
+#	plt.clf()
 #	
 #	lineProps = {'color': 'r', 'linewidth': 2}
 #	
 #	SR = 2
 #	SC = 2
-#	pylab.subplot(SR, SC, 1)
+#	plt.subplot(SR, SC, 1)
 #	CCSegUtils.showIMG(LKOutput['croppedIMG'])
 #	T, hierarchy = CCSegUtils.findContours(numpy.uint8(finalSegNoArtefacts), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 #	for z in range(len(T)):
 #		CCSegUtils.plotContour(numpy.squeeze(T[z]).T, lineProps = lineProps)
 #
-#	pylab.subplot(SR, SC, 2)
+#	plt.subplot(SR, SC, 2)
 #	CCSegUtils.showIMG(resampledAVW)
 #	T, hierarchy = CCSegUtils.findContours(numpy.uint8(finalSegResampledAVWSpace), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 #	for z in range(len(T)):
@@ -2333,35 +2333,35 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 #	#resamplexx = numpy.arange(lowX, highX + templatePixdims[0], templatePixdims[0])
 #	#resampleyy = numpy.arange(lowY, highY + templatePixdims[1], templatePixdims[1])
 #	#resampleX, resampleY = numpy.meshgrid(resamplexx, resampleyy)	
-#	pylab.subplot(SR, SC, 3)
+#	plt.subplot(SR, SC, 3)
 #	CCSegUtils.showIMG(midSagAVW)
 #	T, hierarchy = CCSegUtils.findContours(numpy.uint8(finalSegMidSagAVWSpace), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 #	for z in range(len(T)):
 #		CCSegUtils.plotContour(numpy.squeeze(T[z]).T, lineProps = lineProps)
 #	
-#	#pylab.subplot(SR, SC, 4)
+#	#plt.subplot(SR, SC, 4)
 #	#CCSegUtils.showIMG(midSagAVW2)
 #	#T, hierarchy = CCSegUtils.findContours(numpy.uint8(finalSegTemplateSpace), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 #	#for z in range(len(T)):
 ##		CCSegUtils.plotContour(numpy.squeeze(T[z]).T, lineProps = lineProps)
 #	
 #
-#	pylab.gcf().set_size_inches((20, 10), forward = True)
-#	pylab.show()
+#	plt.gcf().set_size_inches((20, 10), forward = True)
+#	plt.show()
 #	
 #		SR = 3
 #		SC = 3
 #		
 #		#SZ = size(MatchedFilter);
 #
-#		pylab.subplot(SR, SC, 1);
+#		plt.subplot(SR, SC, 1);
 #		CCSegUtils.showIMG(normXCorrAVW);
 #
-#		pylab.plot(LKInitialOffsets[0, 0], LKInitialOffsets[0, 1], 'r*')
-#		pylab.plot(LKInitialOffsets[1:, 0], LKInitialOffsets[1:, 1], 'b*')
-#		pylab.title('LK initial offsets')
+#		plt.plot(LKInitialOffsets[0, 0], LKInitialOffsets[0, 1], 'r*')
+#		plt.plot(LKInitialOffsets[1:, 0], LKInitialOffsets[1:, 1], 'b*')
+#		plt.title('LK initial offsets')
 #		
-#		pylab.subplot(SR, SC, 2);
+#		plt.subplot(SR, SC, 2);
 #		CCSegUtils.showIMG(resampledAVW)
 #		
 #		lineProps = {'color': 'r', 'linewidth': 2}
@@ -2369,17 +2369,17 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 #		plotRectangle([LKInitialOffsets[bestLKIDX, 0], LKInitialOffsets[bestLKIDX, 1], croppedTemplateAVW.shape[1], croppedTemplateAVW.shape[0]], lineProps)
 #		
 #		lineProps = {'color': 'b', 'linewidth': 2}
-#		pylab.plot([LKOutput['TX'][ 0,  0], LKOutput['TX'][-1,  0]], [LKOutput['TY'][ 0,  0], LKOutput['TY'][-1,  0]], **lineProps)
-#		pylab.plot([LKOutput['TX'][ 0, -1], LKOutput['TX'][-1, -1]], [LKOutput['TY'][ 0, -1], LKOutput['TY'][-1, -1]], **lineProps)
-#		pylab.plot([LKOutput['TX'][ 0,  0], LKOutput['TX'][ 0, -1]], [LKOutput['TY'][ 0,  0], LKOutput['TY'][ 0, -1]], **lineProps)
-#		pylab.plot([LKOutput['TX'][-1,  0], LKOutput['TX'][-1, -1]], [LKOutput['TY'][-1,  0], LKOutput['TY'][-1, -1]], **lineProps)
-#		pylab.title('Initial XCORR and LK alignment');
+#		plt.plot([LKOutput['TX'][ 0,  0], LKOutput['TX'][-1,  0]], [LKOutput['TY'][ 0,  0], LKOutput['TY'][-1,  0]], **lineProps)
+#		plt.plot([LKOutput['TX'][ 0, -1], LKOutput['TX'][-1, -1]], [LKOutput['TY'][ 0, -1], LKOutput['TY'][-1, -1]], **lineProps)
+#		plt.plot([LKOutput['TX'][ 0,  0], LKOutput['TX'][ 0, -1]], [LKOutput['TY'][ 0,  0], LKOutput['TY'][ 0, -1]], **lineProps)
+#		plt.plot([LKOutput['TX'][-1,  0], LKOutput['TX'][-1, -1]], [LKOutput['TY'][-1,  0], LKOutput['TY'][-1, -1]], **lineProps)
+#		plt.title('Initial XCORR and LK alignment');
 #
-#		pylab.subplot(SR, SC, 3)
+#		plt.subplot(SR, SC, 3)
 #		CCSegUtils.showIMG(LKCCSeg)
-#		pylab.title("Initial segmentation")
+#		plt.title("Initial segmentation")
 #
-		#pylab.subplot(SR, SC, 4);
+		#plt.subplot(SR, SC, 4);
 		#CCSegUtils.showIMG(LKOutput['croppedIMG']);
 #		hold on;
 #		[~, CC] = contour(FinalSeg, [0.5, 0.5]);
@@ -2486,10 +2486,10 @@ def segCC(outputBase, groundTruthFile = None, doLK = True, doGraphics = False, s
 #		%delete(gcf);
 #	end
 
-#	pylab.subplot(1, 3, 1); CCSegUtils.showIMG(penaltyIMG < 0.8);
-#	pylab.subplot(1, 3, 2); CCSegUtils.showIMG(CCSeg);
-#	pylab.subplot(1, 3, 3); CCSegUtils.showIMG(T);
-	#pylab.gcf().set_size_inches((20, 10), forward = True)
-	#pylab.show()
+#	plt.subplot(1, 3, 1); CCSegUtils.showIMG(penaltyIMG < 0.8);
+#	plt.subplot(1, 3, 2); CCSegUtils.showIMG(CCSeg);
+#	plt.subplot(1, 3, 3); CCSegUtils.showIMG(T);
+	#plt.gcf().set_size_inches((20, 10), forward = True)
+	#plt.show()
 
 

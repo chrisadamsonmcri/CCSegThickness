@@ -11,7 +11,7 @@ import h5py
 import numpy
 import scipy.stats
 
-import pylab
+import matplotlib.pyplot as plt
 
 import cv2
 
@@ -188,13 +188,13 @@ class CCSegStatResultsDisplayer:
 		#print boundaryContour
 		#print boundaryContour.shape
 		
-		#pylab.imshow(T)
+		#plt.imshow(T)
 		
-		#pylab.colorbar()
-		#pylab.gcf().set_size_inches((20, 10), forward = True)
-		#pylab.show()
+		#plt.colorbar()
+		#plt.gcf().set_size_inches((20, 10), forward = True)
+		#plt.show()
 		
-		#pylab.show()
+		#plt.show()
 		# set up
 
 		#self.plotType = plotType

@@ -9,7 +9,7 @@ import cv2
 import math
 import numpy
 import nibabel
-import pylab
+import matplotlib.pyplot as plt
 import h5py
 import shutil
 
@@ -60,10 +60,10 @@ def segCCToNativeOneFile(segIMG, outputBase, midSagMATFile, segMATFile, dilatePa
 	#midSagAVW = numpy.rot90(midSagAVW, -1)
 	FID.close()
 	
-	#pylab.subplot(1, 4, 1); CCSegUtils.showIMG(seg['initialSeg'])
-	#pylab.subplot(1, 4, 2); CCSegUtils.showIMG(seg['finalSeg'])
-	#pylab.subplot(1, 4, 3); CCSegUtils.showIMG(seg['finalSegNoArtefacts'])
-	#pylab.subplot(1, 4, 4); CCSegUtils.showIMG(seg['IMG'])
+	#plt.subplot(1, 4, 1); CCSegUtils.showIMG(seg['initialSeg'])
+	#plt.subplot(1, 4, 2); CCSegUtils.showIMG(seg['finalSeg'])
+	#plt.subplot(1, 4, 3); CCSegUtils.showIMG(seg['finalSegNoArtefacts'])
+	#plt.subplot(1, 4, 4); CCSegUtils.showIMG(seg['IMG'])
 	
 	# this is going to be the segmentation in original resampled shape
 	finalSegResampledAVWSpace = numpy.zeros(resampledAVWShape, dtype = numpy.uint8)
@@ -154,14 +154,14 @@ def segCCToNative(outputBase, doGraphics = False, dilateParaSagSlices = 0):
 	#print seg['IMG'].dtype
 	
 
-	#pylab.subplot(1, 4, 1); CCSegUtils.showIMG(seg['initialSeg'])
-	#pylab.subplot(1, 4, 2); CCSegUtils.showIMG(seg['finalSeg'])
-	#pylab.subplot(1, 4, 3); CCSegUtils.showIMG(seg['finalSegNoArtefacts'])
-	#pylab.subplot(1, 4, 4); CCSegUtils.showIMG(seg['IMG'])
+	#plt.subplot(1, 4, 1); CCSegUtils.showIMG(seg['initialSeg'])
+	#plt.subplot(1, 4, 2); CCSegUtils.showIMG(seg['finalSeg'])
+	#plt.subplot(1, 4, 3); CCSegUtils.showIMG(seg['finalSegNoArtefacts'])
+	#plt.subplot(1, 4, 4); CCSegUtils.showIMG(seg['IMG'])
 	
 	
-	#pylab.gcf().set_size_inches((20, 10), forward = True)
-	#pylab.show()
+	#plt.gcf().set_size_inches((20, 10), forward = True)
+	#plt.show()
 	#quit()	
 	if os.path.isfile(segManeditMATFile):
 		FID = h5py.File(segManeditMATFile, 'r')
@@ -192,11 +192,11 @@ def segCCToNative(outputBase, doGraphics = False, dilateParaSagSlices = 0):
 			
 			#SR = 1
 			#SC = 3
-			#pylab.subplot(SR, SC, 1); CCSegUtils.showIMG(finalSeg)
-			#pylab.subplot(SR, SC, 2); CCSegUtils.showIMG(curLabelIMG)
-			#pylab.subplot(SR, SC, 3); CCSegUtils.showIMG(T)
-			#pylab.gcf().set_size_inches((20, 10), forward = True)
-			#pylab.show()
+			#plt.subplot(SR, SC, 1); CCSegUtils.showIMG(finalSeg)
+			#plt.subplot(SR, SC, 2); CCSegUtils.showIMG(curLabelIMG)
+			#plt.subplot(SR, SC, 3); CCSegUtils.showIMG(T)
+			#plt.gcf().set_size_inches((20, 10), forward = True)
+			#plt.show()
 			#quit()	
 			segCCToNativeOneFile(numpy.uint8(curLabelIMG), outputBase + "_parcellation_" + curLabels.lower(), midSagMATFile, segMATFile, flirtInterpType = 'nearestneighbour', dilateParaSagSlices = dilateParaSagSlices)
 			

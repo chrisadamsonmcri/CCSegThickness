@@ -21,7 +21,6 @@ import Otsu
 import numpy.linalg
 
 import matplotlib.pyplot as plt
-import pylab
 import CCSegPipeMidSagSymmetric
 
 
@@ -293,9 +292,9 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 				# odd number of slices
 				midSagAVW = numpy.double(NIIData[:, T])
 				midSagAVWBrainMask = numpy.double(NIIBrainMaskData[:, T])
-			pylab.clf()
-			pylab.imshow(midSagAVWBrainMask)
-			pylab.show()
+			plt.clf()
+			plt.imshow(midSagAVWBrainMask)
+			plt.show()
 	#print NIIPixdims
 	#	
 			midSagAVW[numpy.where(midSagAVWBrainMask < 0.5)] = numpy.nan
@@ -490,12 +489,12 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 					curTransX = initialTransX[bestInitialTransXIDX]
 					#print "Best TransX: " + str(curTransX)
 					if doGraphics:
-						pylab.clf()
+						plt.clf()
 						TIMG = CCSegPipeMidSagSymmetric.transformIMG(IMG, IMGxx, IMGyy, IMGzz, curRotY, curRotZ, curTransX) 
 						CCSegPipeMidSagSymmetric.showMidSag(TIMG)
-						pylab.gcf().set_size_inches((20, 10), forward = True)
+						plt.gcf().set_size_inches((20, 10), forward = True)
 						outputPNG = os.path.join(PNGDirectory, subjectID + "_sym_iter_" + str(curIter + 1) + "_1.png")
-						pylab.savefig(outputPNG)
+						plt.savefig(outputPNG)
 						CCSegUtils.cropAutoWhitePNG(outputPNG)
 
 	
@@ -519,12 +518,12 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 					curRotZ = initialRotZ[bestInitialRotZIDX]
 					#print "Best initial RotZ: " + str(curRotZ)
 					if doGraphics:
-						pylab.clf()
+						plt.clf()
 						TIMG = CCSegPipeMidSagSymmetric.transformIMG(IMG, IMGxx, IMGyy, IMGzz, curRotY, curRotZ, curTransX) 
 						CCSegPipeMidSagSymmetric.showMidSag(TIMG)
-						pylab.gcf().set_size_inches((20, 10), forward = True)
+						plt.gcf().set_size_inches((20, 10), forward = True)
 						outputPNG = os.path.join(PNGDirectory, subjectID + "_sym_iter_" + str(curIter + 1) + "_2.png")
-						pylab.savefig(outputPNG)
+						plt.savefig(outputPNG)
 						CCSegUtils.cropAutoWhitePNG(outputPNG)
 
 	
@@ -550,24 +549,24 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 					curRotY = initialRotY[bestInitialRotYIDX]
 					#print "Best initial RotY: " + str(curRotY)
 					#if doGraphics:
-					#	pylab.clf()
+					#	plt.clf()
 					#	TIMG = CCSegPipeMidSagSymmetric.transformIMG(IMG, IMGxx, IMGyy, IMGzz, curRotY, curRotZ, curTransX) 
 					#	CCSegPipeMidSagSymmetric.showMidSag(TIMG)
-					#	pylab.gcf().set_size_inches((20, 10), forward = True)
+					#	plt.gcf().set_size_inches((20, 10), forward = True)
 					#	outputPNG = os.path.join(PNGDirectory, subjectID + "_sym_iter_" + str(curIter + 1) + "_3.png")
-					#	pylab.savefig(outputPNG)
+					#	plt.savefig(outputPNG)
 					#	CCSegUtils.cropAutoWhitePNG(outputPNG)
 
 					TIMG = CCSegPipeMidSagSymmetric.transformIMG(SIMG, SIMGxx, SIMGyy, SIMGzz, curRotY, curRotZ, curTransX) 
 #					SR = 2
 #					SC = 2
-#					pylab.subplot(SR, SC, 1)
+#					plt.subplot(SR, SC, 1)
 #					CCSegUtils.imshow(TIMG[:, :, TIMG.shape[2] // 2])
 #					plt.plot([0, TIMG.shape[1]], [TIMG.shape[0] / 2, TIMG.shape[0] / 2], 'w-')
-#					pylab.subplot(SR, SC, 2)
+#					plt.subplot(SR, SC, 2)
 #					T = numpy.rot90(TIMG[TIMG.shape[0] // 2], 1)
 #					CCSegUtils.imshow(T)
-#					pylab.subplot(SR, SC, 3)
+#					plt.subplot(SR, SC, 3)
 #					T = numpy.rot90(TIMG[:, TIMG.shape[1] // 2], 1)
 #					CCSegUtils.imshow(T)
 #					plt.plot([T.shape[1] / 2, T.shape[1] / 2], [0, TIMG.shape[0]], 'w-')
@@ -666,19 +665,19 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 					midSagAVW[numpy.logical_not(midSagBrainMask > 0)] = 0
 				#parasagittalSlices, parasagittalFX, parasagittalFY, parasagittalFZ = CCSegUtils.parasagittalSlicesAndGradients(TIMG, axialNIIPixdims, numSlices = 3)
 
-				#pylab.subplot(1, 2, 1)
-				#pylab.imshow(midSagAVW)
-				#pylab.subplot(1, 2, 2)
-				#pylab.imshow(midSagBrainMask)
-				#pylab.show()
+				#plt.subplot(1, 2, 1)
+				#plt.imshow(midSagAVW)
+				#plt.subplot(1, 2, 2)
+				#plt.imshow(midSagBrainMask)
+				#plt.show()
 				#quit()
 				#midSagAVW = numpy.array(midSagAVW[:, ::-1])
 				if doGraphics:
-					pylab.clf()
+					plt.clf()
 					CCSegPipeMidSagSymmetric.showMidSag(TIMG, midSagAVW)
-					pylab.gcf().set_size_inches((20, 10), forward = True)
+					plt.gcf().set_size_inches((20, 10), forward = True)
 					outputPNG = os.path.join(PNGDirectory, subjectID + ".png")
-					pylab.savefig(outputPNG)
+					plt.savefig(outputPNG)
 					CCSegUtils.cropAutoWhitePNG(outputPNG)
 
 			elif MSPMethod == 'acpcdetect':
@@ -836,8 +835,8 @@ def midsagExtract(inputBase, outputBase, MSPMethod, doGraphics = False, skullStr
 		#print NII.get_header().get_zooms()
 		#print NIIPixdims
 		#ylab.imshow(midSagAVW)
-		#pylab.set_cmap(pylab.cm.gray)
-		#pylab.show()
+		#plt.set_cmap(plt.cm.gray)
+		#plt.show()
 
 	#if len(NIIShape) == 2:
 	

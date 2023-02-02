@@ -7,7 +7,7 @@ import errno
 
 import numpy
 import nibabel
-import pylab
+import matplotlib.pyplot as plt
 import h5py
 
 # for connected components functions
@@ -264,9 +264,9 @@ def registerProfileCovariance(inputProfile):
 		R[:, z] = resampleProfile(realInputProfiles[:, z], leftPeakValues[ID[0]], templatePeaks[0], rightPeakValues[ID[1]], templatePeaks[1])
 	
 	return R
-	#pylab.clf()
+	#plt.clf()
 	#CCSegUtils.showIMG(costFunction)
-	#pylab.show()
+	#plt.show()
 
 	#quit()
 #	for curLeftIDX = 1:numel(leftPeakValues)
@@ -290,8 +290,8 @@ def registerProfileCovariance(inputProfile):
 #
 	
 	#print idealThicknessProfile
-	#pylab.plot(idealThicknessProfile)
-	#pylab.show()
+	#plt.plot(idealThicknessProfile)
+	#plt.show()
 	
 def registerProfilePeaks(inputProfile):
 	
@@ -312,12 +312,12 @@ def registerProfilePeaks(inputProfile):
 	SE = numpy.ones((1, int(numpy.round(inputProfile.size / 5.0))))
 	D = scipy.ndimage.morphology.grey_dilation(numpy.atleast_2d(inputProfileNoNaNs), footprint = SE)
 	D = numpy.ravel(D)
-#	pylab.subplot(1, 2, 1)
-#	pylab.plot(inputProfile)
-#	pylab.subplot(1, 2, 2)
-#	pylab.plot(D)
+#	plt.subplot(1, 2, 1)
+#	plt.plot(inputProfile)
+#	plt.subplot(1, 2, 2)
+#	plt.plot(D)
 #	print D
-#	pylab.show()
+#	plt.show()
 	#thicknessProfile[numpy.logical_not(validStreamlines)] = numpy.nan
 	
 	peaks = numpy.where(inputProfileNoNaNs == D)[0]
@@ -345,24 +345,24 @@ def registerProfilePeaks(inputProfile):
 	
 	return resampleProfile(inputProfileNoNaNs, leftPeak, templateLeftPeak, rightPeak, templateRightPeak)
 
-	#pylab.plot(inputProfileNoNaNs)
-	#pylab.plot(resampledProfile)
+	#plt.plot(inputProfileNoNaNs)
+	#plt.plot(resampledProfile)
 
-	#pylab.show()
+	#plt.show()
 
 	#quit()
 	#scipy.ndimage.morphology.grey_dilation(numpy.atleast_2d(T), footprint = numpy.ones((1, dilateSize)
-	#pylab.plot(scaledContours['outer'][0], scaledContours['outer'][1], **lineProps)
+	#plt.plot(scaledContours['outer'][0], scaledContours['outer'][1], **lineProps)
 
 
 def plotRectangle(Position, lineProps):
 	
 	assert(isinstance(lineProps, dict)),"LineProps must be a dict"
 
-	pylab.plot([Position[0], Position[0]], [Position[1], Position[1] + Position[3]], **lineProps)
-	pylab.plot([Position[0], Position[0] + Position[2]], [Position[1], Position[1]], **lineProps)
-	pylab.plot([Position[0] + Position[2], Position[0] + Position[2]], [Position[1], Position[1] + Position[3]], **lineProps)
-	pylab.plot([Position[0], Position[0] + Position[2]], [Position[1] + Position[3], Position[1] + Position[3]], **lineProps)
+	plt.plot([Position[0], Position[0]], [Position[1], Position[1] + Position[3]], **lineProps)
+	plt.plot([Position[0], Position[0] + Position[2]], [Position[1], Position[1]], **lineProps)
+	plt.plot([Position[0] + Position[2], Position[0] + Position[2]], [Position[1], Position[1] + Position[3]], **lineProps)
+	plt.plot([Position[0], Position[0] + Position[2]], [Position[1] + Position[3], Position[1] + Position[3]], **lineProps)
 
 #def fn(val):
 #	
@@ -400,14 +400,14 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
 	FID.close()
 	#print seg['IMG'].dtype
 
-	#pylab.subplot(1, 4, 1); CCSegUtils.showIMG(seg['initialSeg'])
-	#pylab.subplot(1, 4, 2); CCSegUtils.showIMG(seg['finalSeg'])
-	#pylab.subplot(1, 4, 3); CCSegUtils.showIMG(seg['finalSegNoArtefacts'])
-	#pylab.subplot(1, 4, 4); CCSegUtils.showIMG(seg['IMG'])
+	#plt.subplot(1, 4, 1); CCSegUtils.showIMG(seg['initialSeg'])
+	#plt.subplot(1, 4, 2); CCSegUtils.showIMG(seg['finalSeg'])
+	#plt.subplot(1, 4, 3); CCSegUtils.showIMG(seg['finalSegNoArtefacts'])
+	#plt.subplot(1, 4, 4); CCSegUtils.showIMG(seg['IMG'])
 	
 	
-	#pylab.gcf().set_size_inches((20, 10), forward = True)
-	#pylab.show()
+	#plt.gcf().set_size_inches((20, 10), forward = True)
+	#plt.show()
 	#quit()	
 	if os.path.isfile(segManeditMATFile):
 		print("using man edit seg")
@@ -433,7 +433,7 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
 
 	if doGraphics:
 		outputPNG = os.path.join(outputDir, 'thickness', subjectID + "_seg.png")
-		pylab.clf()
+		plt.clf()
 		
 		CCSegUtils.showIMG(seg['IMG'])
 		finalSegContours, hierarchy = CCSegUtils.findContours(numpy.uint8(finalSeg), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
@@ -441,8 +441,8 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
 		for z in range(len(finalSegContours)):
 			CCSegUtils.plotContour(numpy.squeeze(finalSegContours[z]).T, lineProps = lineProps)
 		
-		pylab.gcf().set_size_inches((20, 10), forward = True)
-		pylab.savefig(outputPNG)
+		plt.gcf().set_size_inches((20, 10), forward = True)
+		plt.savefig(outputPNG)
 		CCSegUtils.cropAutoWhitePNG(outputPNG)
 	
 	if doGraphics:
@@ -534,9 +534,9 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
 		
 			outputPNG = os.path.join(PNGDirectory, subjectID + "_thickness.png")
 
-		pylab.clf()
+		plt.clf()
 		
-		pylab.subplot(2, 1, 1)
+		plt.subplot(2, 1, 1)
 		for z in range(len(streamlines)):
 			if validStreamlines[z] == True:
 				lineProps = {'color': 'b', 'linewidth': 2}
@@ -545,53 +545,53 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
 			CCSegUtils.plotContour(streamlines[z], closed = False, lineProps = lineProps)
 			
 			if numpy.mod(z, 5) == 0:
-				#pylab.text(streamlines[z][0, 0], streamlines[z][1, 0], str(z))startV[0, z], startV[1, z]
-				pylab.text(startV[0, z], startV[1, z], str(z), horizontalalignment='center', verticalalignment='center', backgroundcolor='w')
+				#plt.text(streamlines[z][0, 0], streamlines[z][1, 0], str(z))startV[0, z], startV[1, z]
+				plt.text(startV[0, z], startV[1, z], str(z), horizontalalignment='center', verticalalignment='center', backgroundcolor='w')
 			#CCSegUtils.plotContour(streamlinesOuter[z], closed = False)
 			#CCSegUtils.plotContour(streamlinesInner[z], closed = False)
 		CCSegUtils.plotContour(streamlines[4], closed = False, lineProps = {'color': 'y', 'linewidth': 5})
 		CCSegUtils.plotContour(streamlines[94], closed = False, lineProps = {'color': 'k', 'linewidth': 5})
 		lineProps = {'color': 'g', 'linewidth': 2}
-		pylab.plot(scaledContours['inner'][0], scaledContours['inner'][1], **lineProps)
+		plt.plot(scaledContours['inner'][0], scaledContours['inner'][1], **lineProps)
 		lineProps = {'color': 'r', 'linewidth': 2}
-		pylab.plot(scaledContours['outer'][0], scaledContours['outer'][1], **lineProps)
+		plt.plot(scaledContours['outer'][0], scaledContours['outer'][1], **lineProps)
 		lineProps = {'color': 'b', 'linewidth': 2}
-		pylab.plot(bendingAngleV[0], bendingAngleV[1], **lineProps)
+		plt.plot(bendingAngleV[0], bendingAngleV[1], **lineProps)
 		
-		pylab.gca().invert_yaxis()
-		pylab.gca().get_xaxis().set_ticks([])
-		pylab.gca().get_yaxis().set_ticks([])
-		pylab.title('Streamlines')
+		plt.gca().invert_yaxis()
+		plt.gca().get_xaxis().set_ticks([])
+		plt.gca().get_yaxis().set_ticks([])
+		plt.title('Streamlines')
 		idealThicknessProfile, templatePeaks = getIdealThicknessProfile(100, returnPeaks = True)
 		
-		pylab.subplot(2, 1, 2)
-		thicknessProfilePlot, = pylab.plot(thicknessProfile)
-		registeredPeaksThicknessProfilePlot, = pylab.plot(registeredThicknessProfilePeaks)
-		registeredCovThicknessProfilePlot, = pylab.plot(registeredThicknessProfileCov)
-		idealThicknessProfilePlot, = pylab.plot(idealThicknessProfile / 25.0)
-		pylab.legend([thicknessProfilePlot, registeredPeaksThicknessProfilePlot, registeredCovThicknessProfilePlot, idealThicknessProfilePlot], ['Original thickness profile', 'Registered thickness profile peaks', 'Registered thickness profile cov', 'Ideal'], loc = 9)
-		pylab.title('Thickness profile')
-		pylab.xlabel('Node')
-		pylab.ylabel('Thickness (mm)')
+		plt.subplot(2, 1, 2)
+		thicknessProfilePlot, = plt.plot(thicknessProfile)
+		registeredPeaksThicknessProfilePlot, = plt.plot(registeredThicknessProfilePeaks)
+		registeredCovThicknessProfilePlot, = plt.plot(registeredThicknessProfileCov)
+		idealThicknessProfilePlot, = plt.plot(idealThicknessProfile / 25.0)
+		plt.legend([thicknessProfilePlot, registeredPeaksThicknessProfilePlot, registeredCovThicknessProfilePlot, idealThicknessProfilePlot], ['Original thickness profile', 'Registered thickness profile peaks', 'Registered thickness profile cov', 'Ideal'], loc = 9)
+		plt.title('Thickness profile')
+		plt.xlabel('Node')
+		plt.ylabel('Thickness (mm)')
 
-		#pylab.subplot(1, 2, 2); CCSegUtils.showIMG(FY, extent = [xx[0], xx[-1], yy[0], yy[-1]], ticks = True);
+		#plt.subplot(1, 2, 2); CCSegUtils.showIMG(FY, extent = [xx[0], xx[-1], yy[0], yy[-1]], ticks = True);
 		#for z in range(numpy.size(sxi)):
 		#	CCSegUtils.plotContour(streamlinesOuter[z], closed = False)
 		#	CCSegUtils.plotContour(streamlinesInner[z], closed = False)
-		#pylab.plot(scaledxi[0], scaledyi[0])
-		#pylab.plot(scaledxo[0], scaledyo[0])
+		#plt.plot(scaledxi[0], scaledyi[0])
+		#plt.plot(scaledxo[0], scaledyo[0])
 		
 		#print scaledxi
 		#print scaledyi
 #	CCSegUtils.showIMG(FX)
 		
 		#print outputPNG
-		pylab.gcf().set_size_inches((20, 10), forward = True)
-		pylab.savefig(outputPNG)
+		plt.gcf().set_size_inches((20, 10), forward = True)
+		plt.savefig(outputPNG)
 		CCSegUtils.cropAutoWhitePNG(outputPNG)
 		
-	#pylab.gcf().set_size_inches((20, 10), forward = True)
-	#pylab.show()
+	#plt.gcf().set_size_inches((20, 10), forward = True)
+	#plt.show()
 	#quit()
 	
 	# perform Witelson and "Hofer and Frahm" parcellations on the CCs, output parcellations of the streamlines
@@ -607,7 +607,7 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
 
 	minColRow = int(numpy.mean(I[0][numpy.where(I[1] == minCol)]))
 	maxColRow = int(numpy.mean(I[0][numpy.where(I[1] == maxCol)]))
-	pylab.clf()
+	plt.clf()
 
 	minColX = xx[minCol]
 	minColY = yy[minColRow]
@@ -745,19 +745,19 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
 
 	#R = 1
 	#SC = 1
-	#pylab.subplot(SR, SC, 1)
+	#plt.subplot(SR, SC, 1)
 	#CCSegUtils.showIMG(FY, extent = [xx[0], xx[-1], yy[0], yy[-1]], ticks = True);
 	#CCSegUtils.showIMG(midLineCrossInMaskIMG, extent = [xx[0], xx[-1], yy[0], yy[-1]], ticks = True)
-	#pylab.plot(inferiorContourXY[0, rightMostIDX], inferiorContourXY[1, rightMostIDX], 'r*')
-#	pylab.colorbar()
-#	pylab.subplot(SR, SC, 2)
+	#plt.plot(inferiorContourXY[0, rightMostIDX], inferiorContourXY[1, rightMostIDX], 'r*')
+#	plt.colorbar()
+#	plt.subplot(SR, SC, 2)
 #	CCSegUtils.showIMG(midLineCrossInMaskIMG == 1)
 #	
-#	pylab.subplot(SR, SC, 3)
+#	plt.subplot(SR, SC, 3)
 #	CCSegUtils.showIMG(pixelsAtSignChangeIMG)
 #	
-	#pylab.gcf().set_size_inches((20, 10), forward = True)
-	#pylab.show()
+	#plt.gcf().set_size_inches((20, 10), forward = True)
+	#plt.show()
 	#quit()
 #	
 	
@@ -806,21 +806,21 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
 	del emsellI
 
 	#CCSegUtils.showIMG(maskClosed, extent = [xx[0], xx[-1], yy[0], yy[-1]])
-	#pylab.subplot(2, 1, 1)
+	#plt.subplot(2, 1, 1)
 	#CCSegUtils.showIMG(witelsonRGB, extent = [xx[0], xx[-1], yy[0], yy[-1]])
-	#pylab.title('Witelson parcellation')
+	#plt.title('Witelson parcellation')
 	
-	#pylab.subplot(2, 1, 2)
+	#plt.subplot(2, 1, 2)
 	#CCSegUtils.showIMG(hoferFrahmRGB, extent = [xx[0], xx[-1], yy[0], yy[-1]])
-	#pylab.title('Hofer and Frahm parcellation')
-	#pylab.plot(xx, cropLineM * xx + cropLineC, 'b-')
+	#plt.title('Hofer and Frahm parcellation')
+	#plt.plot(xx, cropLineM * xx + cropLineC, 'b-')
 
-	#pylab.plot(minColX, minColY, 'g*')
-	#pylab.plot(maxColX, maxColY, 'r*')
+	#plt.plot(minColX, minColY, 'g*')
+	#plt.plot(maxColX, maxColY, 'r*')
 
-	#pylab.gcf().set_size_inches((20, 10), forward = True)
-	#pylab.show()
-	#pylab.savefig(outputPNG)
+	#plt.gcf().set_size_inches((20, 10), forward = True)
+	#plt.show()
+	#plt.savefig(outputPNG)
 		
 
 		
@@ -834,32 +834,32 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
 	emsellNodeLabels = numpy.uint8(emsellNodeLabels)
 	
 	if doGraphics:
-		pylab.clf()
+		plt.clf()
 		
 		lineProps = {'color': 'y', 'linewidth': 2}
 		
 		SR = 3
 		SC = 1
-		pylab.subplot(SR, SC, 1)
+		plt.subplot(SR, SC, 1)
 		CCSegUtils.showIMG(witelsonRGB, extent = [xx[0], xx[-1], yy[0], yy[-1]])
 		for z in range(numThicknessNodes):
-			pylab.text(startV[0, z], startV[1, z], str(witelsonNodeLabels[z]), horizontalalignment='center', verticalalignment='center')
+			plt.text(startV[0, z], startV[1, z], str(witelsonNodeLabels[z]), horizontalalignment='center', verticalalignment='center')
 		CCSegUtils.plotStreamlines(streamlines, lineProps = lineProps)
-		pylab.title('Witelson parcellation')
+		plt.title('Witelson parcellation')
 		
-		pylab.subplot(SR, SC, 2)
+		plt.subplot(SR, SC, 2)
 		CCSegUtils.showIMG(hoferFrahmRGB, extent = [xx[0], xx[-1], yy[0], yy[-1]])
 		for z in range(numThicknessNodes):
-			pylab.text(startV[0, z], startV[1, z], str(hoferFrahmNodeLabels[z]), horizontalalignment='center', verticalalignment='center')
+			plt.text(startV[0, z], startV[1, z], str(hoferFrahmNodeLabels[z]), horizontalalignment='center', verticalalignment='center')
 		CCSegUtils.plotStreamlines(streamlines, lineProps = lineProps)
-		pylab.title('Hofer and Frahm parcellation')
+		plt.title('Hofer and Frahm parcellation')
 
-		pylab.subplot(SR, SC, 3)
+		plt.subplot(SR, SC, 3)
 		CCSegUtils.showIMG(emsellRGB, extent = [xx[0], xx[-1], yy[0], yy[-1]])
 		for z in range(numThicknessNodes):
-			pylab.text(startV[0, z], startV[1, z], str(emsellNodeLabels[z]), horizontalalignment='center', verticalalignment='center')
+			plt.text(startV[0, z], startV[1, z], str(emsellNodeLabels[z]), horizontalalignment='center', verticalalignment='center')
 		CCSegUtils.plotStreamlines(streamlines, lineProps = lineProps)
-		pylab.title('Emsell parcellation')
+		plt.title('Emsell parcellation')
 
 		parcellationPNGDirectory = os.path.join(outputDir, "parcellations")
 		try:
@@ -872,11 +872,11 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
 
 		outputPNG = os.path.join(parcellationPNGDirectory, subjectID + "_parcellations.png")
 		
-		pylab.gcf().set_size_inches((20, 10), forward = True)
-		#pylab.show()
+		plt.gcf().set_size_inches((20, 10), forward = True)
+		#plt.show()
 		#quit()
 
-		pylab.savefig(outputPNG)
+		plt.savefig(outputPNG)
 		CCSegUtils.cropAutoWhitePNG(outputPNG)
 		
 	pixelArea = (xx[1] - xx[0]) * (yy[1] - yy[0])

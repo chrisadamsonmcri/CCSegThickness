@@ -1,5 +1,5 @@
 import numpy
-import pylab
+import matplotlib.pyplot as plt
 
 import os
 
@@ -229,9 +229,9 @@ def plotContour(C, lineProps = None, closed = True):
 		AY = numpy.array(C[1])
 
 	if lineProps != None:
-		pylab.plot(AX, AY, **lineProps)
+		plt.plot(AX, AY, **lineProps)
 	else:
-		pylab.plot(AX, AY)
+		plt.plot(AX, AY)
 
 def normPDF(X, MU, SIGMA):
 	XC = X - MU
@@ -250,7 +250,7 @@ def empty2DList(SZ):
 def removeWhiteRowsColsPNG(IMGFileName, padding = (10, 10), blackImage = False):
 	assert(os.path.isfile(IMGFileName)),"PNG file does not exist"
 
-	IMG = pylab.imread(IMGFileName)
+	IMG = plt.imread(IMGFileName)
 	
 	if blackImage == True:
 		IMG = 1 - IMG
@@ -293,7 +293,7 @@ def removeWhiteRowsColsPNG(IMGFileName, padding = (10, 10), blackImage = False):
 def cropAutoWhitePNG(IMGFileName, padding = (10, 10)):
 	assert(os.path.isfile(IMGFileName)),"PNG file does not exist"
 
-	IMG = pylab.imread(IMGFileName)
+	IMG = plt.imread(IMGFileName)
 	
 	if IMG.shape[2] == 4:
 		T = numpy.squeeze(numpy.take(IMG, [0, 1, 2], axis = 2))
@@ -321,11 +321,11 @@ def cropAutoWhitePNG(IMGFileName, padding = (10, 10)):
 
 	scipy.misc.imsave(IMGFileName, T)
 
-	#pylab.clf()
+	#plt.clf()
 
-	#pylab.imshow(T)
-	#pylab.gcf().set_size_inches((20, 10), forward = True)
-	#pylab.show()
+	#plt.imshow(T)
+	#plt.gcf().set_size_inches((20, 10), forward = True)
+	#plt.show()
 	
 	#pass	
 
@@ -333,28 +333,28 @@ def imshow(IMG, extent = None, ticks = False):
 	showIMG(IMG, extent = extent, ticks = ticks)
 
 def showIMG(IMG, extent = None, ticks = False):
-	pylab.imshow(IMG, origin = 'lower', extent = extent)
+	plt.imshow(IMG, origin = 'lower', extent = extent)
 
-	pylab.set_cmap(pylab.cm.gray)
+	plt.set_cmap(plt.cm.gray)
 	
 	if extent == None:
-		pylab.ylim((0, IMG.shape[0] - 1))
-		pylab.xlim((0, IMG.shape[1] - 1))
+		plt.ylim((0, IMG.shape[0] - 1))
+		plt.xlim((0, IMG.shape[1] - 1))
 	else:
-		pylab.ylim((extent[2], extent[3]))
-		pylab.xlim((extent[0], extent[1]))
+		plt.ylim((extent[2], extent[3]))
+		plt.xlim((extent[0], extent[1]))
 	
 	if not ticks:
-		pylab.gca().get_xaxis().set_ticks([])
-		pylab.gca().get_yaxis().set_ticks([])
-	pylab.gca().invert_yaxis()
+		plt.gca().get_xaxis().set_ticks([])
+		plt.gca().get_yaxis().set_ticks([])
+	plt.gca().invert_yaxis()
 
 def imshow(IMG, extent = None, ticks = False):
 	showIMG(IMG, extent = extent, ticks = ticks)
 
-def pylabShow():
-	pylab.gcf().set_size_inches((20, 10), forward = True)
-	pylab.show()
+def pltShow():
+	plt.gcf().set_size_inches((20, 10), forward = True)
+	plt.show()
 
 def MNI152FLIRTSymNeckCropTemplate(skullStripped = False):
 	scriptPath = os.path.realpath(__file__)
