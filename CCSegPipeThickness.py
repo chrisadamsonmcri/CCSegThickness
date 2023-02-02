@@ -243,30 +243,30 @@ def registerProfileCovariance(inputProfile):
     leftPeakValues = numpy.arange(5, numpy.round(numNodes / 4.0) + 1)
     rightPeakValues = numpy.arange(numpy.round(numNodes * 3.0 / 4.0), numNodes - 1)
 
-	costFunction = numpy.zeros((leftPeakValues.size, rightPeakValues.size))
-	
-	for curLeftIDX in range(leftPeakValues.size):
-		curLeftPeak = leftPeakValues[curLeftIDX]
-		for curRightIDX in range(rightPeakValues.size):
-			curRightPeak = rightPeakValues[curRightIDX]
-			R = numpy.zeros_like(realInputProfiles)
-			for z in range(realInputProfiles.shape[1]):
-#			R = resampleProfiles(Profiles, curLeftPeak, curRightPeak, TemplateLeftPeak, TemplateRightPeak);
-				R[:, z] = resampleProfile(realInputProfiles[:, z], curLeftPeak, templatePeaks[0], curRightPeak, templatePeaks[1])
-			T = (R - numpy.mean(R, axis = 0)) * idealThicknessProfile
-			costFunction[curLeftIDX, curRightIDX] = numpy.sum(T)
-	
-	I = numpy.argmax(costFunction)
-	ID = numpy.unravel_index(indices = I, dims = costFunction.shape)
-	
-	R = numpy.zeros_like(realInputProfiles)
-	for z in range(realInputProfiles.shape[1]):
-		R[:, z] = resampleProfile(realInputProfiles[:, z], leftPeakValues[ID[0]], templatePeaks[0], rightPeakValues[ID[1]], templatePeaks[1])
-	
-	return R
-	#plt.clf()
-	#CCSegUtils.showIMG(costFunction)
-	#plt.show()
+    costFunction = numpy.zeros((leftPeakValues.size, rightPeakValues.size))
+    
+    for curLeftIDX in range(leftPeakValues.size):
+        curLeftPeak = leftPeakValues[curLeftIDX]
+        for curRightIDX in range(rightPeakValues.size):
+            curRightPeak = rightPeakValues[curRightIDX]
+            R = numpy.zeros_like(realInputProfiles)
+            for z in range(realInputProfiles.shape[1]):
+#            R = resampleProfiles(Profiles, curLeftPeak, curRightPeak, TemplateLeftPeak, TemplateRightPeak)
+                R[:, z] = resampleProfile(realInputProfiles[:, z], curLeftPeak, templatePeaks[0], curRightPeak, templatePeaks[1])
+            T = (R - numpy.mean(R, axis = 0)) * idealThicknessProfile
+            costFunction[curLeftIDX, curRightIDX] = numpy.sum(T)
+    
+    I = numpy.argmax(costFunction)
+    ID = numpy.unravel_index(indices = I, dims = costFunction.shape)
+    
+    R = numpy.zeros_like(realInputProfiles)
+    for z in range(realInputProfiles.shape[1]):
+        R[:, z] = resampleProfile(realInputProfiles[:, z], leftPeakValues[ID[0]], templatePeaks[0], rightPeakValues[ID[1]], templatePeaks[1])
+    
+    return R
+    #plt.clf()
+    #CCSegUtils.showIMG(costFunction)
+    #plt.show()
 
     #quit()
 #    for curLeftIDX = 1:numel(leftPeakValues)
@@ -288,11 +288,11 @@ def registerProfileCovariance(inputProfile):
 #    BestOffsets = [leftPeakValues(ID), rightPeakValues(JD)];
 #    RegisteredProfiles = resampleProfiles(Profiles, BestOffsets(1), BestOffsets(2), TemplateLeftPeak, TemplateRightPeak);
 #
-	
-	#print idealThicknessProfile
-	#plt.plot(idealThicknessProfile)
-	#plt.show()
-	
+    
+    #print idealThicknessProfile
+    #plt.plot(idealThicknessProfile)
+    #plt.show()
+    
 def registerProfilePeaks(inputProfile):
     
     idealThicknessProfile, peaks = getIdealThicknessProfile(inputProfile.size, returnPeaks = True)
@@ -309,60 +309,60 @@ def registerProfilePeaks(inputProfile):
     
     inputProfileNoNaNs = scipy.ndimage.filters.gaussian_filter1d(inputProfileNoNaNs, 1, mode='nearest')
 
-	SE = numpy.ones((1, int(numpy.round(inputProfile.size / 5.0))))
-	D = scipy.ndimage.morphology.grey_dilation(numpy.atleast_2d(inputProfileNoNaNs), footprint = SE)
-	D = numpy.ravel(D)
-#	plt.subplot(1, 2, 1)
-#	plt.plot(inputProfile)
-#	plt.subplot(1, 2, 2)
-#	plt.plot(D)
-#	print D
-#	plt.show()
-	#thicknessProfile[numpy.logical_not(validStreamlines)] = numpy.nan
-	
-	peaks = numpy.where(inputProfileNoNaNs == D)[0]
-	#print peaks
-	leftPeaks = peaks[numpy.where(peaks < inputProfile.size / 2 - 1)]
-	rightPeaks = peaks[numpy.where(peaks > inputProfile.size / 2 - 1)]
-	
-	#print leftPeaks
-	#print rightPeaks
-	
-	if numpy.size(leftPeaks) > 0:
-		I = numpy.argmax(inputProfileNoNaNs[leftPeaks])
-		leftPeak = leftPeaks[0]
-		leftPeak = leftPeaks[I]
-	else:
-		leftPeak = templateLeftPeak
-	
-	if numpy.size(rightPeaks) > 0:
-		I = numpy.argmax(inputProfileNoNaNs[rightPeaks])
-		rightPeak = rightPeaks[I]
-		#rightPeak = rightPeaks[-1]
+    SE = numpy.ones((1, int(numpy.round(inputProfile.size / 5.0))))
+    D = scipy.ndimage.morphology.grey_dilation(numpy.atleast_2d(inputProfileNoNaNs), footprint = SE)
+    D = numpy.ravel(D)
+#    plt.subplot(1, 2, 1)
+#    plt.plot(inputProfile)
+#    plt.subplot(1, 2, 2)
+#    plt.plot(D)
+#    print D
+#    plt.show()
+    #thicknessProfile[numpy.logical_not(validStreamlines)] = numpy.nan
+    
+    peaks = numpy.where(inputProfileNoNaNs == D)[0]
+    #print peaks
+    leftPeaks = peaks[numpy.where(peaks < inputProfile.size / 2 - 1)]
+    rightPeaks = peaks[numpy.where(peaks > inputProfile.size / 2 - 1)]
+    
+    #print leftPeaks
+    #print rightPeaks
+    
+    if numpy.size(leftPeaks) > 0:
+        I = numpy.argmax(inputProfileNoNaNs[leftPeaks])
+        leftPeak = leftPeaks[0]
+        leftPeak = leftPeaks[I]
+    else:
+        leftPeak = templateLeftPeak
+    
+    if numpy.size(rightPeaks) > 0:
+        I = numpy.argmax(inputProfileNoNaNs[rightPeaks])
+        rightPeak = rightPeaks[I]
+        #rightPeak = rightPeaks[-1]
 
     else:
         rightPeak = templateRightPeak
     
     return resampleProfile(inputProfileNoNaNs, leftPeak, templateLeftPeak, rightPeak, templateRightPeak)
 
-	#plt.plot(inputProfileNoNaNs)
-	#plt.plot(resampledProfile)
+    #plt.plot(inputProfileNoNaNs)
+    #plt.plot(resampledProfile)
 
-	#plt.show()
+    #plt.show()
 
-	#quit()
-	#scipy.ndimage.morphology.grey_dilation(numpy.atleast_2d(T), footprint = numpy.ones((1, dilateSize)
-	#plt.plot(scaledContours['outer'][0], scaledContours['outer'][1], **lineProps)
+    #quit()
+    #scipy.ndimage.morphology.grey_dilation(numpy.atleast_2d(T), footprint = numpy.ones((1, dilateSize)
+    #plt.plot(scaledContours['outer'][0], scaledContours['outer'][1], **lineProps)
 
 
 def plotRectangle(Position, lineProps):
     
     assert(isinstance(lineProps, dict)),"LineProps must be a dict"
 
-	plt.plot([Position[0], Position[0]], [Position[1], Position[1] + Position[3]], **lineProps)
-	plt.plot([Position[0], Position[0] + Position[2]], [Position[1], Position[1]], **lineProps)
-	plt.plot([Position[0] + Position[2], Position[0] + Position[2]], [Position[1], Position[1] + Position[3]], **lineProps)
-	plt.plot([Position[0], Position[0] + Position[2]], [Position[1] + Position[3], Position[1] + Position[3]], **lineProps)
+    plt.plot([Position[0], Position[0]], [Position[1], Position[1] + Position[3]], **lineProps)
+    plt.plot([Position[0], Position[0] + Position[2]], [Position[1], Position[1]], **lineProps)
+    plt.plot([Position[0] + Position[2], Position[0] + Position[2]], [Position[1], Position[1] + Position[3]], **lineProps)
+    plt.plot([Position[0], Position[0] + Position[2]], [Position[1] + Position[3], Position[1] + Position[3]], **lineProps)
 
 #def fn(val):
 #    
@@ -400,27 +400,27 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
     FID.close()
     #print seg['IMG'].dtype
 
-	#plt.subplot(1, 4, 1); CCSegUtils.showIMG(seg['initialSeg'])
-	#plt.subplot(1, 4, 2); CCSegUtils.showIMG(seg['finalSeg'])
-	#plt.subplot(1, 4, 3); CCSegUtils.showIMG(seg['finalSegNoArtefacts'])
-	#plt.subplot(1, 4, 4); CCSegUtils.showIMG(seg['IMG'])
-	
-	
-	#plt.gcf().set_size_inches((20, 10), forward = True)
-	#plt.show()
-	#quit()	
-	if os.path.isfile(segManeditMATFile):
-		print("using man edit seg")
-		FID = h5py.File(segManeditMATFile, 'r')
-		finalSeg = numpy.array(FID['finalSegManEdit']) > 0
-		FID.close()	
-	else:
-		if seg['watershedSeg'] is None:
-			finalSeg = numpy.array(seg['finalSegNoArtefacts'])
-		else:
-			finalSeg = numpy.array(seg['watershedSeg'])
-	
-	finalSeg = CCSegUtils.largestComponent(finalSeg)
+    #plt.subplot(1, 4, 1); CCSegUtils.showIMG(seg['initialSeg'])
+    #plt.subplot(1, 4, 2); CCSegUtils.showIMG(seg['finalSeg'])
+    #plt.subplot(1, 4, 3); CCSegUtils.showIMG(seg['finalSegNoArtefacts'])
+    #plt.subplot(1, 4, 4); CCSegUtils.showIMG(seg['IMG'])
+    
+    
+    #plt.gcf().set_size_inches((20, 10), forward = True)
+    #plt.show()
+    #quit()    
+    if os.path.isfile(segManeditMATFile):
+        print("using man edit seg")
+        FID = h5py.File(segManeditMATFile, 'r')
+        finalSeg = numpy.array(FID['finalSegManEdit']) > 0
+        FID.close()    
+    else:
+        if seg['watershedSeg'] is None:
+            finalSeg = numpy.array(seg['finalSegNoArtefacts'])
+        else:
+            finalSeg = numpy.array(seg['watershedSeg'])
+    
+    finalSeg = CCSegUtils.largestComponent(finalSeg)
 
     if doGraphics:
         try:
@@ -431,30 +431,30 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
             else:
                 raise Exception
 
-	if doGraphics:
-		outputPNG = os.path.join(outputDir, 'thickness', subjectID + "_seg.png")
-		plt.clf()
-		
-		CCSegUtils.showIMG(seg['IMG'])
-		finalSegContours, hierarchy = CCSegUtils.findContours(numpy.uint8(finalSeg), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-		lineProps = {'color': 'b', 'linewidth': 2}
-		for z in range(len(finalSegContours)):
-			CCSegUtils.plotContour(numpy.squeeze(finalSegContours[z]).T, lineProps = lineProps)
-		
-		plt.gcf().set_size_inches((20, 10), forward = True)
-		plt.savefig(outputPNG)
-		CCSegUtils.cropAutoWhitePNG(outputPNG)
-	
-	if doGraphics:
-		outputPNG = os.path.join(outputDir, 'endpoint', subjectID + "_endpoints.png")
-	else:
-		outputPNG = None
-	try:
-		finalContours = LaplaceThicknessMethod.endpointsFind(finalSeg, outputPNG = outputPNG)
-	except Exception as e:
-		raise(e)
-	
-	#return
+    if doGraphics:
+        outputPNG = os.path.join(outputDir, 'thickness', subjectID + "_seg.png")
+        plt.clf()
+        
+        CCSegUtils.showIMG(seg['IMG'])
+        finalSegContours, hierarchy = CCSegUtils.findContours(numpy.uint8(finalSeg), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        lineProps = {'color': 'b', 'linewidth': 2}
+        for z in range(len(finalSegContours)):
+            CCSegUtils.plotContour(numpy.squeeze(finalSegContours[z]).T, lineProps = lineProps)
+        
+        plt.gcf().set_size_inches((20, 10), forward = True)
+        plt.savefig(outputPNG)
+        CCSegUtils.cropAutoWhitePNG(outputPNG)
+    
+    if doGraphics:
+        outputPNG = os.path.join(outputDir, 'endpoint', subjectID + "_endpoints.png")
+    else:
+        outputPNG = None
+    try:
+        finalContours = LaplaceThicknessMethod.endpointsFind(finalSeg, outputPNG = outputPNG)
+    except Exception as e:
+        raise(e)
+    
+    #return
 
     xx, yy, scaledContours, streamlines, validStreamlines, solvedImage = LaplaceThicknessMethod.laplaceEquation2DContours(finalContours['xi'], finalContours['yi'], finalContours['xo'][::-1], finalContours['yo'][::-1], seg['templatePixdims'][0], seg['templatePixdims'][1], 1.0 / numpy.min(seg['templatePixdims']), 100, redoFactorisation = True)
     
@@ -525,87 +525,87 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
     #else:
     #    registeredThicknessProfile = registerProfilePeaks(thicknessProfile)
 
-		plt.clf()
-		
-		plt.subplot(2, 1, 1)
-		for z in range(len(streamlines)):
-			if validStreamlines[z] == True:
-				lineProps = {'color': 'b', 'linewidth': 2}
-			else:
-				lineProps = {'color': 'm', 'linewidth': 2}
-			CCSegUtils.plotContour(streamlines[z], closed = False, lineProps = lineProps)
-			
-			if numpy.mod(z, 5) == 0:
-				#plt.text(streamlines[z][0, 0], streamlines[z][1, 0], str(z))startV[0, z], startV[1, z]
-				plt.text(startV[0, z], startV[1, z], str(z), horizontalalignment='center', verticalalignment='center', backgroundcolor='w')
-			#CCSegUtils.plotContour(streamlinesOuter[z], closed = False)
-			#CCSegUtils.plotContour(streamlinesInner[z], closed = False)
-		CCSegUtils.plotContour(streamlines[4], closed = False, lineProps = {'color': 'y', 'linewidth': 5})
-		CCSegUtils.plotContour(streamlines[94], closed = False, lineProps = {'color': 'k', 'linewidth': 5})
-		lineProps = {'color': 'g', 'linewidth': 2}
-		plt.plot(scaledContours['inner'][0], scaledContours['inner'][1], **lineProps)
-		lineProps = {'color': 'r', 'linewidth': 2}
-		plt.plot(scaledContours['outer'][0], scaledContours['outer'][1], **lineProps)
-		lineProps = {'color': 'b', 'linewidth': 2}
-		plt.plot(bendingAngleV[0], bendingAngleV[1], **lineProps)
-		
-		plt.gca().invert_yaxis()
-		plt.gca().get_xaxis().set_ticks([])
-		plt.gca().get_yaxis().set_ticks([])
-		plt.title('Streamlines')
-		idealThicknessProfile, templatePeaks = getIdealThicknessProfile(100, returnPeaks = True)
-		
-		plt.subplot(2, 1, 2)
-		thicknessProfilePlot, = plt.plot(thicknessProfile)
-		registeredPeaksThicknessProfilePlot, = plt.plot(registeredThicknessProfilePeaks)
-		registeredCovThicknessProfilePlot, = plt.plot(registeredThicknessProfileCov)
-		idealThicknessProfilePlot, = plt.plot(idealThicknessProfile / 25.0)
-		plt.legend([thicknessProfilePlot, registeredPeaksThicknessProfilePlot, registeredCovThicknessProfilePlot, idealThicknessProfilePlot], ['Original thickness profile', 'Registered thickness profile peaks', 'Registered thickness profile cov', 'Ideal'], loc = 9)
-		plt.title('Thickness profile')
-		plt.xlabel('Node')
-		plt.ylabel('Thickness (mm)')
+    plt.clf()
+        
+    plt.subplot(2, 1, 1)
+    for z in range(len(streamlines)):
+        if validStreamlines[z] == True:
+            lineProps = {'color': 'b', 'linewidth': 2}
+        else:
+            lineProps = {'color': 'm', 'linewidth': 2}
+        CCSegUtils.plotContour(streamlines[z], closed = False, lineProps = lineProps)
+        
+        if numpy.mod(z, 5) == 0:
+            #plt.text(streamlines[z][0, 0], streamlines[z][1, 0], str(z))startV[0, z], startV[1, z]
+            plt.text(startV[0, z], startV[1, z], str(z), horizontalalignment='center', verticalalignment='center', backgroundcolor='w')
+        #CCSegUtils.plotContour(streamlinesOuter[z], closed = False)
+        #CCSegUtils.plotContour(streamlinesInner[z], closed = False)
+    CCSegUtils.plotContour(streamlines[4], closed = False, lineProps = {'color': 'y', 'linewidth': 5})
+    CCSegUtils.plotContour(streamlines[94], closed = False, lineProps = {'color': 'k', 'linewidth': 5})
+    lineProps = {'color': 'g', 'linewidth': 2}
+    plt.plot(scaledContours['inner'][0], scaledContours['inner'][1], **lineProps)
+    lineProps = {'color': 'r', 'linewidth': 2}
+    plt.plot(scaledContours['outer'][0], scaledContours['outer'][1], **lineProps)
+    lineProps = {'color': 'b', 'linewidth': 2}
+    plt.plot(bendingAngleV[0], bendingAngleV[1], **lineProps)
+    
+    plt.gca().invert_yaxis()
+    plt.gca().get_xaxis().set_ticks([])
+    plt.gca().get_yaxis().set_ticks([])
+    plt.title('Streamlines')
+    idealThicknessProfile, templatePeaks = getIdealThicknessProfile(100, returnPeaks = True)
+    
+    plt.subplot(2, 1, 2)
+    thicknessProfilePlot, = plt.plot(thicknessProfile)
+    registeredPeaksThicknessProfilePlot, = plt.plot(registeredThicknessProfilePeaks)
+    registeredCovThicknessProfilePlot, = plt.plot(registeredThicknessProfileCov)
+    idealThicknessProfilePlot, = plt.plot(idealThicknessProfile / 25.0)
+    plt.legend([thicknessProfilePlot, registeredPeaksThicknessProfilePlot, registeredCovThicknessProfilePlot, idealThicknessProfilePlot], ['Original thickness profile', 'Registered thickness profile peaks', 'Registered thickness profile cov', 'Ideal'], loc = 9)
+    plt.title('Thickness profile')
+    plt.xlabel('Node')
+    plt.ylabel('Thickness (mm)')
 
-		#plt.subplot(1, 2, 2); CCSegUtils.showIMG(FY, extent = [xx[0], xx[-1], yy[0], yy[-1]], ticks = True);
-		#for z in range(numpy.size(sxi)):
-		#	CCSegUtils.plotContour(streamlinesOuter[z], closed = False)
-		#	CCSegUtils.plotContour(streamlinesInner[z], closed = False)
-		#plt.plot(scaledxi[0], scaledyi[0])
-		#plt.plot(scaledxo[0], scaledyo[0])
-		
-		#print scaledxi
-		#print scaledyi
-#	CCSegUtils.showIMG(FX)
-		
-		#print outputPNG
-		plt.gcf().set_size_inches((20, 10), forward = True)
-		plt.savefig(outputPNG)
-		CCSegUtils.cropAutoWhitePNG(outputPNG)
-		
-	#plt.gcf().set_size_inches((20, 10), forward = True)
-	#plt.show()
-	#quit()
-	
-	# perform Witelson and "Hofer and Frahm" parcellations on the CCs, output parcellations of the streamlines
-	#../witelson_hoferfrahm_parcellation_schemes.png
+    #plt.subplot(1, 2, 2); CCSegUtils.showIMG(FY, extent = [xx[0], xx[-1], yy[0], yy[-1]], ticks = True);
+    #for z in range(numpy.size(sxi)):
+    #    CCSegUtils.plotContour(streamlinesOuter[z], closed = False)
+    #    CCSegUtils.plotContour(streamlinesInner[z], closed = False)
+    #plt.plot(scaledxi[0], scaledyi[0])
+    #plt.plot(scaledxo[0], scaledyo[0])
+    
+    #print scaledxi
+    #print scaledyi
+#    CCSegUtils.showIMG(FX)
+    
+    #print outputPNG
+    plt.gcf().set_size_inches((20, 10), forward = True)
+    plt.savefig(outputPNG)
+    CCSegUtils.cropAutoWhitePNG(outputPNG)
+    
+    #plt.gcf().set_size_inches((20, 10), forward = True)
+    #plt.show()
+    #quit()
+    
+    # perform Witelson and "Hofer and Frahm" parcellations on the CCs, output parcellations of the streamlines
+    #../witelson_hoferfrahm_parcellation_schemes.png
 
-        #pylab.subplot(1, 2, 2); CCSegUtils.showIMG(FY, extent = [xx[0], xx[-1], yy[0], yy[-1]], ticks = True);
+        #plt.subplot(1, 2, 2); CCSegUtils.showIMG(FY, extent = [xx[0], xx[-1], yy[0], yy[-1]], ticks = True);
         #for z in range(numpy.size(sxi)):
         #    CCSegUtils.plotContour(streamlinesOuter[z], closed = False)
         #    CCSegUtils.plotContour(streamlinesInner[z], closed = False)
-        #pylab.plot(scaledxi[0], scaledyi[0])
-        #pylab.plot(scaledxo[0], scaledyo[0])
+        #plt.plot(scaledxi[0], scaledyi[0])
+        #plt.plot(scaledxo[0], scaledyo[0])
         
         #print scaledxi
         #print scaledyi
 #    CCSegUtils.showIMG(FX)
         
-        #print outputPNG
-        pylab.gcf().set_size_inches((20, 10), forward = True)
-        pylab.savefig(outputPNG)
-        CCSegUtils.cropAutoWhitePNG(outputPNG)
-        
-    #pylab.gcf().set_size_inches((20, 10), forward = True)
-    #pylab.show()
+    #print outputPNG
+    plt.gcf().set_size_inches((20, 10), forward = True)
+    plt.savefig(outputPNG)
+    CCSegUtils.cropAutoWhitePNG(outputPNG)
+    
+    #plt.gcf().set_size_inches((20, 10), forward = True)
+    #plt.show()
     #quit()
     
     # perform Witelson and "Hofer and Frahm" parcellations on the CCs, output parcellations of the streamlines
@@ -615,14 +615,17 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
 
     maskClosed = numpy.isfinite(solvedImage)
     I = numpy.where(maskClosed)
-
-	minColRow = int(numpy.mean(I[0][numpy.where(I[1] == minCol)]))
-	maxColRow = int(numpy.mean(I[0][numpy.where(I[1] == maxCol)]))
-	plt.clf()
+    
+    minCol = int(numpy.min(I[1]))
+    maxCol = int(numpy.max(I[1]))
+    
+    minColRow = int(numpy.mean(I[0][numpy.where(I[1] == minCol)]))
+    maxColRow = int(numpy.mean(I[0][numpy.where(I[1] == maxCol)]))
+    plt.clf()
 
     minColRow = int(numpy.mean(I[0][numpy.where(I[1] == minCol)]))
     maxColRow = int(numpy.mean(I[0][numpy.where(I[1] == maxCol)]))
-    pylab.clf()
+    plt.clf()
 
     minColX = xx[minCol]
     minColY = yy[minColRow]
@@ -758,30 +761,30 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
     # find highest S in the right half 
     #SAtPixelsAtSignChange = S[pixelsAtSignChange]
 
-	#R = 1
-	#SC = 1
-	#plt.subplot(SR, SC, 1)
-	#CCSegUtils.showIMG(FY, extent = [xx[0], xx[-1], yy[0], yy[-1]], ticks = True);
-	#CCSegUtils.showIMG(midLineCrossInMaskIMG, extent = [xx[0], xx[-1], yy[0], yy[-1]], ticks = True)
-	#plt.plot(inferiorContourXY[0, rightMostIDX], inferiorContourXY[1, rightMostIDX], 'r*')
-#	plt.colorbar()
-#	plt.subplot(SR, SC, 2)
-#	CCSegUtils.showIMG(midLineCrossInMaskIMG == 1)
-#	
-#	plt.subplot(SR, SC, 3)
-#	CCSegUtils.showIMG(pixelsAtSignChangeIMG)
-#	
-	#plt.gcf().set_size_inches((20, 10), forward = True)
-	#plt.show()
-	#quit()
-#	
-	
-#	try:
-#		SAtApex = numpy.max(SAtPixelsAtSignChange[SAtPixelsAtSignChange < (1.0 / 2.0)])
-#		print "Proportion at rostrum apex: " + str(SAtApex)
-#		emsellI[numpy.where(numpy.logical_and(numpy.logical_and(S > SAtApex, S < (1.0 / 2.0)), midLineCrossInMask > 0))] = 1
-#	except Exception:
-#		print "Rostrum apex not found, region 1 will be empty"
+    #R = 1
+    #SC = 1
+    #plt.subplot(SR, SC, 1)
+    #CCSegUtils.showIMG(FY, extent = [xx[0], xx[-1], yy[0], yy[-1]], ticks = True);
+    #CCSegUtils.showIMG(midLineCrossInMaskIMG, extent = [xx[0], xx[-1], yy[0], yy[-1]], ticks = True)
+    #plt.plot(inferiorContourXY[0, rightMostIDX], inferiorContourXY[1, rightMostIDX], 'r*')
+#    plt.colorbar()
+#    plt.subplot(SR, SC, 2)
+#    CCSegUtils.showIMG(midLineCrossInMaskIMG == 1)
+#    
+#    plt.subplot(SR, SC, 3)
+#    CCSegUtils.showIMG(pixelsAtSignChangeIMG)
+#    
+    #plt.gcf().set_size_inches((20, 10), forward = True)
+    #plt.show()
+    #quit()
+#    
+    
+#    try:
+#        SAtApex = numpy.max(SAtPixelsAtSignChange[SAtPixelsAtSignChange < (1.0 / 2.0)])
+#        print "Proportion at rostrum apex: " + str(SAtApex)
+#        emsellI[numpy.where(numpy.logical_and(numpy.logical_and(S > SAtApex, S < (1.0 / 2.0)), midLineCrossInMask > 0))] = 1
+#    except Exception:
+#        print "Rostrum apex not found, region 1 will be empty"
 #
     emsellLabels[I] = emsellI
     
@@ -820,61 +823,61 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
     del hoferFrahmI
     del emsellI
 
-	#CCSegUtils.showIMG(maskClosed, extent = [xx[0], xx[-1], yy[0], yy[-1]])
-	#plt.subplot(2, 1, 1)
-	#CCSegUtils.showIMG(witelsonRGB, extent = [xx[0], xx[-1], yy[0], yy[-1]])
-	#plt.title('Witelson parcellation')
-	
-	#plt.subplot(2, 1, 2)
-	#CCSegUtils.showIMG(hoferFrahmRGB, extent = [xx[0], xx[-1], yy[0], yy[-1]])
-	#plt.title('Hofer and Frahm parcellation')
-	#plt.plot(xx, cropLineM * xx + cropLineC, 'b-')
+    #CCSegUtils.showIMG(maskClosed, extent = [xx[0], xx[-1], yy[0], yy[-1]])
+    #plt.subplot(2, 1, 1)
+    #CCSegUtils.showIMG(witelsonRGB, extent = [xx[0], xx[-1], yy[0], yy[-1]])
+    #plt.title('Witelson parcellation')
+    
+    #plt.subplot(2, 1, 2)
+    #CCSegUtils.showIMG(hoferFrahmRGB, extent = [xx[0], xx[-1], yy[0], yy[-1]])
+    #plt.title('Hofer and Frahm parcellation')
+    #plt.plot(xx, cropLineM * xx + cropLineC, 'b-')
 
-	#plt.plot(minColX, minColY, 'g*')
-	#plt.plot(maxColX, maxColY, 'r*')
+    #plt.plot(minColX, minColY, 'g*')
+    #plt.plot(maxColX, maxColY, 'r*')
 
-	#plt.gcf().set_size_inches((20, 10), forward = True)
-	#plt.show()
-	#plt.savefig(outputPNG)
-		
+    #plt.gcf().set_size_inches((20, 10), forward = True)
+    #plt.show()
+    #plt.savefig(outputPNG)
+        
 
-		
-	witelsonNodeLabels = CCSegUtils.interp2q(xx, yy, numpy.double(witelsonLabels), startV[0], startV[1], interpmethod = 'nearest')
-	witelsonNodeLabels = numpy.uint8(witelsonNodeLabels)
-	
-	hoferFrahmNodeLabels = CCSegUtils.interp2q(xx, yy, numpy.double(hoferFrahmLabels), startV[0], startV[1], interpmethod = 'nearest')
-	hoferFrahmNodeLabels = numpy.uint8(hoferFrahmNodeLabels)
-	
-	emsellNodeLabels = CCSegUtils.interp2q(xx, yy, numpy.double(emsellLabels), startV[0], startV[1], interpmethod = 'nearest')
-	emsellNodeLabels = numpy.uint8(emsellNodeLabels)
-	
-	if doGraphics:
-		plt.clf()
-		
-		lineProps = {'color': 'y', 'linewidth': 2}
-		
-		SR = 3
-		SC = 1
-		plt.subplot(SR, SC, 1)
-		CCSegUtils.showIMG(witelsonRGB, extent = [xx[0], xx[-1], yy[0], yy[-1]])
-		for z in range(numThicknessNodes):
-			plt.text(startV[0, z], startV[1, z], str(witelsonNodeLabels[z]), horizontalalignment='center', verticalalignment='center')
-		CCSegUtils.plotStreamlines(streamlines, lineProps = lineProps)
-		plt.title('Witelson parcellation')
-		
-		plt.subplot(SR, SC, 2)
-		CCSegUtils.showIMG(hoferFrahmRGB, extent = [xx[0], xx[-1], yy[0], yy[-1]])
-		for z in range(numThicknessNodes):
-			plt.text(startV[0, z], startV[1, z], str(hoferFrahmNodeLabels[z]), horizontalalignment='center', verticalalignment='center')
-		CCSegUtils.plotStreamlines(streamlines, lineProps = lineProps)
-		plt.title('Hofer and Frahm parcellation')
+        
+    witelsonNodeLabels = CCSegUtils.interp2q(xx, yy, numpy.double(witelsonLabels), startV[0], startV[1], interpmethod = 'nearest')
+    witelsonNodeLabels = numpy.uint8(witelsonNodeLabels)
+    
+    hoferFrahmNodeLabels = CCSegUtils.interp2q(xx, yy, numpy.double(hoferFrahmLabels), startV[0], startV[1], interpmethod = 'nearest')
+    hoferFrahmNodeLabels = numpy.uint8(hoferFrahmNodeLabels)
+    
+    emsellNodeLabels = CCSegUtils.interp2q(xx, yy, numpy.double(emsellLabels), startV[0], startV[1], interpmethod = 'nearest')
+    emsellNodeLabels = numpy.uint8(emsellNodeLabels)
+    
+    if doGraphics:
+        plt.clf()
+        
+        lineProps = {'color': 'y', 'linewidth': 2}
+        
+        SR = 3
+        SC = 1
+        plt.subplot(SR, SC, 1)
+        CCSegUtils.showIMG(witelsonRGB, extent = [xx[0], xx[-1], yy[0], yy[-1]])
+        for z in range(numThicknessNodes):
+            plt.text(startV[0, z], startV[1, z], str(witelsonNodeLabels[z]), horizontalalignment='center', verticalalignment='center')
+        CCSegUtils.plotStreamlines(streamlines, lineProps = lineProps)
+        plt.title('Witelson parcellation')
+        
+        plt.subplot(SR, SC, 2)
+        CCSegUtils.showIMG(hoferFrahmRGB, extent = [xx[0], xx[-1], yy[0], yy[-1]])
+        for z in range(numThicknessNodes):
+            plt.text(startV[0, z], startV[1, z], str(hoferFrahmNodeLabels[z]), horizontalalignment='center', verticalalignment='center')
+        CCSegUtils.plotStreamlines(streamlines, lineProps = lineProps)
+        plt.title('Hofer and Frahm parcellation')
 
-		plt.subplot(SR, SC, 3)
-		CCSegUtils.showIMG(emsellRGB, extent = [xx[0], xx[-1], yy[0], yy[-1]])
-		for z in range(numThicknessNodes):
-			plt.text(startV[0, z], startV[1, z], str(emsellNodeLabels[z]), horizontalalignment='center', verticalalignment='center')
-		CCSegUtils.plotStreamlines(streamlines, lineProps = lineProps)
-		plt.title('Emsell parcellation')
+        plt.subplot(SR, SC, 3)
+        CCSegUtils.showIMG(emsellRGB, extent = [xx[0], xx[-1], yy[0], yy[-1]])
+        for z in range(numThicknessNodes):
+            plt.text(startV[0, z], startV[1, z], str(emsellNodeLabels[z]), horizontalalignment='center', verticalalignment='center')
+        CCSegUtils.plotStreamlines(streamlines, lineProps = lineProps)
+        plt.title('Emsell parcellation')
 
         parcellationPNGDirectory = os.path.join(outputDir, "parcellations")
         try:
@@ -885,23 +888,23 @@ def thicknessCC(outputBase, groundTruthFile = None, numThicknessNodes = 100, doG
             else:
                 raise Exception
 
-		outputPNG = os.path.join(parcellationPNGDirectory, subjectID + "_parcellations.png")
-		
-		plt.gcf().set_size_inches((20, 10), forward = True)
-		#plt.show()
-		#quit()
+        outputPNG = os.path.join(parcellationPNGDirectory, subjectID + "_parcellations.png")
+        
+        plt.gcf().set_size_inches((20, 10), forward = True)
+        #plt.show()
+        #quit()
 
-		plt.savefig(outputPNG)
-		CCSegUtils.cropAutoWhitePNG(outputPNG)
-		
-	pixelArea = (xx[1] - xx[0]) * (yy[1] - yy[0])
-	# now do the stats
-	witelsonStats = CCSegUtils.parcellationStats(witelsonLabels, pixelArea, thicknessProfile, witelsonNodeLabels)
-	hoferFrahmStats = CCSegUtils.parcellationStats(hoferFrahmLabels, pixelArea, thicknessProfile, hoferFrahmNodeLabels)
-	emsellStats = CCSegUtils.parcellationStats(emsellLabels, pixelArea, thicknessProfile, emsellNodeLabels)
-	
-	#print witelsonStats
-	#print hoferFrahmStats
+        plt.savefig(outputPNG)
+        CCSegUtils.cropAutoWhitePNG(outputPNG)
+        
+    pixelArea = (xx[1] - xx[0]) * (yy[1] - yy[0])
+    # now do the stats
+    witelsonStats = CCSegUtils.parcellationStats(witelsonLabels, pixelArea, thicknessProfile, witelsonNodeLabels)
+    hoferFrahmStats = CCSegUtils.parcellationStats(hoferFrahmLabels, pixelArea, thicknessProfile, hoferFrahmNodeLabels)
+    emsellStats = CCSegUtils.parcellationStats(emsellLabels, pixelArea, thicknessProfile, emsellNodeLabels)
+    
+    #print witelsonStats
+    #print hoferFrahmStats
 
     #quit()
     outputMAT = outputBase + "_thickness.hdf5"
